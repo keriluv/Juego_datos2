@@ -15,7 +15,7 @@ public class GestorPeligros : MonoBehaviour
             int nivel = info != null ? info.nivelPeligro : 1;
 
             arbolPeligros.Insertar(new PeligroData(p.name, nivel, p));
-            Debug.Log(p.name +" xx"+ nivel +"");
+            Debug.Log(p.name + " xx" + nivel + "");
         }
 
         foreach (var dato in arbolPeligros.RecorridoInOrder())
@@ -23,7 +23,7 @@ public class GestorPeligros : MonoBehaviour
             Debug.Log(dato.nombre + " - nivel de peligro: " + dato.nivelPeligro);
         }
 
-        Debug.Log("La raiz es: " + arbolPeligros.Raiz.Valor.nombre +"y nivel "+ arbolPeligros.Raiz.Valor.nivelPeligro);
+        Debug.Log("La raiz es: " + arbolPeligros.Raiz.Valor.nombre + "y nivel " + arbolPeligros.Raiz.Valor.nivelPeligro);
         visualizador.MostrarArbol(arbolPeligros);
     }
 

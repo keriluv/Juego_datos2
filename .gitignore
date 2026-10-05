@@ -21,6 +21,8 @@
 *.pdb
 *.opendb
 *.VC.db
+*.blend1
+*.blend2
 .vs/
 .idea/
 .vscode/

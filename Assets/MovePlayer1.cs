@@ -10,6 +10,8 @@ public class MovePlayer1 : MonoBehaviour
     [SerializeField] private float jumpForce = 1f;
     [SerializeField] private Transform target;
 
+    [SerializeField] private bool isPlatform = false;
+
     private Rigidbody rb;
     private bool canJump = true;
     private Vector2 movement = Vector2.zero;
@@ -21,7 +23,7 @@ public class MovePlayer1 : MonoBehaviour
 
     void Update()
     {
-        // Se resetea cada frame para que suelte al dejar de presionar
+        
         movement = Vector2.zero;
 
         if (Keyboard.current.wKey.isPressed) movement.y += velocity;
@@ -61,6 +63,11 @@ public class MovePlayer1 : MonoBehaviour
             targetVelocity,
             currentAcceleration * Time.fixedDeltaTime
         );
+
+        if (isPlatform)
+        {
+            horizontalVelocity.z = 0f;
+        }
 
         rb.linearVelocity = new Vector3(horizontalVelocity.x, currentVelocity.y, horizontalVelocity.z);
     }

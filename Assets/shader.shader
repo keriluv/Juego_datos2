@@ -5,7 +5,7 @@ Shader "Custom/DisableZWriteTUT"
 			"RenderType" = "Opaque"
 			}
 			Pass{
-				ZWrite Off
+				ZWrite Off 
 				}
 		}
 	}

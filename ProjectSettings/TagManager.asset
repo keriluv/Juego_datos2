@@ -8,6 +8,7 @@ TagManager:
   - Item
   - Point
   - Platform
+  - Hit
   layers:
   - Default
   - TransparentFX

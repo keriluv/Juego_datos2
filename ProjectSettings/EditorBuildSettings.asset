@@ -14,5 +14,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 1
+    path: Assets/LevelYoutube.unity
+    guid: 61ceea8d4b5309848a338961cd23f7b2
+  - enabled: 1
+    path: Assets/LevelYoutubev2.unity
+    guid: ece8d76b09d00154c81405dbcc44dcc2
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 468912f47335ff04584dfb443256f569, type: 3}

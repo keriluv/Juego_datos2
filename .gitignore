@@ -11,6 +11,7 @@
 # Archivos de la solución y del IDE (Visual Studio / Rider / VS Code)
 *.csproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -29,3 +30,6 @@
 
 # Build de Gradle en Android (si compilas para móviles)
 .gradle/
+
+# Proyecto de Unity creado dentro de este repo. No debe subirse.
+My project (6)/

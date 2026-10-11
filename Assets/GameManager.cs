@@ -22,6 +22,11 @@ public class GameManager : MonoBehaviour
     {
         SceneManager.LoadScene(LevelSelector);
     }
+
+    public void goToBatallaVR()
+    {
+        CargadorBatallaVR.Cargar();
+    }
     public void openConfig()
     {
         if (!isConfig)

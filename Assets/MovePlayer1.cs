@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
-public class MovePlayer1 : MonoBehaviour
+public class MovePlayer1 : NetworkBehaviour
 {
-    [SerializeField] private float velocity=1f;
+    [SerializeField] private float velocity = 1f;
     [SerializeField] private float maxSpeed = 20f;
     [SerializeField] private float acceleration = 10f;
     [SerializeField] private float friction = 5f;
@@ -16,14 +17,26 @@ public class MovePlayer1 : MonoBehaviour
     private bool canJump = true;
     private Vector2 movement = Vector2.zero;
 
-    void Start()
+    void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }
 
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            if (target == null && Camera.main != null)
+                target = Camera.main.transform;
+
+        }
+    }
+
     void Update()
     {
-        
+        if (!IsOwner) return;
+        if (Keyboard.current == null) return;
+
         movement = Vector2.zero;
 
         if (Keyboard.current.wKey.isPressed) movement.y += velocity;
@@ -40,6 +53,9 @@ public class MovePlayer1 : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!IsOwner) return;
+        if (target == null) return;
+
         Vector3 forward = target.forward;
         Vector3 right = target.right;
 
@@ -74,6 +90,7 @@ public class MovePlayer1 : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        if (!IsOwner) return;
         if (collision.gameObject.CompareTag("Platform"))
         {
             canJump = true;

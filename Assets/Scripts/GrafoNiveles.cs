@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 [Serializable]
 public class Nivel
 {
@@ -20,7 +19,6 @@ public class Nivel
     }
 }
 
-
 public class Arista
 {
     public int destino;
@@ -32,7 +30,6 @@ public class Arista
         this.peso = peso;
     }
 }
-
 
 public class GrafoNiveles
 {
@@ -100,7 +97,6 @@ public class GrafoNiveles
                 DFSRec(a.destino, visitados, orden);
         }
     }
-
 
     public List<int> CaminoMasCorto(int origen, int destino, out float costo)
     {

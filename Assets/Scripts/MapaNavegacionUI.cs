@@ -5,7 +5,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-// Guarda qué niveles ya se completaron (persiste entre escenas y sesiones)
 public static class ProgresoNiveles
 {
     private const string Prefijo = "completado_";
@@ -32,10 +31,11 @@ public class NivelConfig
 {
     public int id;
     public string nombre;
-    public string escena;       
-    public Vector2 posicion;     
+    public string escena;
+    public Vector2 posicion;
     public bool inicial;
-    public bool falso;           
+    public bool falso;
+    public Color acento = Color.clear;
 }
 
 [Serializable]
@@ -43,7 +43,7 @@ public class ConexionConfig
 {
     public int origen;
     public int destino;
-    public float peso = 1f;      
+    public float peso = 1f;
     public bool bidireccional;
 }
 
@@ -51,10 +51,23 @@ public class MapaNavegacionUI : MonoBehaviour
 {
     private enum Modo { Navegar, Ruta, Completar }
 
+    private class NodoVisual
+    {
+        public RectTransform rect;
+        public Image borde;
+        public Image barra;
+        public Text nombre;
+        public Text estado;
+    }
+
     private class AristaVisual
     {
         public ConexionConfig conexion;
+        public Vector2 p1, p2;
+        public RectTransform linea;
         public List<Image> partes = new List<Image>();
+        public Image pastilla;
+        public Text textoPeso;
     }
 
     [Header("Grafo (editable en el Inspector)")]
@@ -62,28 +75,41 @@ public class MapaNavegacionUI : MonoBehaviour
     public List<ConexionConfig> conexiones = new List<ConexionConfig>();
 
     [Header("Colores")]
-    public Color colorFondo = new Color(0.08f, 0.09f, 0.13f);
-    public Color colorBloqueado = new Color(0.35f, 0.35f, 0.38f);
-    public Color colorDisponible = new Color(0.20f, 0.55f, 0.85f);
-    public Color colorCompletado = new Color(0.25f, 0.70f, 0.35f);
-    public Color colorActual = new Color(0.85f, 0.55f, 0.10f);
-    public Color colorArista = new Color(0.65f, 0.65f, 0.70f);
-    public Color colorRuta = new Color(0.95f, 0.35f, 0.35f);
+    public Color colorFondoArriba = new Color(0.11f, 0.13f, 0.22f);
+    public Color colorFondoAbajo = new Color(0.04f, 0.05f, 0.09f);
+    public Color colorBloqueado = new Color(0.45f, 0.48f, 0.56f);
+    public Color colorDisponible = new Color(0.27f, 0.62f, 0.96f);
+    public Color colorCompletado = new Color(0.30f, 0.78f, 0.45f);
+    public Color colorActual = new Color(0.98f, 0.70f, 0.20f);
+    public Color colorArista = new Color(0.42f, 0.47f, 0.60f);
+    public Color colorRuta = new Color(1.00f, 0.38f, 0.42f);
+
+    private readonly Color colorTarjeta = new Color(0.12f, 0.14f, 0.21f);
+    private readonly Color colorPastilla = new Color(0.08f, 0.09f, 0.15f);
+    private readonly Color colorBordePastilla = new Color(0.62f, 0.67f, 0.82f);
+    private readonly Color colorBoton = new Color(0.16f, 0.19f, 0.28f);
+    private readonly Color colorTextoSuave = new Color(0.78f, 0.80f, 0.87f);
+
+    private const float AnchoNodo = 140f;
+    private const float AltoNodo = 60f;
+    private const float GrosorArista = 3f;
+    private const float GrosorRuta = 5f;
+    private const string MensajeNavegar = "Modo navegar: haz clic en un nivel disponible para jugarlo.\nEl número de cada línea es el peso (costo) de ese camino.";
 
     private GrafoNiveles grafo;
     private readonly Dictionary<int, NivelConfig> config = new Dictionary<int, NivelConfig>();
-    private readonly Dictionary<int, Image> imagenNodo = new Dictionary<int, Image>();
-    private readonly Dictionary<int, Text> textoNodo = new Dictionary<int, Text>();
+    private readonly Dictionary<int, NodoVisual> nodos = new Dictionary<int, NodoVisual>();
     private readonly List<AristaVisual> aristasVisuales = new List<AristaVisual>();
+    private readonly Dictionary<int, Sprite> spritesRedondeados = new Dictionary<int, Sprite>();
+    private readonly Image[] botonesModo = new Image[3];
 
+    private Sprite spriteFlecha;
     private RectTransform raiz;
     private Font fuente;
     private Text textoInfo;
     private Modo modo = Modo.Navegar;
     private int idActual;
-
-    private const float AnchoNodo = 140f;
-    private const float AltoNodo = 60f;
+    private int idHover = -1;
 
     private void Reset()
     {
@@ -99,7 +125,23 @@ public class MapaNavegacionUI : MonoBehaviour
         CrearInterfaz();
         DeterminarNivelActual();
         Refrescar();
-        MostrarInfo("Modo navegar: haz clic en un nivel disponible para jugarlo.");
+        ActualizarBotonesModo();
+        MostrarInfo(MensajeNavegar);
+    }
+
+    private void Update()
+    {
+        float t = Time.unscaledTime;
+        foreach (var kv in nodos)
+        {
+            float objetivo = 1f;
+            if (kv.Key == idHover) objetivo = 1.07f;
+            else if (kv.Key == idActual) objetivo = 1f + 0.025f * Mathf.Sin(t * 3f);
+
+            float actual = kv.Value.rect.localScale.x;
+            float nuevo = Mathf.Lerp(actual, objetivo, 12f * Time.unscaledDeltaTime);
+            kv.Value.rect.localScale = new Vector3(nuevo, nuevo, 1f);
+        }
     }
 
     private void CargarEjemplo()
@@ -108,11 +150,11 @@ public class MapaNavegacionUI : MonoBehaviour
         {
             new NivelConfig { id = 1, nombre = "MainMenu", escena = "MainMenu", posicion = new Vector2(-290, -50), inicial = true },
             new NivelConfig { id = 2, nombre = "LevelSelector", escena = "LevelSelector", posicion = new Vector2(110, -50) },
-            new NivelConfig { id = 3, nombre = "Tutorial", escena = "Tutorial", posicion = new Vector2(-130, 100) },
-            new NivelConfig { id = 4, nombre = "LevelYoutube", escena = "LevelYoutube", posicion = new Vector2(110, 120) },
-            new NivelConfig { id = 5, nombre = "TikTok", escena = "", posicion = new Vector2(330, 120), falso = true },
-            new NivelConfig { id = 6, nombre = "Instagram", escena = "", posicion = new Vector2(330, -50), falso = true },
-            new NivelConfig { id = 7, nombre = "WhatsApp", escena = "", posicion = new Vector2(540, 110), falso = true },
+            new NivelConfig { id = 3, nombre = "Tutorial", escena = "Tutorial", posicion = new Vector2(-130, 100), acento = new Color(0.65f, 0.55f, 1.00f) },
+            new NivelConfig { id = 4, nombre = "LevelYoutube", escena = "LevelYoutube", posicion = new Vector2(110, 120), acento = new Color(1.00f, 0.20f, 0.20f) },
+            new NivelConfig { id = 5, nombre = "TikTok", escena = "", posicion = new Vector2(330, 120), falso = true, acento = new Color(0.10f, 0.90f, 0.90f) },
+            new NivelConfig { id = 6, nombre = "Instagram", escena = "", posicion = new Vector2(330, -50), falso = true, acento = new Color(0.90f, 0.25f, 0.60f) },
+            new NivelConfig { id = 7, nombre = "WhatsApp", escena = "", posicion = new Vector2(540, 110), falso = true, acento = new Color(0.15f, 0.83f, 0.40f) },
         };
 
         conexiones = new List<ConexionConfig>
@@ -131,7 +173,6 @@ public class MapaNavegacionUI : MonoBehaviour
             new ConexionConfig { origen = 2, destino = 7, peso = 9f },
         };
     }
-
 
     private void ConstruirGrafo()
     {
@@ -180,7 +221,6 @@ public class MapaNavegacionUI : MonoBehaviour
         return string.IsNullOrEmpty(n.escena) ? n.nombre : n.escena;
     }
 
-
     private void CrearInterfaz()
     {
         var canvasGO = new GameObject("CanvasMapa", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -197,14 +237,20 @@ public class MapaNavegacionUI : MonoBehaviour
         if (FindFirstObjectByType<EventSystem>() == null)
             new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
+        spriteFlecha = CrearSpriteFlecha();
+
         raiz = CrearRect("Fondo", canvasGO.transform);
         Estirar(raiz);
-        raiz.gameObject.AddComponent<Image>().color = colorFondo;
+        var fondo = raiz.gameObject.AddComponent<Image>();
+        fondo.sprite = CrearSpriteDegradado();
+        fondo.color = Color.white;
+        fondo.raycastTarget = false;
 
-        
         foreach (var c in conexiones) DibujarArista(c);
         foreach (var n in niveles) DibujarNodo(n);
+        CrearPastillas();
         CrearHUD();
+        CrearLeyenda();
     }
 
     private void DibujarArista(ConexionConfig c)
@@ -217,43 +263,142 @@ public class MapaNavegacionUI : MonoBehaviour
         Vector2 dir = p2 - p1;
         float largo = dir.magnitude;
         if (largo < 1f) return;
-        Vector2 u = dir / largo;
 
-        var visual = new AristaVisual { conexion = c };
+        Vector2 u = dir / largo;
+        float angulo = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        float borde = DistanciaAlBorde(u);
+
+        var visual = new AristaVisual { conexion = c, p1 = p1, p2 = p2 };
 
         var linea = CrearRect("Arista", raiz);
         linea.pivot = new Vector2(0f, 0.5f);
-        linea.sizeDelta = new Vector2(largo, 4f);
-        linea.anchoredPosition = p1;
-        linea.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
+        linea.sizeDelta = new Vector2(Mathf.Max(largo - 2f * borde, 1f), GrosorArista);
+        linea.anchoredPosition = p1 + u * borde;
+        linea.localRotation = Quaternion.Euler(0f, 0f, angulo);
         var img = linea.gameObject.AddComponent<Image>();
         img.color = colorArista;
         img.raycastTarget = false;
+        visual.linea = linea;
         visual.partes.Add(img);
 
-       
-        float margen = DistanciaAlBorde(u) + 10f;
-        visual.partes.Add(CrearPunta(p2 - u * margen));
-        if (c.bidireccional) visual.partes.Add(CrearPunta(p1 + u * margen));
-
-        var etiqueta = CrearTexto("Peso", raiz, c.peso.ToString("0.#"), 18, TextAnchor.MiddleCenter);
-        Vector2 perp = new Vector2(-u.y, u.x);
-        etiqueta.rectTransform.sizeDelta = new Vector2(40f, 24f);
-        etiqueta.rectTransform.anchoredPosition = (p1 + p2) / 2f + perp * 16f;
+        visual.partes.Add(CrearFlecha(p2 - u * (borde + 3f), angulo));
+        if (c.bidireccional) visual.partes.Add(CrearFlecha(p1 + u * (borde + 3f), angulo + 180f));
 
         aristasVisuales.Add(visual);
     }
 
-    private Image CrearPunta(Vector2 posicion)
+    private Image CrearFlecha(Vector2 punta, float angulo)
     {
-        var r = CrearRect("Punta", raiz);
-        r.sizeDelta = new Vector2(14f, 14f);
-        r.anchoredPosition = posicion;
-        r.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        var r = CrearRect("Flecha", raiz);
+        r.pivot = new Vector2(1f, 0.5f);
+        r.sizeDelta = new Vector2(16f, 16f);
+        r.anchoredPosition = punta;
+        r.localRotation = Quaternion.Euler(0f, 0f, angulo);
         var img = r.gameObject.AddComponent<Image>();
+        img.sprite = spriteFlecha;
         img.color = colorArista;
         img.raycastTarget = false;
         return img;
+    }
+
+    private void CrearPastillas()
+    {
+        var usados = new List<Vector2>();
+        float[] fracciones = { 0.30f, 0.35f, 0.40f, 0.45f, 0.50f, 0.55f, 0.60f, 0.65f, 0.70f };
+
+        for (int i = 0; i < aristasVisuales.Count; i++)
+        {
+            var v = aristasVisuales[i];
+            Vector2 dir = (v.p2 - v.p1).normalized;
+            float margen = DistanciaAlBorde(dir);
+            Vector2 inicio = v.p1 + dir * margen;
+            Vector2 fin = v.p2 - dir * margen;
+
+            Vector2 elegido = Vector2.Lerp(v.p1, v.p2, 0.5f);
+            bool hayElegido = false;
+            float mejorPuntaje = float.MinValue;
+
+            foreach (float f in fracciones)
+            {
+                Vector2 candidato = Vector2.Lerp(v.p1, v.p2, f);
+                if (ChocaConNodo(candidato)) continue;
+                if ((candidato - inicio).magnitude < 26f || (candidato - fin).magnitude < 26f) continue;
+
+                float distLineas = float.MaxValue;
+                for (int j = 0; j < aristasVisuales.Count; j++)
+                {
+                    if (j == i) continue;
+                    distLineas = Mathf.Min(distLineas,
+                        DistanciaASegmento(candidato, aristasVisuales[j].p1, aristasVisuales[j].p2));
+                }
+
+                float distPastillas = float.MaxValue;
+                foreach (var otro in usados)
+                    distPastillas = Mathf.Min(distPastillas, (otro - candidato).magnitude);
+
+                float puntaje = Mathf.Min(distLineas, distPastillas * 0.6f) - 15f * Mathf.Abs(f - 0.5f);
+                if (!hayElegido || puntaje > mejorPuntaje)
+                {
+                    hayElegido = true;
+                    mejorPuntaje = puntaje;
+                    elegido = candidato;
+                }
+            }
+            usados.Add(elegido);
+
+            string texto = v.conexion.peso.ToString("0.#");
+            float ancho = 30f + 9f * (texto.Length - 1);
+            Text textoPeso;
+            v.pastilla = CrearPastillaPeso(raiz, texto, elegido, ancho, 26f, 17, out textoPeso);
+            v.textoPeso = textoPeso;
+        }
+    }
+
+    private Image CrearPastillaPeso(Transform padre, string texto, Vector2 posicion, float ancho, float alto,
+                                    int tamanoFuente, out Text textoPeso)
+    {
+        var r = CrearRect("Peso", padre);
+        r.sizeDelta = new Vector2(ancho, alto);
+        r.anchoredPosition = posicion;
+
+        var anillo = r.gameObject.AddComponent<Image>();
+        anillo.sprite = SpriteRedondeado(12);
+        anillo.type = Image.Type.Sliced;
+        anillo.color = colorBordePastilla;
+        anillo.raycastTarget = false;
+
+        var interior = CrearRect("Interior", r);
+        Estirar(interior);
+        interior.offsetMin = new Vector2(2f, 2f);
+        interior.offsetMax = new Vector2(-2f, -2f);
+        var interiorImg = interior.gameObject.AddComponent<Image>();
+        interiorImg.sprite = SpriteRedondeado(10);
+        interiorImg.type = Image.Type.Sliced;
+        interiorImg.color = colorPastilla;
+        interiorImg.raycastTarget = false;
+
+        textoPeso = CrearTexto("Texto", r, texto, tamanoFuente, TextAnchor.MiddleCenter);
+        textoPeso.fontStyle = FontStyle.Bold;
+        Estirar(textoPeso.rectTransform);
+        return anillo;
+    }
+
+    private float DistanciaASegmento(Vector2 p, Vector2 a, Vector2 b)
+    {
+        Vector2 ab = b - a;
+        float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
+        return (p - (a + ab * t)).magnitude;
+    }
+
+    private bool ChocaConNodo(Vector2 p)
+    {
+        foreach (var n in niveles)
+        {
+            if (Mathf.Abs(p.x - n.posicion.x) < AnchoNodo / 2f + 22f &&
+                Mathf.Abs(p.y - n.posicion.y) < AltoNodo / 2f + 18f)
+                return true;
+        }
+        return false;
     }
 
     private float DistanciaAlBorde(Vector2 u)
@@ -269,69 +414,197 @@ public class MapaNavegacionUI : MonoBehaviour
         r.sizeDelta = new Vector2(AnchoNodo, AltoNodo);
         r.anchoredPosition = n.posicion;
 
-        var img = r.gameObject.AddComponent<Image>();
-        var boton = r.gameObject.AddComponent<Button>();
-        boton.targetGraphic = img;
+        var borde = r.gameObject.AddComponent<Image>();
+        borde.sprite = SpriteRedondeado(14);
+        borde.type = Image.Type.Sliced;
 
+        var sombra = r.gameObject.AddComponent<Shadow>();
+        sombra.effectColor = new Color(0f, 0f, 0f, 0.45f);
+        sombra.effectDistance = new Vector2(0f, -4f);
+
+        var boton = r.gameObject.AddComponent<Button>();
+        boton.targetGraphic = borde;
+        boton.transition = Selectable.Transition.None;
         int id = n.id;
         boton.onClick.AddListener(() => AlHacerClicNodo(id));
 
-        var texto = CrearTexto("Etiqueta", r, n.nombre, 18, TextAnchor.MiddleCenter);
-        Estirar(texto.rectTransform);
+        var trigger = r.gameObject.AddComponent<EventTrigger>();
+        AgregarEvento(trigger, EventTriggerType.PointerEnter, () => idHover = id);
+        AgregarEvento(trigger, EventTriggerType.PointerExit, () => { if (idHover == id) idHover = -1; });
 
-        imagenNodo[id] = img;
-        textoNodo[id] = texto;
+        var relleno = CrearRect("Relleno", r);
+        Estirar(relleno);
+        relleno.offsetMin = new Vector2(3f, 3f);
+        relleno.offsetMax = new Vector2(-3f, -3f);
+        var rellenoImg = relleno.gameObject.AddComponent<Image>();
+        rellenoImg.sprite = SpriteRedondeado(11);
+        rellenoImg.type = Image.Type.Sliced;
+        rellenoImg.color = colorTarjeta;
+        rellenoImg.raycastTarget = false;
+
+        var barraRect = CrearRect("Barra", r);
+        barraRect.anchorMin = new Vector2(0f, 0f);
+        barraRect.anchorMax = new Vector2(0f, 1f);
+        barraRect.pivot = new Vector2(0f, 0.5f);
+        barraRect.sizeDelta = new Vector2(5f, -22f);
+        barraRect.anchoredPosition = new Vector2(10f, 0f);
+        var barra = barraRect.gameObject.AddComponent<Image>();
+        barra.sprite = SpriteRedondeado(2);
+        barra.type = Image.Type.Sliced;
+        barra.raycastTarget = false;
+
+        var nombre = CrearTexto("Nombre", r, n.nombre, 17, TextAnchor.MiddleCenter);
+        nombre.fontStyle = FontStyle.Bold;
+        nombre.rectTransform.anchorMin = new Vector2(0f, 0.42f);
+        nombre.rectTransform.anchorMax = new Vector2(1f, 0.95f);
+        nombre.rectTransform.offsetMin = new Vector2(18f, 0f);
+        nombre.rectTransform.offsetMax = new Vector2(-6f, 0f);
+
+        var estado = CrearTexto("Estado", r, "", 12, TextAnchor.MiddleCenter);
+        estado.rectTransform.anchorMin = new Vector2(0f, 0.05f);
+        estado.rectTransform.anchorMax = new Vector2(1f, 0.45f);
+        estado.rectTransform.offsetMin = new Vector2(18f, 0f);
+        estado.rectTransform.offsetMax = new Vector2(-6f, 0f);
+
+        nodos[id] = new NodoVisual { rect = r, borde = borde, barra = barra, nombre = nombre, estado = estado };
+    }
+
+    private void AgregarEvento(EventTrigger trigger, EventTriggerType tipo, UnityEngine.Events.UnityAction accion)
+    {
+        var entrada = new EventTrigger.Entry { eventID = tipo };
+        entrada.callback.AddListener(_ => accion());
+        trigger.triggers.Add(entrada);
     }
 
     private void CrearHUD()
     {
-        var titulo = CrearTexto("Titulo", raiz, "Mapa de navegación", 30, TextAnchor.MiddleCenter);
+        var titulo = CrearTexto("Titulo", raiz, "Mapa de navegación", 32, TextAnchor.MiddleCenter);
+        titulo.fontStyle = FontStyle.Bold;
         titulo.rectTransform.anchorMin = titulo.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-        titulo.rectTransform.sizeDelta = new Vector2(600f, 50f);
-        titulo.rectTransform.anchoredPosition = new Vector2(0f, -40f);
+        titulo.rectTransform.sizeDelta = new Vector2(600f, 44f);
+        titulo.rectTransform.anchoredPosition = new Vector2(0f, -36f);
 
-        textoInfo = CrearTexto("Info", raiz, "", 22, TextAnchor.UpperCenter);
-        textoInfo.rectTransform.anchorMin = textoInfo.rectTransform.anchorMax = new Vector2(0.5f, 0f);
-        textoInfo.rectTransform.sizeDelta = new Vector2(900f, 110f);
-        textoInfo.rectTransform.anchoredPosition = new Vector2(100f, 80f);
+        var subtitulo = CrearTexto("Subtitulo", raiz, "Grafo dirigido y ponderado de niveles", 15, TextAnchor.MiddleCenter);
+        subtitulo.color = colorTextoSuave;
+        subtitulo.rectTransform.anchorMin = subtitulo.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+        subtitulo.rectTransform.sizeDelta = new Vector2(600f, 24f);
+        subtitulo.rectTransform.anchoredPosition = new Vector2(0f, -66f);
 
-        CrearBotonHUD("Navegar", 0, () => CambiarModo(Modo.Navegar));
-        CrearBotonHUD("Ruta más corta", 1, () => CambiarModo(Modo.Ruta));
-        CrearBotonHUD("Completar (demo)", 2, () => CambiarModo(Modo.Completar));
+        var panel = CrearRect("PanelInfo", raiz);
+        panel.anchorMin = panel.anchorMax = new Vector2(0.5f, 0f);
+        panel.sizeDelta = new Vector2(900f, 96f);
+        panel.anchoredPosition = new Vector2(100f, 62f);
+        var panelImg = panel.gameObject.AddComponent<Image>();
+        panelImg.sprite = SpriteRedondeado(14);
+        panelImg.type = Image.Type.Sliced;
+        panelImg.color = new Color(0.07f, 0.08f, 0.13f, 0.92f);
+        panelImg.raycastTarget = false;
+
+        textoInfo = CrearTexto("Info", panel, "", 20, TextAnchor.MiddleCenter);
+        Estirar(textoInfo.rectTransform);
+        textoInfo.rectTransform.offsetMin = new Vector2(16f, 8f);
+        textoInfo.rectTransform.offsetMax = new Vector2(-16f, -8f);
+
+        botonesModo[0] = CrearBotonHUD("Navegar", 0, () => CambiarModo(Modo.Navegar));
+        botonesModo[1] = CrearBotonHUD("Ruta más corta", 1, () => CambiarModo(Modo.Ruta));
+        botonesModo[2] = CrearBotonHUD("Completar (demo)", 2, () => CambiarModo(Modo.Completar));
         CrearBotonHUD("Recorrido BFS", 3, () => MostrarRecorrido(true));
         CrearBotonHUD("Recorrido DFS", 4, () => MostrarRecorrido(false));
         CrearBotonHUD("Reiniciar progreso", 5, ReiniciarProgreso);
     }
 
-    private void CrearBotonHUD(string texto, int indice, UnityEngine.Events.UnityAction accion)
+    private Image CrearBotonHUD(string texto, int indice, UnityEngine.Events.UnityAction accion)
     {
         var r = CrearRect("Boton_" + texto, raiz);
         r.anchorMin = r.anchorMax = new Vector2(0f, 1f);
         r.pivot = new Vector2(0f, 1f);
-        r.sizeDelta = new Vector2(200f, 44f);
+        r.sizeDelta = new Vector2(210f, 44f);
         r.anchoredPosition = new Vector2(20f, -100f - indice * 54f);
 
         var img = r.gameObject.AddComponent<Image>();
-        img.color = new Color(0.18f, 0.20f, 0.27f);
+        img.sprite = SpriteRedondeado(10);
+        img.type = Image.Type.Sliced;
+        img.color = colorBoton;
+
+        var sombra = r.gameObject.AddComponent<Shadow>();
+        sombra.effectColor = new Color(0f, 0f, 0f, 0.35f);
+        sombra.effectDistance = new Vector2(0f, -3f);
+
         var boton = r.gameObject.AddComponent<Button>();
         boton.targetGraphic = img;
+        var colores = boton.colors;
+        colores.normalColor = Color.white;
+        colores.highlightedColor = new Color(0.82f, 0.88f, 1f);
+        colores.pressedColor = new Color(0.65f, 0.70f, 0.88f);
+        colores.selectedColor = Color.white;
+        colores.fadeDuration = 0.08f;
+        boton.colors = colores;
         boton.onClick.AddListener(accion);
 
-        var t = CrearTexto("Texto", r, texto, 18, TextAnchor.MiddleCenter);
+        var t = CrearTexto("Texto", r, texto, 17, TextAnchor.MiddleCenter);
         Estirar(t.rectTransform);
+        return img;
     }
 
-   
+    private void CrearLeyenda()
+    {
+        var items = new[]
+        {
+            new KeyValuePair<string, Color>("Estás aquí", colorActual),
+            new KeyValuePair<string, Color>("Disponible", colorDisponible),
+            new KeyValuePair<string, Color>("Completado", colorCompletado),
+            new KeyValuePair<string, Color>("Bloqueado", colorBloqueado),
+            new KeyValuePair<string, Color>("Ruta más corta", colorRuta),
+        };
+
+        for (int i = 0; i < items.Length; i++)
+        {
+            float y = 28f + (items.Length - 1 - i) * 26f;
+
+            var punto = CrearRect("Punto", raiz);
+            punto.anchorMin = punto.anchorMax = new Vector2(0f, 0f);
+            punto.pivot = new Vector2(0f, 0.5f);
+            punto.sizeDelta = new Vector2(14f, 14f);
+            punto.anchoredPosition = new Vector2(22f, y);
+            var img = punto.gameObject.AddComponent<Image>();
+            img.sprite = SpriteRedondeado(5);
+            img.type = Image.Type.Sliced;
+            img.color = items[i].Value;
+            img.raycastTarget = false;
+
+            var t = CrearTexto("Leyenda", raiz, items[i].Key, 14, TextAnchor.MiddleLeft);
+            t.color = colorTextoSuave;
+            t.rectTransform.anchorMin = t.rectTransform.anchorMax = new Vector2(0f, 0f);
+            t.rectTransform.pivot = new Vector2(0f, 0.5f);
+            t.rectTransform.sizeDelta = new Vector2(170f, 22f);
+            t.rectTransform.anchoredPosition = new Vector2(44f, y);
+        }
+
+        float yPeso = 28f + items.Length * 26f;
+        Text textoMuestra;
+        var muestra = CrearPastillaPeso(raiz, "n", Vector2.zero, 26f, 22f, 15, out textoMuestra);
+        muestra.rectTransform.anchorMin = muestra.rectTransform.anchorMax = new Vector2(0f, 0f);
+        muestra.rectTransform.pivot = new Vector2(0f, 0.5f);
+        muestra.rectTransform.anchoredPosition = new Vector2(20f, yPeso);
+
+        var explicacion = CrearTexto("LeyendaPeso", raiz, "Peso (costo) del camino", 14, TextAnchor.MiddleLeft);
+        explicacion.color = colorTextoSuave;
+        explicacion.rectTransform.anchorMin = explicacion.rectTransform.anchorMax = new Vector2(0f, 0f);
+        explicacion.rectTransform.pivot = new Vector2(0f, 0.5f);
+        explicacion.rectTransform.sizeDelta = new Vector2(190f, 22f);
+        explicacion.rectTransform.anchoredPosition = new Vector2(54f, yPeso);
+    }
 
     private void CambiarModo(Modo nuevo)
     {
         modo = nuevo;
         LimpiarRuta();
+        ActualizarBotonesModo();
 
         switch (modo)
         {
             case Modo.Navegar:
-                MostrarInfo("Modo navegar: haz clic en un nivel disponible para jugarlo.");
+                MostrarInfo(MensajeNavegar);
                 break;
             case Modo.Ruta:
                 MostrarInfo("Modo ruta: haz clic en un nivel destino para ver el camino más corto desde " + Nombre(idActual) + ".");
@@ -339,6 +612,15 @@ public class MapaNavegacionUI : MonoBehaviour
             case Modo.Completar:
                 MostrarInfo("Modo demo: haz clic en un nivel disponible para marcarlo como completado.");
                 break;
+        }
+    }
+
+    private void ActualizarBotonesModo()
+    {
+        for (int i = 0; i < botonesModo.Length; i++)
+        {
+            if (botonesModo[i] == null) continue;
+            botonesModo[i].color = (int)modo == i ? colorDisponible : colorBoton;
         }
     }
 
@@ -429,10 +711,8 @@ public class MapaNavegacionUI : MonoBehaviour
         MostrarInfo("Progreso reiniciado.");
     }
 
-  
     private void Refrescar()
     {
-       
         foreach (var n in niveles) grafo.Obtener(n.id).desbloqueado = n.inicial;
         foreach (var n in niveles)
         {
@@ -443,17 +723,25 @@ public class MapaNavegacionUI : MonoBehaviour
         foreach (var n in niveles)
         {
             var nivel = grafo.Obtener(n.id);
+            var visual = nodos[n.id];
+
             Color color;
-            string estado = "";
+            string estado;
+            bool bloqueado = false;
 
-            if (n.id == idActual) color = colorActual;
-            else if (ProgresoNiveles.EstaCompletado(Clave(n))) color = colorCompletado;
-            else if (nivel.desbloqueado) color = colorDisponible;
-            else { color = colorBloqueado; estado = "\n(bloqueado)"; }
-            if (n.falso) estado = "\n(sin escena)";
+            if (n.id == idActual) { color = colorActual; estado = "Estás aquí"; }
+            else if (ProgresoNiveles.EstaCompletado(Clave(n))) { color = colorCompletado; estado = "Completado"; }
+            else if (nivel.desbloqueado) { color = colorDisponible; estado = "Disponible"; }
+            else { color = colorBloqueado; estado = "Bloqueado"; bloqueado = true; }
 
-            imagenNodo[n.id].color = color;
-            textoNodo[n.id].text = n.nombre + estado;
+            if (n.falso) estado += " · sin escena";
+
+            visual.borde.color = color;
+            visual.barra.color = n.acento.a > 0f ? n.acento : color;
+            visual.nombre.text = n.nombre;
+            visual.nombre.color = bloqueado ? colorTextoSuave : Color.white;
+            visual.estado.text = estado;
+            visual.estado.color = color;
         }
     }
 
@@ -465,14 +753,21 @@ public class MapaNavegacionUI : MonoBehaviour
             bool coincide = (c.origen == a && c.destino == b) ||
                             (c.bidireccional && c.origen == b && c.destino == a);
             if (!coincide) continue;
+
             foreach (var parte in v.partes) parte.color = colorRuta;
+            v.linea.sizeDelta = new Vector2(v.linea.sizeDelta.x, GrosorRuta);
+            if (v.pastilla != null) v.pastilla.color = colorRuta;
         }
     }
 
     private void LimpiarRuta()
     {
         foreach (var v in aristasVisuales)
+        {
             foreach (var parte in v.partes) parte.color = colorArista;
+            v.linea.sizeDelta = new Vector2(v.linea.sizeDelta.x, GrosorArista);
+            if (v.pastilla != null) v.pastilla.color = colorBordePastilla;
+        }
     }
 
     private void MostrarInfo(string mensaje)
@@ -480,6 +775,81 @@ public class MapaNavegacionUI : MonoBehaviour
         textoInfo.text = mensaje;
     }
 
+    private Sprite SpriteRedondeado(int radio)
+    {
+        Sprite existente;
+        if (spritesRedondeados.TryGetValue(radio, out existente)) return existente;
+
+        const int tam = 64;
+        var tex = new Texture2D(tam, tam, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+
+        var pixeles = new Color32[tam * tam];
+        for (int y = 0; y < tam; y++)
+        {
+            for (int x = 0; x < tam; x++)
+            {
+                float px = x + 0.5f;
+                float py = y + 0.5f;
+                float cx = Mathf.Clamp(px, radio, tam - radio);
+                float cy = Mathf.Clamp(py, radio, tam - radio);
+                float dist = Mathf.Sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+                byte alfa = (byte)(Mathf.Clamp01(radio - dist + 0.5f) * 255f);
+                pixeles[y * tam + x] = new Color32(255, 255, 255, alfa);
+            }
+        }
+        tex.SetPixels32(pixeles);
+        tex.Apply();
+
+        var sprite = Sprite.Create(tex, new Rect(0, 0, tam, tam), new Vector2(0.5f, 0.5f), 100f, 0,
+            SpriteMeshType.FullRect, new Vector4(radio, radio, radio, radio));
+        spritesRedondeados[radio] = sprite;
+        return sprite;
+    }
+
+    private Sprite CrearSpriteFlecha()
+    {
+        const int ancho = 32;
+        const int alto = 32;
+        var tex = new Texture2D(ancho, alto, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+
+        var pixeles = new Color32[ancho * alto];
+        for (int y = 0; y < alto; y++)
+        {
+            for (int x = 0; x < ancho; x++)
+            {
+                float semialto = 14f * (1f - (x + 0.5f) / ancho);
+                float d = Mathf.Abs(y + 0.5f - alto / 2f);
+                byte alfa = (byte)(Mathf.Clamp01(semialto - d + 0.5f) * 255f);
+                pixeles[y * ancho + x] = new Color32(255, 255, 255, alfa);
+            }
+        }
+        tex.SetPixels32(pixeles);
+        tex.Apply();
+
+        return Sprite.Create(tex, new Rect(0, 0, ancho, alto), new Vector2(1f, 0.5f), 100f);
+    }
+
+    private Sprite CrearSpriteDegradado()
+    {
+        const int alto = 128;
+        var tex = new Texture2D(2, alto, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+
+        for (int y = 0; y < alto; y++)
+        {
+            Color c = Color.Lerp(colorFondoAbajo, colorFondoArriba, y / (alto - 1f));
+            tex.SetPixel(0, y, c);
+            tex.SetPixel(1, y, c);
+        }
+        tex.Apply();
+
+        return Sprite.Create(tex, new Rect(0, 0, 2, alto), new Vector2(0.5f, 0.5f), 100f);
+    }
 
     private RectTransform CrearRect(string nombre, Transform padre)
     {

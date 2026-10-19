@@ -25461,6 +25461,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4810807121385254363, guid: 208110fe07886134186493b5f3809887, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6146368101489438540, guid: 208110fe07886134186493b5f3809887, type: 3}
       propertyPath: m_Name
       value: Capsule
@@ -25468,6 +25472,10 @@ PrefabInstance:
     - target: {fileID: 6146368101489438540, guid: 208110fe07886134186493b5f3809887, type: 3}
       propertyPath: m_TagString
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 8970388949857848863, guid: 208110fe07886134186493b5f3809887, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

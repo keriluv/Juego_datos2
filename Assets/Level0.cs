@@ -3,9 +3,10 @@ using UnityEngine.SceneManagement;
 
 public class NewMonoBehaviourScript : MonoBehaviour
 {
+    [SerializeField] private string nextLevel="SampleScene";
     public void LoadLevel0()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene(nextLevel);
     }
 
     private void OnTriggerEnter(Collider other)

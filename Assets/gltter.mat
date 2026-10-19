@@ -108,7 +108,7 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _NoiseRotation: 90
+    - _NoiseRotation: 20
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueControl: 0
@@ -124,12 +124,12 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - Color_063e21ec65944a35be55a9110e60bcfb: {r: 0, g: 0.15417111, b: 1, a: 0.078431375}
-    - Color_922ec08d649044c09a59fc2311821d5a: {r: 1, g: 1, b: 1, a: 1}
-    - Vector2_c83df04f699a40a98932cd8306029fa4: {r: 1, g: 1, b: 0, a: 0}
+    - Color_063e21ec65944a35be55a9110e60bcfb: {r: 0, g: 0.15417111, b: 1, a: 0.5529412}
+    - Color_922ec08d649044c09a59fc2311821d5a: {r: 8, g: 8, b: 8, a: 1}
+    - Vector2_c83df04f699a40a98932cd8306029fa4: {r: 0.2, g: -3.84, b: 0, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseColor1: {r: 0.9245283, g: 0.9245283, b: 0.9245283, a: 0.40784314}
-    - _BaseColor2: {r: 0.6450102, g: 0, b: 0.7433963, a: 0.1254902}
+    - _BaseColor1: {r: 0.9245283, g: 0.9245283, b: 0.9245283, a: 1}
+    - _BaseColor2: {r: 0.6450102, g: 0, b: 0.7433963, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

@@ -5,10 +5,12 @@ public class crackMinecraft : StruckObject
 {
     [SerializeField] private GameObject explosion;
     [SerializeField] private ObjectivesManager om;
+    [SerializeField] private GameObject crack;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
         explosion.SetActive(false);
+        crack.SetActive(false);
     }
 
     public override void OnHit()
@@ -24,6 +26,7 @@ public class crackMinecraft : StruckObject
         yield return new WaitForSeconds(0.5f);
         explosion.SetActive(false);
 
+        crack.SetActive(true);
         Debug.Log("Ir a video minecraft");
     }
    

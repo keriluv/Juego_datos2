@@ -467,8 +467,8 @@ MonoBehaviour:
     destino: 2
     peso: 1
     bidireccional: 1
-  - origen: 1
-    destino: 3
+  - origen: 3
+    destino: 1
     peso: 1
     bidireccional: 0
   - origen: 3

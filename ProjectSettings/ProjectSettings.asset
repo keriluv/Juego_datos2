@@ -929,11 +929,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: 90fb41c3-2946-4d7d-bc11-97fabbca208c
+  cloudProjectId: cf54d0e0-726e-423c-922f-750097c1c542
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: JuegoEstructura
-  organizationId: darmon45
+  organizationId: pkvega
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

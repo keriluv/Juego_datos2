@@ -13,6 +13,10 @@ public class MovePlayer1 : NetworkBehaviour
 
     [SerializeField] private bool isPlatform = false;
 
+    [Header("Red (opcionales: solo si la cámara está dentro del prefab)")]
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private AudioListener playerListener;
+
     private Rigidbody rb;
     private bool canJump = true;
     private Vector2 movement = Vector2.zero;
@@ -24,11 +28,18 @@ public class MovePlayer1 : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        rb.isKinematic = !IsOwner;
+
+        
+        if (playerCamera != null) playerCamera.enabled = IsOwner;
+        if (playerListener != null) playerListener.enabled = IsOwner;
+
         if (IsOwner)
         {
-            if (target == null && Camera.main != null)
+            if (playerCamera != null)
+                target = playerCamera.transform;
+            else if (target == null && Camera.main != null)
                 target = Camera.main.transform;
-
         }
     }
 

@@ -33,3 +33,5 @@
 
 # Proyecto de Unity creado dentro de este repo. No debe subirse.
 My project (6)/
+Assets/UserChoices.choices*
+ProjectSettings/VirtualProjectsConfig.json

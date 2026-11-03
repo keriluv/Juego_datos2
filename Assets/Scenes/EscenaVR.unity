@@ -699,9 +699,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 910000001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3a8c21e90b54d6a8e7c1b04d5f6a293, type: 3}
+  m_Script: {fileID: 11500000, guid: b6d2a481e0c74f5a9e13c7b58d04a1f2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VRGameManager
+  m_EditorClassIdentifier: Assembly-CSharp::NavalCinematicDirector
   modeloBarco: {fileID: 919132149155446097, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
   texturaAgua: {fileID: 0}
   sonidoDisparo: {fileID: 8300000, guid: 16fba6d30ed741d4a9fdd6e79ee2f3ac, type: 3}

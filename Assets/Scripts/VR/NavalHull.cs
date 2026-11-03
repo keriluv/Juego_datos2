@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics;
 
 /// <summary>
 /// Casco con vida. Al llegar a cero se hunde sin tirar el rig de VR.
@@ -13,6 +15,8 @@ public class NavalHull : MonoBehaviour
     public float VidaMaxima { get; private set; }
     public bool Hundido { get; private set; }
     public bool EsJugador => esJugador;
+    public bool EsPractica { get; set; }
+    public event Action<NavalHull> AlHundirse;
 
     public void Configurar(float vidaInicial, bool jugador)
     {
@@ -27,11 +31,14 @@ public class NavalHull : MonoBehaviour
             return;
 
         vida -= cantidad;
+        if (esJugador)
+            HapticsUtility.SendHapticImpulse(0.85f, 0.16f, HapticsUtility.Controller.Both);
         if (vida > 0f)
             return;
 
         vida = 0f;
         Hundido = true;
+        AlHundirse?.Invoke(this);
         StartCoroutine(Hundir());
     }
 

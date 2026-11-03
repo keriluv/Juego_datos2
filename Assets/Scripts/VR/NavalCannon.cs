@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics;
@@ -16,6 +17,9 @@ public class NavalCannon : MonoBehaviour
 
     public Transform Boca { get; private set; }
     public NavalVfxPool Efectos { get; set; }
+    public event Action AlAgarrar;
+    public event Action AlDisparar;
+    public bool Agarrado => agarrado;
 
     private XRGrabInteractable agarre;
     private bool agarrado;
@@ -54,7 +58,11 @@ public class NavalCannon : MonoBehaviour
         agarre.trackRotation = false;
         agarre.throwOnDetach = false;
         agarre.retainTransformParent = true;
-        agarre.selectEntered.AddListener(_ => agarrado = true);
+        agarre.selectEntered.AddListener(_ =>
+        {
+            agarrado = true;
+            AlAgarrar?.Invoke();
+        });
         agarre.selectExited.AddListener(_ =>
         {
             agarrado = false;
@@ -95,6 +103,7 @@ public class NavalCannon : MonoBehaviour
             return;
 
         siguiente = Time.time + enfriamiento;
+        AlDisparar?.Invoke();
         Quaternion rotacion = Quaternion.LookRotation(direccion.normalized, Vector3.up);
         if (Efectos != null)
             Efectos.Disparo(Boca.position, rotacion);

@@ -708,6 +708,8 @@ MonoBehaviour:
   sonidoImpacto: {fileID: 8300000, guid: 16fba6d30ed741d4a9fdd6e79ee2f3ac, type: 3}
   controlDerecho: {fileID: 4283425761326543017, guid: 9f3369e30fbd31f4bb596b1a99babe83, type: 3}
   controlIzquierdo: {fileID: 8758423527188247893, guid: 1392f805216c47742996d4742c80721c, type: 3}
+  modeloEnemigo: {fileID: 919132149155446097, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+  oleadasMaximas: 3
   escenaAlSalir: MainMenu
   enemigosIniciales: 2
   vidaJugador: 140

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -10,9 +11,13 @@ public class NavalCinematicDirector : MonoBehaviour
 {
     [SerializeField] private GameObject controlDerecho;
     [SerializeField] private GameObject controlIzquierdo;
+    [SerializeField] private GameObject modeloEnemigo;
+    [SerializeField] private int oleadasMaximas = 3;
 
     private NavalVfxPool efectos;
     private Transform jugador;
+    private TutorialCubierta tutorial;
+    private bool oleadasEnMarcha;
 
     private void Start()
     {
@@ -28,9 +33,50 @@ public class NavalCinematicDirector : MonoBehaviour
         CrearIslaLejana();
         jugador = CrearBarco(true, Vector3.zero, 1f);
         AsegurarMandos();
-        CrearEnemigo(12f, 0.4f);
-        CrearEnemigo(16f, 2.1f);
-        CrearEnemigo(18f, 3.6f);
+        tutorial = jugador.gameObject.AddComponent<TutorialCubierta>();
+        tutorial.Colocar(jugador, jugador.GetComponentsInChildren<NavalCannon>());
+        NavalHull practica = CrearEnemigo(11f, 1.15f);
+        practica.EsPractica = true;
+        practica.AlHundirse += _ =>
+        {
+            if (!oleadasEnMarcha)
+                StartCoroutine(LanzarOleadas());
+        };
+    }
+
+    private IEnumerator LanzarOleadas()
+    {
+        oleadasEnMarcha = true;
+        yield return new WaitForSeconds(2f);
+        for (int oleada = 1; oleada <= oleadasMaximas; oleada++)
+        {
+            if (tutorial != null)
+                tutorial.AnunciarOleada(oleada);
+
+            int cantidad = Mathf.Min(oleada + 1, 3);
+            for (int i = 0; i < cantidad; i++)
+                CrearEnemigo(13f + oleada, i * 1.3f + oleada * 0.4f);
+
+            while (QuedanEnemigos())
+                yield return null;
+
+            yield return new WaitForSeconds(2.4f);
+        }
+
+        if (tutorial != null)
+            tutorial.AnunciarOleada(0);
+    }
+
+    private static bool QuedanEnemigos()
+    {
+        NavalHull[] cascos = FindObjectsByType<NavalHull>(FindObjectsSortMode.None);
+        for (int i = 0; i < cascos.Length; i++)
+        {
+            if (!cascos[i].EsJugador && !cascos[i].Hundido)
+                return true;
+        }
+
+        return false;
     }
 
     public static Material Toon(Color color)
@@ -44,6 +90,22 @@ public class NavalCinematicDirector : MonoBehaviour
             material.SetColor("_BaseColor", color);
         if (material.HasProperty("_Color"))
             material.SetColor("_Color", color);
+        material.color = color;
+        return material;
+    }
+
+    public static Material Lit(Color color)
+    {
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader == null)
+            return Toon(color);
+
+        Material material = new Material(shader);
+        material.enableInstancing = true;
+        if (material.HasProperty("_BaseColor"))
+            material.SetColor("_BaseColor", color);
+        if (material.HasProperty("_Smoothness"))
+            material.SetFloat("_Smoothness", 0.18f);
         material.color = color;
         return material;
     }
@@ -66,17 +128,20 @@ public class NavalCinematicDirector : MonoBehaviour
         }
 
         sol.color = new Color(1f, 0.62f, 0.267f);
-        sol.intensity = 1.5f;
+        sol.intensity = 1.35f;
         sol.shadows = LightShadows.Soft;
-        sol.transform.rotation = Quaternion.Euler(16f, -28f, 0f);
+        sol.shadowStrength = 0.82f;
+        sol.shadowBias = 0.04f;
+        sol.transform.rotation = Quaternion.Euler(22f, -36f, 0f);
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.85f, 0.55f, 0.38f);
+        RenderSettings.ambientLight = new Color(0.72f, 0.48f, 0.36f);
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.Linear;
-        RenderSettings.fogColor = new Color(1f, 0.62f, 0.32f);
-        RenderSettings.fogStartDistance = 35f;
-        RenderSettings.fogEndDistance = 120f;
-        QualitySettings.shadowDistance = 42f;
+        RenderSettings.fogColor = new Color(0.96f, 0.58f, 0.34f);
+        RenderSettings.fogStartDistance = 18f;
+        RenderSettings.fogEndDistance = 78f;
+        QualitySettings.shadowDistance = 28f;
+        QualitySettings.shadowCascades = 1;
     }
 
     private void AplicarVolumen()
@@ -97,30 +162,71 @@ public class NavalCinematicDirector : MonoBehaviour
         volumen.profile = perfil;
 
         Bloom bloom = perfil.Add<Bloom>();
-        bloom.threshold.Override(0.9f);
-        bloom.intensity.Override(1.2f);
+        bloom.threshold.Override(1.05f);
+        bloom.intensity.Override(0.45f);
+        bloom.highQualityFiltering.Override(false);
+        bloom.maxIterations.Override(4);
 
         Tonemapping mapa = perfil.Add<Tonemapping>();
         mapa.mode.Override(TonemappingMode.ACES);
 
         ColorAdjustments ajuste = perfil.Add<ColorAdjustments>();
-        ajuste.postExposure.Override(0.12f);
-        ajuste.contrast.Override(14f);
-        ajuste.colorFilter.Override(new Color(1f, 0.93f, 0.82f));
+        ajuste.postExposure.Override(0.08f);
+        ajuste.contrast.Override(10f);
+        ajuste.saturation.Override(12f);
+        ajuste.colorFilter.Override(new Color(1f, 0.9f, 0.78f));
 
         ShadowsMidtonesHighlights tonos = perfil.Add<ShadowsMidtonesHighlights>();
-        tonos.shadows.Override(new Vector4(0.75f, 0.82f, 1.15f, 0.35f));
-        tonos.highlights.Override(new Vector4(1.15f, 0.78f, 0.42f, 0.3f));
+        tonos.shadows.Override(new Vector4(0.62f, 0.74f, 1.12f, 0.4f));
+        tonos.highlights.Override(new Vector4(1.12f, 0.72f, 0.38f, 0.28f));
 
         Vignette vineta = perfil.Add<Vignette>();
-        vineta.intensity.Override(0.16f);
-        vineta.smoothness.Override(0.42f);
+        vineta.intensity.Override(0.18f);
+        vineta.smoothness.Override(0.38f);
+        ActivarOclusionLigera();
+    }
 
-        DepthOfField foco = perfil.Add<DepthOfField>();
-        foco.mode.Override(DepthOfFieldMode.Gaussian);
-        foco.gaussianStart.Override(26f);
-        foco.gaussianEnd.Override(80f);
-        foco.gaussianMaxRadius.Override(0.55f);
+    private static void ActivarOclusionLigera()
+    {
+        try
+        {
+            UniversalRenderPipelineAsset asset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            if (asset == null)
+                return;
+
+            System.Reflection.FieldInfo campo = typeof(UniversalRenderPipelineAsset).GetField("m_RendererDataList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            ScriptableRendererData[] datos = campo != null ? campo.GetValue(asset) as ScriptableRendererData[] : null;
+            if (datos == null || datos.Length == 0 || datos[0] == null)
+                return;
+
+            foreach (ScriptableRendererFeature existente in datos[0].rendererFeatures)
+            {
+                if (existente is ScreenSpaceAmbientOcclusion)
+                    return;
+            }
+
+            ScreenSpaceAmbientOcclusion oclusion = ScriptableObject.CreateInstance<ScreenSpaceAmbientOcclusion>();
+            oclusion.name = "OclusionLigeraVR";
+            System.Reflection.FieldInfo ajustes = typeof(ScreenSpaceAmbientOcclusion).GetField("m_Settings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            object valores = ajustes != null ? ajustes.GetValue(oclusion) : null;
+            if (valores != null)
+            {
+                PonerAjuste(valores, "Downsample", true);
+                PonerAjuste(valores, "Intensity", 0.55f);
+                PonerAjuste(valores, "Radius", 0.12f);
+                PonerAjuste(valores, "Samples", 2);
+                PonerAjuste(valores, "Source", 0);
+                PonerAjuste(valores, "BlurQuality", 2);
+                PonerAjuste(valores, "AOMethod", 1);
+            }
+
+            datos[0].rendererFeatures.Add(oclusion);
+            oclusion.Create();
+        }
+        catch (System.Exception)
+        {
+            // Si el renderer ya estaba creado, la feria sigue con bloom y color grading.
+        }
     }
 
     private static void CrearCielo()
@@ -131,7 +237,14 @@ public class NavalCinematicDirector : MonoBehaviour
         domo.transform.localScale = Vector3.one * 90f;
         Shader shader = Shader.Find("Juego/CieloDorado");
         Renderer render = domo.GetComponent<Renderer>();
-        render.sharedMaterial = shader != null ? new Material(shader) : Toon(new Color(1f, 0.55f, 0.25f));
+        Material cielo = shader != null ? new Material(shader) : Toon(new Color(1f, 0.55f, 0.25f));
+        if (cielo.HasProperty("_Horizonte"))
+            cielo.SetColor("_Horizonte", new Color(1f, 0.48f, 0.18f));
+        if (cielo.HasProperty("_Medio"))
+            cielo.SetColor("_Medio", new Color(0.98f, 0.58f, 0.32f));
+        if (cielo.HasProperty("_Cenit"))
+            cielo.SetColor("_Cenit", new Color(0.22f, 0.16f, 0.42f));
+        render.sharedMaterial = cielo;
         render.shadowCastingMode = ShadowCastingMode.Off;
     }
 
@@ -163,6 +276,24 @@ public class NavalCinematicDirector : MonoBehaviour
         pico.transform.position = new Vector3(-38f, 3.4f, 34f);
         pico.transform.localScale = new Vector3(7f, 4.5f, 6f);
         pico.GetComponent<Renderer>().material = Toon(new Color(0.55f, 0.62f, 0.28f));
+
+        RocaDistante(new Vector3(42f, -0.4f, 28f), 9f, new Color(0.42f, 0.36f, 0.3f));
+        RocaDistante(new Vector3(-18f, -0.6f, 48f), 6f, new Color(0.5f, 0.42f, 0.28f));
+        RocaDistante(new Vector3(22f, -0.8f, -40f), 11f, new Color(0.36f, 0.32f, 0.28f));
+        RocaDistante(new Vector3(-46f, -0.5f, -12f), 7f, new Color(0.48f, 0.4f, 0.26f));
+    }
+
+    private static void RocaDistante(Vector3 posicion, float escala, Color color)
+    {
+        GameObject roca = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        Destroy(roca.GetComponent<Collider>());
+        roca.name = "Roca";
+        roca.transform.position = posicion;
+        roca.transform.localScale = new Vector3(escala, escala * 0.45f, escala * 0.8f);
+        Renderer render = roca.GetComponent<Renderer>();
+        render.material = Toon(color);
+        render.shadowCastingMode = ShadowCastingMode.Off;
+        render.receiveShadows = false;
     }
 
     private Transform CrearBarco(bool delJugador, Vector3 posicion, float escala)
@@ -184,18 +315,27 @@ public class NavalCinematicDirector : MonoBehaviour
 
         Color blanco = new Color(0.93f, 0.94f, 0.95f);
         Color madera = new Color(0.55f, 0.32f, 0.16f);
-        Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 0.32f, 0.1f), new Vector3(1.55f, 0.42f, 4.1f), blanco);
-        Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 0.42f, 2.15f), new Vector3(0.7f, 0.28f, 0.7f), blanco);
-        Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 0.58f, -0.15f), new Vector3(1.25f, 0.08f, 3.1f), madera);
-        Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 1.05f, -0.35f), new Vector3(0.85f, 0.62f, 1.15f), blanco);
-        Bloque(raiz.transform, PrimitiveType.Cylinder, new Vector3(0f, 1.55f, -0.15f), new Vector3(0.18f, 0.28f, 0.18f), new Color(0.16f, 0.16f, 0.17f));
-        Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 1.72f, -0.15f), new Vector3(0.22f, 0.06f, 0.22f), new Color(0.82f, 0.12f, 0.1f));
-        Bloque(raiz.transform, PrimitiveType.Cylinder, new Vector3(0f, 1.7f, 0.35f), new Vector3(0.06f, 0.7f, 0.06f), madera);
-        Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0.16f, 2.25f, 0.35f), new Vector3(0.32f, 0.22f, 0.04f), new Color(0.82f, 0.12f, 0.1f));
-        Baranda(raiz.transform, -0.72f);
-        Baranda(raiz.transform, 0.72f);
-        Farol(raiz.transform, new Vector3(-0.55f, 0.85f, 1.15f));
-        Farol(raiz.transform, new Vector3(0.55f, 0.85f, 1.15f));
+        bool conModelo = !delJugador && modeloEnemigo != null;
+        if (conModelo)
+        {
+            ColocarModelo(raiz.transform);
+            Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0.2f, 2.1f, 0f), new Vector3(0.36f, 0.22f, 0.04f), new Color(0.82f, 0.12f, 0.1f));
+        }
+        else
+        {
+            Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 0.32f, 0.1f), new Vector3(1.55f, 0.42f, 4.1f), blanco);
+            Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 0.42f, 2.15f), new Vector3(0.7f, 0.28f, 0.7f), blanco);
+            BloqueLit(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 0.58f, -0.15f), new Vector3(1.25f, 0.08f, 3.1f), madera);
+            Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 1.05f, -0.35f), new Vector3(0.85f, 0.62f, 1.15f), blanco);
+            Bloque(raiz.transform, PrimitiveType.Cylinder, new Vector3(0f, 1.55f, -0.15f), new Vector3(0.18f, 0.28f, 0.18f), new Color(0.16f, 0.16f, 0.17f));
+            Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 1.72f, -0.15f), new Vector3(0.22f, 0.06f, 0.22f), new Color(0.82f, 0.12f, 0.1f));
+            Bloque(raiz.transform, PrimitiveType.Cylinder, new Vector3(0f, 1.7f, 0.35f), new Vector3(0.06f, 0.7f, 0.06f), madera);
+            Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0.16f, 2.25f, 0.35f), new Vector3(0.32f, 0.22f, 0.04f), new Color(0.82f, 0.12f, 0.1f));
+            Baranda(raiz.transform, -0.72f);
+            Baranda(raiz.transform, 0.72f);
+            Farol(raiz.transform, new Vector3(-0.55f, 0.85f, 1.15f));
+            Farol(raiz.transform, new Vector3(0.55f, 0.85f, 1.15f));
+        }
 
         GameObject popa = new GameObject("Popa");
         popa.transform.SetParent(raiz.transform, false);
@@ -226,10 +366,32 @@ public class NavalCinematicDirector : MonoBehaviour
         return raiz.transform;
     }
 
-    private void CrearEnemigo(float distancia, float angulo)
+    private NavalHull CrearEnemigo(float distancia, float angulo)
     {
         Vector3 posicion = new Vector3(Mathf.Cos(angulo) * distancia, 0f, Mathf.Sin(angulo) * distancia + 4f);
-        CrearBarco(false, posicion, 0.85f);
+        return CrearBarco(false, posicion, modeloEnemigo != null ? 1f : 0.85f).GetComponent<NavalHull>();
+    }
+
+    private void ColocarModelo(Transform padre)
+    {
+        GameObject visual = Instantiate(modeloEnemigo, padre);
+        visual.name = "Modelo";
+        foreach (Collider colision in visual.GetComponentsInChildren<Collider>())
+            Destroy(colision);
+
+        Renderer[] renders = visual.GetComponentsInChildren<Renderer>();
+        if (renders.Length == 0)
+            return;
+
+        Bounds limites = renders[0].bounds;
+        for (int i = 1; i < renders.Length; i++)
+            limites.Encapsulate(renders[i].bounds);
+
+        float largo = Mathf.Max(limites.size.x, limites.size.z);
+        if (largo > 0.01f)
+            visual.transform.localScale *= 7.2f / largo;
+
+        visual.transform.localPosition = new Vector3(0f, 0.15f, 0f);
     }
 
     private NavalCannon MontarCanon(Transform barco, Vector3 local, bool delJugador)
@@ -237,7 +399,7 @@ public class NavalCinematicDirector : MonoBehaviour
         GameObject raiz = new GameObject(delJugador ? "Canon" : "CanonEnemigo");
         raiz.transform.SetParent(barco, false);
         raiz.transform.localPosition = local;
-        Bloque(raiz.transform, PrimitiveType.Cylinder, new Vector3(0f, 0.05f, 0.25f), new Vector3(0.16f, 0.42f, 0.16f), new Color(0.12f, 0.12f, 0.13f));
+        BloqueLit(raiz.transform, PrimitiveType.Cylinder, new Vector3(0f, 0.05f, 0.25f), new Vector3(0.16f, 0.42f, 0.16f), new Color(0.12f, 0.12f, 0.13f));
         raiz.transform.GetChild(0).localRotation = Quaternion.Euler(90f, 0f, 0f);
         if (delJugador)
             Bloque(raiz.transform, PrimitiveType.Cube, new Vector3(0f, 0.22f, -0.25f), new Vector3(0.46f, 0.08f, 0.08f), new Color(0.5f, 0.3f, 0.14f));
@@ -263,9 +425,9 @@ public class NavalCinematicDirector : MonoBehaviour
     private static void Baranda(Transform padre, float x)
     {
         Color madera = new Color(0.62f, 0.38f, 0.16f);
-        Bloque(padre, PrimitiveType.Cube, new Vector3(x, 1.05f, 0.15f), new Vector3(0.05f, 0.05f, 3.2f), madera);
+        BloqueLit(padre, PrimitiveType.Cube, new Vector3(x, 1.05f, 0.15f), new Vector3(0.05f, 0.05f, 3.2f), madera);
         for (int i = 0; i < 5; i++)
-            Bloque(padre, PrimitiveType.Cube, new Vector3(x, 0.82f, -1.2f + i * 0.7f), new Vector3(0.05f, 0.38f, 0.05f), madera);
+            BloqueLit(padre, PrimitiveType.Cube, new Vector3(x, 0.82f, -1.2f + i * 0.7f), new Vector3(0.05f, 0.38f, 0.05f), madera);
     }
 
     private static void Farol(Transform padre, Vector3 local)
@@ -284,12 +446,37 @@ public class NavalCinematicDirector : MonoBehaviour
 
     private static void Bloque(Transform padre, PrimitiveType tipo, Vector3 local, Vector3 escala, Color color)
     {
+        Pieza(padre, tipo, local, escala, Toon(color));
+    }
+
+    private static void BloqueLit(Transform padre, PrimitiveType tipo, Vector3 local, Vector3 escala, Color color)
+    {
+        Pieza(padre, tipo, local, escala, Lit(color));
+    }
+
+    private static void Pieza(Transform padre, PrimitiveType tipo, Vector3 local, Vector3 escala, Material material)
+    {
         GameObject pieza = GameObject.CreatePrimitive(tipo);
         Destroy(pieza.GetComponent<Collider>());
         pieza.transform.SetParent(padre, false);
         pieza.transform.localPosition = local;
         pieza.transform.localScale = escala;
-        pieza.GetComponent<Renderer>().material = Toon(color);
+        Renderer render = pieza.GetComponent<Renderer>();
+        render.material = material;
+        render.shadowCastingMode = ShadowCastingMode.On;
+        render.receiveShadows = true;
+    }
+
+    private static void PonerAjuste(object valores, string nombre, object valor)
+    {
+        System.Reflection.FieldInfo campo = valores.GetType().GetField(nombre);
+        if (campo == null)
+            return;
+
+        if (campo.FieldType.IsEnum)
+            campo.SetValue(valores, System.Enum.ToObject(campo.FieldType, valor));
+        else
+            campo.SetValue(valores, valor);
     }
 
     private static Mesh Malla(int divisiones, float tamano)

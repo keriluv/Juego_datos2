@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,19 +39,37 @@ public class VRGameManager : MonoBehaviour
 
     private void Start()
     {
-        DesactivarPlanoViejo();
-        naval = gameObject.AddComponent<VRNavalCombat>();
-        naval.AplicarAtardecer();
-        efectoFuego = CrearEfectoFuego();
-        efectoAgua = CrearEfectoAgua();
-        CrearMar();
-        islas = naval.CrearIslas(7);
-        AsegurarControlesVR();
-        Transform barco = CrearBarcoJugador();
-        naval.VestirCubierta(barco);
-        CrearTablaCubierta(barco);
-        AgruparEntorno();
+        Paso("plano", DesactivarPlanoViejo);
+        Paso("combate", () => naval = gameObject.AddComponent<VRNavalCombat>());
+        Paso("atardecer", () => { if (naval != null) naval.AplicarAtardecer(); });
+        Paso("fuego", () => efectoFuego = CrearEfectoFuego());
+        Paso("agua", () => efectoAgua = CrearEfectoAgua());
+        Paso("mar", CrearMar);
+        Paso("islas", () => { if (naval != null) islas = naval.CrearIslas(7); });
+        Paso("controles", AsegurarControlesVR);
+
+        Transform barco = null;
+        Paso("barco", () => barco = CrearBarcoJugador());
+        Paso("cubierta", () => { if (naval != null && barco != null) naval.VestirCubierta(barco); });
+        Paso("tabla", () => { if (barco != null) CrearTablaCubierta(barco); });
+        Paso("entorno", AgruparEntorno);
+
+        StartCoroutine(ArranqueXR.IniciarSiHayCasco());
         StartCoroutine(LanzarOleada());
+        Debug.Log("EscenaVR: batalla lista. Entorno, BarcoJugador y oleada ya están en la jerarquía.");
+    }
+
+    private static void Paso(string nombre, System.Action accion)
+    {
+        try
+        {
+            accion();
+        }
+        catch (Exception excepcion)
+        {
+            Debug.LogError("EscenaVR se detuvo al crear " + nombre + ".");
+            Debug.LogException(excepcion);
+        }
     }
 
     public void VolverAlMenu()
@@ -205,6 +224,12 @@ public class VRGameManager : MonoBehaviour
     private IEnumerator LanzarOleada()
     {
         yield return new WaitForSeconds(1.2f);
+        if (barcoJugador == null)
+        {
+            Debug.LogError("EscenaVR: el barco del jugador no quedó creado, así que no salen enemigos.");
+            yield break;
+        }
+
         while (!terminada)
         {
             int cantidad = Mathf.Min(enemigosIniciales + oleada - 1, 5);

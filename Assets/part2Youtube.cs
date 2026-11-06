@@ -20,11 +20,13 @@ public class part2Youtube : MonoBehaviour
     private void Start()
     {
         loadingImage.gameObject.SetActive(false);
+       
     }
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
+            player = other.transform;
             Begin();
         }
     }

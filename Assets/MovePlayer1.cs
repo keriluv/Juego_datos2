@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
+using UnityEngine.SceneManagement;
 
 public class MovePlayer1 : NetworkBehaviour
 {
@@ -47,7 +48,14 @@ public class MovePlayer1 : NetworkBehaviour
         rb = GetComponent<Rigidbody>();
         if (animator == null)
         {
-            animator = GetComponentInChildren<Animator>(true);
+            animator = GetComponentInChildren<Animator>();
+        }
+    }
+    private void Start()
+    {
+        if (SceneManager.GetActiveScene().name == "LevelYoutubev2")
+        {
+            isPlatform = true;
         }
     }
 

@@ -6,11 +6,17 @@ public class PlayerHit : MonoBehaviour
     [SerializeField] private float cooldown = 1f;
     [SerializeField] private float showHit = 0.2f;
 
+    [SerializeField] private Animator animator;
+
     private bool hitEnabled = false;
     private float time = 0f;
 
     void Start()
     {
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
         hit.SetActive(false);
     }
 
@@ -20,6 +26,7 @@ public class PlayerHit : MonoBehaviour
         {
             hitEnabled = true;
             hit.SetActive(true);
+            if (animator != null) { animator.SetBool("isHit", true); }
             time = 0f;
         }
 
@@ -34,6 +41,7 @@ public class PlayerHit : MonoBehaviour
             }
             if (time>=showHit)
             {
+                if (animator != null) { animator.SetBool("isHit", false); }
                 hit.SetActive(false);
             }
         }

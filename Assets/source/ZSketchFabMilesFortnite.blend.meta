@@ -3,7 +3,42 @@ guid: 73062e8aec1afe84d8c79191b778e84e
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 40_-Mask.material03.Mask.material03_1_0_0
+    second: {fileID: 2100000, guid: f6c82ad4ce810874597bce9b7001058d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: E Y E S
+    second: {fileID: 2100000, guid: 49ddbe119f2bd8249a9cd6338588e3eb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: H A I R
+    second: {fileID: 2100000, guid: a63dbdcb16fd379458d1ac190b746945, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M A S K
+    second: {fileID: 2100000, guid: 7591bf3c685461b4ca6f4b7900ee35de, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: N E C K P A R T
+    second: {fileID: 2100000, guid: 6e7027458e35d7445b0746e3b241a83c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S K I N
+    second: {fileID: 2100000, guid: 792ae06124b44b642ab643328de9d674, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: S U I T
+    second: {fileID: 2100000, guid: 5e6aea20d39b44b459ec678be89de337, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

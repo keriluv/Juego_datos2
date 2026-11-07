@@ -11,6 +11,14 @@ public class FollowPlayer : MonoBehaviour
     private Vector3 smoothVelocity;
     [SerializeField] private float smoothTime = 1f;
 
+    private void Start()
+    {
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player").transform;
+        }
+    }
+
     private void LateUpdate()
     {
         Vector3 destino = player.position;

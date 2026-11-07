@@ -7,7 +7,7 @@ public class ConfigManager : MonoBehaviour
     [SerializeField] private GameObject sonidoScreen;
     [SerializeField] private GameObject controlesScreen;
     [SerializeField] private GameObject idiomaScreen;
-    void Start()
+    void Start()    
     {
         pantallaScreen.SetActive(true);
         sonidoScreen.SetActive(false);

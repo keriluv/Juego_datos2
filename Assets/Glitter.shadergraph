@@ -848,7 +848,7 @@
     "m_Title": "Combining Colors",
     "m_Position": {
         "x": -726.4000244140625,
-        "y": -166.40000915527345
+        "y": -166.39996337890626
     }
 }
 
@@ -1255,8 +1255,8 @@
     "m_ObjectId": "2ce584fac49d408493949077110f0ade",
     "m_Title": "Get View Direction (Normalized)",
     "m_Position": {
-        "x": -1411.2001953125,
-        "y": 2.399993896484375
+        "x": -1411.2000732421875,
+        "y": 2.4000244140625
     }
 }
 
@@ -3952,8 +3952,8 @@
     "m_ObjectId": "c7b217474ec24adf8a6456b06716c4ff",
     "m_Title": "Fresnel Nodes",
     "m_Position": {
-        "x": -748.0000610351563,
-        "y": 247.99998474121095
+        "x": -747.9998779296875,
+        "y": 248.0
     }
 }
 
@@ -4515,7 +4515,7 @@
     "m_ObjectId": "e2e91359c91648b38bb492581b8773d8",
     "m_Title": "Get Glitter Facing Directions (Sample Noise)",
     "m_Position": {
-        "x": -2283.199951171875,
+        "x": -2283.2001953125,
         "y": -827.199951171875
     }
 }

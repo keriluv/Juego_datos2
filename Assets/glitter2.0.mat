@@ -124,8 +124,8 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - Color_063e21ec65944a35be55a9110e60bcfb: {r: 1, g: 1, b: 1, a: 1}
-    - Color_922ec08d649044c09a59fc2311821d5a: {r: 1, g: 1, b: 1, a: 1}
+    - Color_063e21ec65944a35be55a9110e60bcfb: {r: 4, g: 4, b: 4, a: 1}
+    - Color_922ec08d649044c09a59fc2311821d5a: {r: 64, g: 64, b: 64, a: 1}
     - Vector2_c83df04f699a40a98932cd8306029fa4: {r: 1, g: 1, b: 0, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColor1: {r: 0, g: 0, b: 0, a: 1}

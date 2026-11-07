@@ -9,6 +9,7 @@ public class MovePlayer1 : NetworkBehaviour
     [SerializeField] private float acceleration = 10f;
     [SerializeField] private float friction = 5f;
     [SerializeField] private float jumpForce = 1f;
+    [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private Transform target;
 
     [SerializeField] private bool isPlatform = false;
@@ -21,13 +22,40 @@ public class MovePlayer1 : NetworkBehaviour
     private bool canJump = true;
     private Vector2 movement = Vector2.zero;
 
+    private NetworkVariable<float> networkSpeed =
+       new NetworkVariable<float>(
+           0f,
+           NetworkVariableReadPermission.Everyone,
+           NetworkVariableWritePermission.Owner
+       );
+
+    private NetworkVariable<bool> networkJump =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Owner
+        );
+
+    [SerializeField] private Animator animator;
+
+    [SerializeField] private float runMultiplier = 1.5f;
+
     void Awake()
     {
+        Debug.Log("PLAYER: Awake ejecutado");
+
         rb = GetComponent<Rigidbody>();
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>(true);
+        }
     }
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log("IsOwner: " + IsOwner);
+        Debug.Log("Target: " + target);
+        Debug.Log("Rigidbody: " + rb);
         rb.isKinematic = !IsOwner;
 
         
@@ -41,6 +69,17 @@ public class MovePlayer1 : NetworkBehaviour
             else if (target == null && Camera.main != null)
                 target = Camera.main.transform;
         }
+
+        networkSpeed.OnValueChanged += OnSpeedChanged;
+        networkJump.OnValueChanged += OnJumpChanged;
+
+        UpdateAnimations();
+
+    }
+    public override void OnNetworkDespawn()
+    {
+        networkSpeed.OnValueChanged -= OnSpeedChanged;
+        networkJump.OnValueChanged -= OnJumpChanged;
     }
 
     void Update()
@@ -55,17 +94,28 @@ public class MovePlayer1 : NetworkBehaviour
         if (Keyboard.current.aKey.isPressed) movement.x -= velocity;
         if (Keyboard.current.dKey.isPressed) movement.x += velocity;
 
+
+        float speed = movement.magnitude;
+
+        networkSpeed.Value = speed;
+
         if (canJump && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             canJump = false;
+ 
+            networkJump.Value = true;
         }
+
+        UpdateAnimations();
+
     }
 
     void FixedUpdate()
     {
         if (!IsOwner) return;
         if (target == null) return;
+
 
         Vector3 forward = target.forward;
         Vector3 right = target.right;
@@ -77,6 +127,17 @@ public class MovePlayer1 : NetworkBehaviour
 
         Vector3 direction = forward * movement.y + right * movement.x;
         if (direction.sqrMagnitude > 1f) direction.Normalize();
+
+        if (direction.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                rotationSpeed * Time.fixedDeltaTime
+            );
+        }
 
         Vector3 currentVelocity = rb.linearVelocity;
         Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
@@ -97,6 +158,29 @@ public class MovePlayer1 : NetworkBehaviour
         }
 
         rb.linearVelocity = new Vector3(horizontalVelocity.x, currentVelocity.y, horizontalVelocity.z);
+        networkSpeed.Value = horizontalVelocity.magnitude;
+    }
+
+    private void UpdateAnimations()
+    {
+        if (animator == null) return;
+
+        float currentSpeed = new Vector3(
+            rb.linearVelocity.x,
+            0f,
+            rb.linearVelocity.z
+        ).magnitude;
+
+        animator.SetFloat("speed", currentSpeed);
+        animator.SetBool("isJumping", networkJump.Value);
+    }
+    private void OnSpeedChanged(float previous, float current)
+    {
+        UpdateAnimations();
+    }
+    private void OnJumpChanged(bool previous, bool current)
+    {
+        UpdateAnimations();
     }
 
     void OnCollisionEnter(Collision collision)
@@ -105,6 +189,9 @@ public class MovePlayer1 : NetworkBehaviour
         if (collision.gameObject.CompareTag("Platform"))
         {
             canJump = true;
+            networkJump.Value = false;
+
+            UpdateAnimations();
         }
     }
 }

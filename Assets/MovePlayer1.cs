@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class MovePlayer1 : NetworkBehaviour
 {
@@ -22,7 +23,6 @@ public class MovePlayer1 : NetworkBehaviour
     private bool canJump = true;
     private Vector2 movement = Vector2.zero;
 
-<<<<<<< HEAD
     private NetworkVariable<float> networkSpeed =
        new NetworkVariable<float>(
            0f,
@@ -40,9 +40,7 @@ public class MovePlayer1 : NetworkBehaviour
     [SerializeField] private Animator animator;
 
     [SerializeField] private float runMultiplier = 1.5f;
-=======
     private bool ControlaEsteCliente => !IsSpawned || IsOwner;
->>>>>>> multijugador-integracion
 
     void Awake()
     {
@@ -51,7 +49,14 @@ public class MovePlayer1 : NetworkBehaviour
         rb = GetComponent<Rigidbody>();
         if (animator == null)
         {
-            animator = GetComponentInChildren<Animator>(true);
+            animator = GetComponentInChildren<Animator>();
+        }
+    }
+    private void Start()
+    {
+        if (SceneManager.GetActiveScene().name == "LevelYoutubev2")
+        {
+            isPlatform = true;
         }
     }
 

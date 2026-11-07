@@ -1,5 +1,7 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Unity.Netcode;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Multiplayer;
@@ -13,6 +15,8 @@ public class LobbyUI : MonoBehaviour
 
     [Header("Configuración")]
     [SerializeField] int maxJugadores = 4;
+    [Tooltip("Nombre exacto de la escena del juego (debe estar en Build Settings)")]
+    [SerializeField] string escenaJuego = "";
     [Tooltip("Muestra botones temporales con OnGUI para probar sin Canvas")]
     [SerializeField] bool usarBotonesTemporales = true;
 
@@ -26,7 +30,6 @@ public class LobbyUI : MonoBehaviour
         try
         {
             var opciones = new InitializationOptions();
-           
             opciones.SetProfile(System.Guid.NewGuid().ToString("N").Substring(0, 12));
 
             await UnityServices.InitializeAsync(opciones);
@@ -43,11 +46,9 @@ public class LobbyUI : MonoBehaviour
             Debug.LogException(e);
         }
     }
-
-  
     public async void CrearPartida()
-{
-    if (!listo || ocupado || sesion != null) return;
+    {
+        if (!listo || ocupado || sesion != null) return;
         ocupado = true;
         try
         {
@@ -66,17 +67,14 @@ public class LobbyUI : MonoBehaviour
         }
         finally { ocupado = false; }
     }
-
-
     public void Unirse()
     {
         string codigo = campoCodigo != null ? campoCodigo.text : codigoTemporal;
         UnirseConCodigo(codigo);
     }
-
     public async void UnirseConCodigo(string codigo)
-{
-    if (!listo || ocupado || sesion != null) return;
+    {
+        if (!listo || ocupado || sesion != null) return;
         codigo = (codigo ?? "").Trim().ToUpper();
         if (string.IsNullOrEmpty(codigo))
         {
@@ -98,8 +96,21 @@ public class LobbyUI : MonoBehaviour
         }
         finally { ocupado = false; }
     }
+    public void IniciarJuego()
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        {
+            MostrarEstado("Solo el anfitrión puede iniciar");
+            return;
+        }
+        if (string.IsNullOrEmpty(escenaJuego))
+        {
+            MostrarEstado("Falta el nombre de la escena del juego");
+            return;
+        }
 
-    
+        NetworkManager.Singleton.SceneManager.LoadScene(escenaJuego, LoadSceneMode.Single);
+    }
     public async void SalirDePartida()
     {
         if (sesion == null) return;
@@ -122,15 +133,15 @@ public class LobbyUI : MonoBehaviour
         Debug.Log("[Lobby] " + mensaje);
     }
 
-    // Botones temporales
     void OnGUI()
     {
         if (!usarBotonesTemporales) return;
 
-        GUILayout.BeginArea(new Rect(10, 10, 260, 220));
+        GUILayout.BeginArea(new Rect(10, 10, 260, 260));
         if (GUILayout.Button("Crear partida")) CrearPartida();
         codigoTemporal = GUILayout.TextField(codigoTemporal);
         if (GUILayout.Button("Unirse")) UnirseConCodigo(codigoTemporal);
+        if (GUILayout.Button("Iniciar juego (host)")) IniciarJuego();
         if (GUILayout.Button("Salir")) SalirDePartida();
         GUILayout.EndArea();
     }

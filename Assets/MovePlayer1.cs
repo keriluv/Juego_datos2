@@ -1,6 +1,6 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Netcode;
 
 public class MovePlayer1 : NetworkBehaviour
 {
@@ -21,6 +21,8 @@ public class MovePlayer1 : NetworkBehaviour
     private bool canJump = true;
     private Vector2 movement = Vector2.zero;
 
+    private bool ControlaEsteCliente => !IsSpawned || IsOwner;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -30,22 +32,54 @@ public class MovePlayer1 : NetworkBehaviour
     {
         rb.isKinematic = !IsOwner;
 
-        
         if (playerCamera != null) playerCamera.enabled = IsOwner;
         if (playerListener != null) playerListener.enabled = IsOwner;
 
+        Debug.Log(
+            "[Online] JUGADOR_SPAWN owner=" + OwnerClientId +
+            " isOwner=" + IsOwner +
+            " isServer=" + IsServer +
+            " pos=" + transform.position);
+
         if (IsOwner)
         {
-            if (playerCamera != null)
-                target = playerCamera.transform;
-            else if (target == null && Camera.main != null)
-                target = Camera.main.transform;
+            RefrescarCamara();
+
+            if (JuegoOnlineEscena.HayPuntoAparicion)
+                ColocarEnAparicion(JuegoOnlineEscena.PuntoAparicion, OwnerClientId);
         }
+    }
+
+    public void RefrescarCamara()
+    {
+        if (!ControlaEsteCliente) return;
+
+        if (playerCamera != null)
+        {
+            target = playerCamera.transform;
+            return;
+        }
+
+        if (Camera.main != null)
+            target = Camera.main.transform;
+    }
+
+    public void ColocarEnAparicion(Vector3 posicionBase, ulong ownerId)
+    {
+        if (!ControlaEsteCliente) return;
+
+        int indice = (int)(ownerId % 4u);
+        Vector3 posicion = posicionBase + new Vector3(indice * 2.5f, 0.5f, 0f);
+
+        transform.position = posicion;
+        rb.position = posicion;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
     }
 
     void Update()
     {
-        if (!IsOwner) return;
+        if (!ControlaEsteCliente) return;
         if (Keyboard.current == null) return;
 
         movement = Vector2.zero;
@@ -64,7 +98,9 @@ public class MovePlayer1 : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if (!IsOwner) return;
+        if (!ControlaEsteCliente) return;
+
+        if (target == null) RefrescarCamara();
         if (target == null) return;
 
         Vector3 forward = target.forward;
@@ -101,7 +137,7 @@ public class MovePlayer1 : NetworkBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (!IsOwner) return;
+        if (!ControlaEsteCliente) return;
         if (collision.gameObject.CompareTag("Platform"))
         {
             canJump = true;

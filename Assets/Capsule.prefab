@@ -493,10 +493,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4369289780442619933}
     m_Modifications:
-    - target: {fileID: 5866666021909216657, guid: 00df73ec5e1620c42963dc0f18bf8ede, type: 3}
-      propertyPath: m_Controller
-      value: 
-      objectReference: {fileID: 9100000, guid: 1762448049a4513449e5868f1a856ed3, type: 2}
     - target: {fileID: -8679921383154817045, guid: 47eb329050c18c047aa5da7692e230a0, type: 3}
       propertyPath: m_LocalScale.x
       value: 2
@@ -553,7 +549,15 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 47eb329050c18c047aa5da7692e230a0, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 47eb329050c18c047aa5da7692e230a0, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 1762448049a4513449e5868f1a856ed3, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 00df73ec5e1620c42963dc0f18bf8ede, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 1762448049a4513449e5868f1a856ed3, type: 2}
@@ -707,7 +711,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d560cc9c408b2424c8bf637e8a35156f, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

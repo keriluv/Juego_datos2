@@ -102,9 +102,9 @@ GameObject:
   - component: {fileID: 2877880555671690435}
   - component: {fileID: 600216250414908166}
   - component: {fileID: 5762601933989246037}
+  - component: {fileID: 265014901866439718}
   - component: {fileID: 4808889587953110328}
   - component: {fileID: 1084168639431289546}
-  - component: {fileID: 265014901866439718}
   - component: {fileID: 9177045849713025615}
   m_Layer: 0
   m_Name: JugadorRedJuego
@@ -210,55 +210,6 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4808889587953110328
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2119047639109950535}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 299be704ddb679a44aca8a03969f061b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MovePlayer1
-  ShowTopMostFoldoutHeaderGroup: 1
-  velocity: 2
-  maxSpeed: 20
-  acceleration: 10
-  friction: 5
-  jumpForce: 5
-  target: {fileID: 0}
-  isPlatform: 0
-  playerCamera: {fileID: 0}
-  playerListener: {fileID: 0}
---- !u!54 &1084168639431289546
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2119047639109950535}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 1
-  m_Constraints: 112
-  m_CollisionDetection: 1
 --- !u!114 &265014901866439718
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286,6 +237,58 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &4808889587953110328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119047639109950535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 299be704ddb679a44aca8a03969f061b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovePlayer1
+  ShowTopMostFoldoutHeaderGroup: 1
+  velocity: 2
+  maxSpeed: 20
+  acceleration: 10
+  friction: 5
+  jumpForce: 5
+  rotationSpeed: 10
+  target: {fileID: 0}
+  isPlatform: 0
+  playerCamera: {fileID: 0}
+  playerListener: {fileID: 0}
+  animator: {fileID: 0}
+  runMultiplier: 1.5
+--- !u!54 &1084168639431289546
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119047639109950535}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 112
+  m_CollisionDetection: 1
 --- !u!114 &9177045849713025615
 MonoBehaviour:
   m_ObjectHideFlags: 0

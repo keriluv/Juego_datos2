@@ -21,6 +21,10 @@ public class FollowPlayer : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player").transform;
+        }
         Vector3 destino = player.position;
         destino.y = offsety;
         destino.z = transform.position.z;

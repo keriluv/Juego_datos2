@@ -14,7 +14,7 @@ public class MultijugadorJuego : MonoBehaviour
 
     [Header("Configuración")]
     [Tooltip("Niveles reales que el anfitrión puede cargar en red.")]
-    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector" };
+    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2" };
 
     public int indiceEscena;
     public int maxJugadores = 4;
@@ -166,7 +166,7 @@ public class MultijugadorJuego : MonoBehaviour
             return;
         }
 
-        GameObject prefab = Resources.Load<GameObject>("JugadorRedJuego");
+        GameObject prefab = Resources.Load<GameObject>("Capsule");
 
         if (prefab == null)
         {

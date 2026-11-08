@@ -1,5 +1,6 @@
 using System.Collections;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -52,7 +53,7 @@ public class JuegoOnlineEscena : MonoBehaviour
 
         bool puntoGuardado = false;
 
-        foreach (MovePlayer1 controlador in FindObjectsByType<MovePlayer1>(FindObjectsInactive.Exclude))
+        foreach (Spawn controlador in FindObjectsByType<Spawn>(FindObjectsInactive.Exclude))
         {
             if (EsJugadorDeRed(controlador.transform)) continue;
 
@@ -118,8 +119,17 @@ public class JuegoOnlineEscena : MonoBehaviour
 
         if (camara != null && !EsJugadorDeRed(camara.transform))
         {
-            if (camara.GetComponent<CamaraLobby>() == null)
-                camara.gameObject.AddComponent<CamaraLobby>();
+            string escena = SceneManager.GetActiveScene().name;
+
+            if (escena == "LevelYoutube" || escena == "LevelYoutubev2")
+            {
+                camara.GetComponent<FollowPlayer>().enabled = true;
+            }
+            else
+            {
+                if (camara.GetComponent<CamaraLobby>() == null)
+                    camara.gameObject.AddComponent<CamaraLobby>();
+            }
         }
 
         StartCoroutine(ColocarJugadorLocal());
@@ -192,3 +202,4 @@ public class JuegoOnlineEscena : MonoBehaviour
         return transform.GetComponentInParent<NetworkObject>() != null;
     }
 }
+

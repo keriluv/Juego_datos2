@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: 8688667599253519690}
   - component: {fileID: -3596088580305927383}
   - component: {fileID: 4252643517170484408}
+  - component: {fileID: -1984183481028999538}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Player
@@ -299,6 +300,23 @@ MonoBehaviour:
   cooldown: 2
   showHit: 1
   animator: {fileID: 0}
+--- !u!114 &-1984183481028999538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkRigidbody
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkRigidbodyBaseExpanded: 0
+  UseRigidBodyForMotion: 1
+  AutoUpdateKinematicState: 1
+  AutoSetKinematicOnDespawn: 1
 --- !u!1 &7145590744847819147
 GameObject:
   m_ObjectHideFlags: 0

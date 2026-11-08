@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 11ee5cc31640def448487aaabfa5800d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 200192
+  packageName: Stylized Pirate Ship
+  packageVersion: 1.0
+  assetPath: Assets/Stylized_Pirate_Ship/StylShip_MatTextures/StylShip_ShipHull_Mat.mat
+  uploadId: 445377

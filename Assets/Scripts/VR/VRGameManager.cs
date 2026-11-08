@@ -14,6 +14,8 @@ public class VRGameManager : MonoBehaviour
 {
     [Header("Assets")]
     [SerializeField] private GameObject modeloBarco;
+    [SerializeField] private GameObject modeloJugador;
+    [SerializeField] private GameObject modeloPirata;
     [SerializeField] private Texture2D texturaAgua;
     [SerializeField] private AudioClip sonidoDisparo;
     [SerializeField] private AudioClip sonidoImpacto;
@@ -50,7 +52,7 @@ public class VRGameManager : MonoBehaviour
 
         Transform barco = null;
         Paso("barco", () => barco = CrearBarcoJugador());
-        Paso("cubierta", () => { if (naval != null && barco != null) naval.VestirCubierta(barco); });
+        Paso("cubierta", () => { if (naval != null && barco != null && modeloJugador == null) naval.VestirCubierta(barco); });
         Paso("tabla", () => { if (barco != null) CrearTablaCubierta(barco); });
         Paso("entorno", AgruparEntorno);
 
@@ -179,11 +181,17 @@ public class VRGameManager : MonoBehaviour
     {
         GameObject raiz = new GameObject("BarcoJugador");
         raiz.transform.position = new Vector3(0f, 0.2f, 0f);
-        ColocarCasco(raiz.transform, 10f, new Color(0.32f, 0.2f, 0.1f));
-
         BoxCollider caja = raiz.AddComponent<BoxCollider>();
         caja.size = new Vector3(3.4f, 1.5f, 8.5f);
         caja.center = new Vector3(0f, 0.8f, 0f);
+
+        Vector3 cubiertaLocal = new Vector3(0f, 1.45f, -1.1f);
+        Vector3 canonIzquierda = new Vector3(-1.45f, 1.2f, 1.1f);
+        Vector3 canonDerecha = new Vector3(1.45f, 1.2f, 1.1f);
+        if (modeloJugador != null)
+            ColocarBarcoEstilizado(raiz.transform, caja, ref cubiertaLocal, ref canonIzquierda, ref canonDerecha);
+        else
+            ColocarCasco(raiz.transform, 10f, new Color(0.32f, 0.2f, 0.1f));
 
         barcoJugador = raiz.AddComponent<BarcoSalud>();
         barcoJugador.Configurar(vidaJugador, 0, true);
@@ -196,7 +204,9 @@ public class VRGameManager : MonoBehaviour
 
         GameObject cubierta = new GameObject("Cubierta");
         cubierta.transform.SetParent(raiz.transform, false);
-        cubierta.transform.localPosition = new Vector3(0f, 1.45f, -1.1f);
+        cubierta.transform.localPosition = cubiertaLocal;
+        if (modeloPirata != null)
+            ColocarPirata(cubierta.transform);
 
         GameObject origen = GameObject.Find("XR Origin (VR)");
         if (origen != null)
@@ -210,8 +220,8 @@ public class VRGameManager : MonoBehaviour
         if (agua != null)
             agua.Configurar(texturaAgua, raiz.transform);
 
-        CrearCanonJugador(raiz.transform, new Vector3(-1.45f, 1.2f, 1.1f));
-        CrearCanonJugador(raiz.transform, new Vector3(1.45f, 1.2f, 1.1f));
+        CrearCanonJugador(raiz.transform, canonIzquierda);
+        CrearCanonJugador(raiz.transform, canonDerecha);
         return raiz.transform;
     }
 
@@ -320,6 +330,121 @@ public class VRGameManager : MonoBehaviour
         }
 
         return raiz.AddComponent<VRShipCannon>();
+    }
+
+    private void ColocarBarcoEstilizado(Transform raiz, BoxCollider caja, ref Vector3 cubiertaLocal, ref Vector3 canonIzquierda, ref Vector3 canonDerecha)
+    {
+        GameObject visual = Instantiate(modeloJugador, raiz);
+        visual.name = "ModeloJugador";
+        visual.transform.localRotation = Quaternion.identity;
+        foreach (Collider colision in visual.GetComponentsInChildren<Collider>())
+            Destroy(colision);
+        PintarUrp(visual);
+
+        Renderer[] piezas = visual.GetComponentsInChildren<Renderer>();
+        if (piezas.Length == 0)
+            return;
+
+        Bounds medida = Encapsular(piezas);
+        float largo = Mathf.Max(medida.size.x, medida.size.z);
+        if (largo > 0.01f)
+            visual.transform.localScale *= 10f / largo;
+
+        medida = Encapsular(piezas);
+        visual.transform.position += new Vector3(raiz.position.x - medida.center.x, -medida.min.y, raiz.position.z - medida.center.z);
+
+        Bounds casco = Encapsular(piezas);
+        caja.center = raiz.InverseTransformPoint(casco.center);
+        caja.size = new Vector3(casco.size.x, Mathf.Clamp(casco.size.y, 1f, 3f), casco.size.z);
+
+        Transform suelo = null;
+        foreach (Transform hijo in visual.GetComponentsInChildren<Transform>())
+        {
+            if (hijo.name.Contains("FloorMid"))
+            {
+                suelo = hijo;
+                break;
+            }
+        }
+
+        Renderer tabla = suelo != null ? suelo.GetComponent<Renderer>() : null;
+        if (tabla == null)
+            return;
+
+        Bounds superficie = tabla.bounds;
+        cubiertaLocal = raiz.InverseTransformPoint(new Vector3(superficie.center.x, superficie.max.y + 0.05f, superficie.center.z - superficie.size.z * 0.2f));
+        float margen = Mathf.Max(0.4f, superficie.size.x * 0.28f);
+        float avance = superficie.size.z * 0.22f;
+        float altura = superficie.max.y + 0.15f;
+        canonIzquierda = raiz.InverseTransformPoint(new Vector3(superficie.center.x - margen, altura, superficie.center.z + avance));
+        canonDerecha = raiz.InverseTransformPoint(new Vector3(superficie.center.x + margen, altura, superficie.center.z + avance));
+    }
+
+    private void ColocarPirata(Transform cubierta)
+    {
+        GameObject pirata = Instantiate(modeloPirata, cubierta);
+        pirata.name = "Pirata";
+        foreach (Camera camara in pirata.GetComponentsInChildren<Camera>(true))
+            camara.gameObject.SetActive(false);
+        foreach (AudioListener oido in pirata.GetComponentsInChildren<AudioListener>(true))
+            Destroy(oido);
+        foreach (Light luz in pirata.GetComponentsInChildren<Light>(true))
+            luz.enabled = false;
+        Animator animador = pirata.GetComponentInChildren<Animator>();
+        if (animador != null)
+            animador.enabled = false;
+        PintarUrp(pirata);
+
+        Renderer[] piezas = pirata.GetComponentsInChildren<Renderer>();
+        if (piezas.Length == 0)
+            return;
+
+        Bounds cuerpo = Encapsular(piezas);
+        if (cuerpo.size.y > 0.01f)
+            pirata.transform.localScale *= 1.7f / cuerpo.size.y;
+        cuerpo = Encapsular(piezas);
+        Vector3 pies = cubierta.InverseTransformPoint(new Vector3(cuerpo.center.x, cuerpo.min.y, cuerpo.center.z));
+        pirata.transform.localPosition += new Vector3(0.8f - pies.x, -pies.y, 0.2f - pies.z);
+        pirata.transform.localRotation = Quaternion.identity;
+    }
+
+    private static Bounds Encapsular(Renderer[] piezas)
+    {
+        Bounds limites = piezas[0].bounds;
+        for (int i = 1; i < piezas.Length; i++)
+            limites.Encapsulate(piezas[i].bounds);
+        return limites;
+    }
+
+    private static void PintarUrp(GameObject visual)
+    {
+        Shader urp = Shader.Find("Universal Render Pipeline/Lit");
+        if (urp == null)
+            return;
+
+        foreach (Renderer render in visual.GetComponentsInChildren<Renderer>(true))
+        {
+            Material[] originales = render.sharedMaterials;
+            Material[] copia = new Material[originales.Length];
+            for (int i = 0; i < originales.Length; i++)
+            {
+                Material fuente = originales[i];
+                if (fuente != null && fuente.shader != null && fuente.shader.name.Contains("Universal"))
+                {
+                    copia[i] = fuente;
+                    continue;
+                }
+
+                Material nuevo = new Material(urp);
+                if (fuente != null && fuente.HasProperty("_MainTex"))
+                    nuevo.SetTexture("_BaseMap", fuente.GetTexture("_MainTex"));
+                if (fuente != null && fuente.HasProperty("_Color"))
+                    nuevo.SetColor("_BaseColor", fuente.color);
+                copia[i] = nuevo;
+            }
+
+            render.materials = copia;
+        }
     }
 
     private void ColocarCasco(Transform padre, float largo, Color colorRespaldo)

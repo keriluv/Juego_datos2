@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 286a021d404ed204f8d67a6317bc289e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 200192
+  packageName: Stylized Pirate Ship
+  packageVersion: 1.0
+  assetPath: Assets/Stylized_Pirate_Ship/StylShip_MatTextures/StylShip_SailsRope_Mat.mat
+  uploadId: 445377

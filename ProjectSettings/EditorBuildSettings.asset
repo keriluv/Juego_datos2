@@ -26,6 +26,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/pruebaLobby.unity
     guid: 6bfa50b9a83b75848b6eefa204edb035
+  - enabled: 1
+    path: Assets/Scenes/JuegoDinoChrome.unity
+    guid: 83f264d3b4e4f284fbc8399538da44a3
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 468912f47335ff04584dfb443256f569, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 777c93c19bb07bb4c9efe2c9df1bb85d, type: 2}

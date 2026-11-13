@@ -6560,7 +6560,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1700640185}
         m_TargetAssemblyTypeName: MultiplayerUI, Assembly-CSharp
-        m_MethodName: 
+        m_MethodName: iniciarPartida
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

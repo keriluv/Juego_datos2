@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Movimiento provisional del jugador (la capsula) mientras no hay personaje real.
-/// WASD o flechas para moverse, Shift para correr. Sin gravedad: es un sustituto temporal.
-/// </summary>
 public class JugadorMovimiento : MonoBehaviour
 {
     [Tooltip("Velocidad normal en unidades por segundo.")]

@@ -8,17 +8,18 @@ using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[DefaultExecutionOrder(-10000)]
 public class MultijugadorJuego : MonoBehaviour
 {
     public static MultijugadorJuego Instancia { get; private set; }
 
     [Header("Configuración")]
     [Tooltip("Niveles reales que el anfitrión puede cargar en red.")]
-    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2" };
+    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat" };
 
     public int indiceEscena;
     public int maxJugadores = 4;
-    public bool cargarEscenaAlCrear = true;
+    public bool cargarEscenaAlCrear = false;
 
     private ISession sesion;
     private NetworkManager red;
@@ -27,7 +28,7 @@ public class MultijugadorJuego : MonoBehaviour
     private bool ocupado;
     private string codigoActual = "";
     private string codigoTemporal = "";
-    private string mensajeEstado = "Pulsa para crear o unirte a una partida.";
+    public string mensajeEstado = "Pulsa para crear o unirte a una partida.";
     private bool panelAbierto = true;
 
     private bool autoAnfitrion;
@@ -36,8 +37,11 @@ public class MultijugadorJuego : MonoBehaviour
 
     public string CodigoActual => codigoActual;
     public bool EnPartida => sesion != null;
+    public NetworkManager Red => red;
+    public static System.Action<NetworkManager> AlCrearRed;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    [UnityEngine.Scripting.Preserve]
     private static void Crear()
     {
         if (Instancia != null) return;
@@ -57,9 +61,18 @@ public class MultijugadorJuego : MonoBehaviour
 
         Instancia = this;
         DontDestroyOnLoad(gameObject);
-        SceneManager.sceneLoaded += AlCargarEscena;
+        //SceneManager.sceneLoaded += AlCargarEscena;
 
         LeerArgumentosDePrueba();
+    }
+    private void Update()
+    {
+        if (red != null && NetworkManager.Singleton == null)
+        {
+            Debug.LogError(
+                "[DIAGNOSTICO] RED EXISTE PERO SINGLETON ES NULL"
+            );
+        }
     }
 
     private void LeerArgumentosDePrueba()
@@ -99,18 +112,20 @@ public class MultijugadorJuego : MonoBehaviour
 
     private void OnDestroy()
     {
-        SceneManager.sceneLoaded -= AlCargarEscena;
+        //SceneManager.sceneLoaded -= AlCargarEscena;
 
         if (Instancia == this) Instancia = null;
     }
 
+    /*
     private void AlCargarEscena(Scene escena, LoadSceneMode modo)
     {
-        if (escena.name == "MainMenu" || escena.name == "pruebaLobby")
+        if (escena.name == "pruebaLobby")
             panelAbierto = true;
         else
             panelAbierto = false;
     }
+    */
 
     private string EscenaElegida
     {
@@ -158,6 +173,20 @@ public class MultijugadorJuego : MonoBehaviour
 
     private void AsegurarNetworkManager()
     {
+        Debug.Log("[RED] Entrando en AsegurarNetworkManager");
+
+        if (red != null)
+        {
+            Debug.Log("[RED] Ya existe: " + red.name);
+            return;
+        }
+
+        if (NetworkManager.Singleton != null)
+        {
+            red = NetworkManager.Singleton;
+            Debug.Log("[RED] Recuperada desde Singleton");
+            return;
+        }
         if (red != null) return;
 
         if (NetworkManager.Singleton != null)
@@ -196,11 +225,15 @@ public class MultijugadorJuego : MonoBehaviour
         red.NetworkConfig.ConnectionApproval = false;
 
         Debug.Log("[Multijugador] NETWORKMANAGER_CONFIGURADO");
+        AlCrearRed?.Invoke(red);
     }
 
     public async void CrearPartida()
     {
         if (ocupado || sesion != null) return;
+
+        if (EscenaElegida == "LevelSnapchat")
+            maxJugadores = 2;
 
         ocupado = true;
         try
@@ -230,6 +263,18 @@ public class MultijugadorJuego : MonoBehaviour
         {
             ocupado = false;
         }
+    }
+
+    public void CrearPartidaSnapchat()
+    {
+        if (escenasDisponibles == null) return;
+
+        int indice = System.Array.IndexOf(escenasDisponibles, "LevelSnapchat");
+        if (indice < 0) return;
+
+        indiceEscena = indice;
+        maxJugadores = 2;
+        CrearPartida();
     }
 
     public async void UnirseConCodigo(string codigo)
@@ -270,7 +315,7 @@ public class MultijugadorJuego : MonoBehaviour
         }
     }
 
-    private IEnumerator CargarEscenaCuandoListo()
+    public IEnumerator CargarEscenaCuandoListo()
     {
         float limite = Time.realtimeSinceStartup + 10f;
 
@@ -334,7 +379,8 @@ public class MultijugadorJuego : MonoBehaviour
         if (SceneManager.GetActiveScene().name != "MainMenu")
             SceneManager.LoadScene("MainMenu");
     }
-
+    
+    /*
     private void OnGUI()
     {
         string escena = SceneManager.GetActiveScene().name;
@@ -344,7 +390,7 @@ public class MultijugadorJuego : MonoBehaviour
         if (sesion == null && escena != "MainMenu") return;
 
         float ancho = panelAbierto ? 370f : 230f;
-        float alto = panelAbierto ? 450f : 58f;
+        float alto = panelAbierto ? 500f : 58f;
 
         GUILayout.BeginArea(new Rect(10f, 10f, ancho, alto), GUI.skin.box);
 
@@ -377,6 +423,9 @@ public class MultijugadorJuego : MonoBehaviour
 
         if (GUILayout.Button("Crear partida (anfitrión)"))
             CrearPartida();
+
+        if (GUILayout.Button("Crear partida Snapchat co-op (2)"))
+            CrearPartidaSnapchat();
 
         GUILayout.Label("Código para unirse:");
         codigoTemporal = GUILayout.TextField((codigoTemporal ?? "").ToUpperInvariant());
@@ -414,4 +463,5 @@ public class MultijugadorJuego : MonoBehaviour
 
         GUILayout.EndArea();
     }
+    */
 }

@@ -237,4 +237,8 @@ public class MovePlayer1 : NetworkBehaviour
             UpdateAnimations();
         }
     }
+    public void AsignarAnimator(Animator nuevo)
+    {
+        animator = nuevo;
+    }
 }

@@ -20,6 +20,8 @@ GameObject:
   - component: {fileID: -3596088580305927383}
   - component: {fileID: 4252643517170484408}
   - component: {fileID: -1984183481028999538}
+  - component: {fileID: 8631874819368800385}
+  - component: {fileID: -7214123584022104471}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Player
@@ -317,6 +319,29 @@ MonoBehaviour:
   UseRigidBodyForMotion: 1
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
+--- !u!114 &8631874819368800385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b4e1ad454a066340bfc94f35654ad99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkinJugador
+  ShowTopMostFoldoutHeaderGroup: 1
+  skins:
+  - nombre: Yoshi
+    modelo: {fileID: 8970388949857848863}
+    icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
+  - nombre: Spiderman
+    modelo: {fileID: 8186735066308690272}
+    icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
+  - nombre: Klee
+    modelo: {fileID: 3723524879590884130}
+    icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
 --- !u!1 &7145590744847819147
 GameObject:
   m_ObjectHideFlags: 0
@@ -584,6 +609,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 47eb329050c18c047aa5da7692e230a0, type: 3}
+--- !u!1 &3723524879590884130 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 47eb329050c18c047aa5da7692e230a0, type: 3}
+  m_PrefabInstance: {fileID: 4570581839300083315}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4100332344566110616 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 47eb329050c18c047aa5da7692e230a0, type: 3}
@@ -659,7 +689,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2383d4a940e42b7419fbf77e288fcdf7, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 2383d4a940e42b7419fbf77e288fcdf7, type: 3}
       propertyPath: m_Controller
@@ -673,6 +703,11 @@ PrefabInstance:
 --- !u!4 &8590310168098346149 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2383d4a940e42b7419fbf77e288fcdf7, type: 3}
+  m_PrefabInstance: {fileID: 8123456789012345678}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8970388949857848863 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2383d4a940e42b7419fbf77e288fcdf7, type: 3}
   m_PrefabInstance: {fileID: 8123456789012345678}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &9033176295212416049
@@ -729,7 +764,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d560cc9c408b2424c8bf637e8a35156f, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -771,3 +806,16 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d560cc9c408b2424c8bf637e8a35156f, type: 3}
   m_PrefabInstance: {fileID: 9033176295212416049}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &-7214123584022104471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7f1c2d3e4a5467890abcdef12345678, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RedSnapchat
+

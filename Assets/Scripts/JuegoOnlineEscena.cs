@@ -69,8 +69,6 @@ public class JuegoOnlineEscena : MonoBehaviour
             return;
         }
 
-        NetworkManager red = NetworkManager.Singleton;
-        if (red == null || !red.IsListening) return;
         StartCoroutine(EsperarRed());
     }
 

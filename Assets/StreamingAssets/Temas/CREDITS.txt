@@ -1,0 +1,27 @@
+Arte de los desafios de escape - Nivel Snapchat
+================================================
+
+SunnyLand - Free Pixel Game Art Assets Pack
+Autor: ansimuz (Luis Zuno)
+Licencia: Creative Commons Zero v1.0 Universal (CC0)
+https://ansimuz.itch.io/sunny-land-pixel-game-art
+Archivos usados: back.png, middle.png, platform-long.png, door.png,
+palm.png, bush.png, rock.png, skulls.png, spike-skull.png, pine.png,
+gem-1.png, frog-idle-1.png
+
+Warped City - Pixel Art Asset Pack
+Autor: ansimuz (Luis Zuno)
+Licencia: Creative Commons Zero v1.0 Universal (CC0)
+https://ansimuz.itch.io/warped-city
+Archivos usados: skyline-a.png, near-buildings-bg.png, drone-1.png,
+antenna.png, banner-neon-1.png, hotel-sign.png
+
+Particle Pack
+Autor: Kenney
+Licencia: Creative Commons Zero (CC0)
+https://kenney.nl/assets/particle-pack
+Archivos usados: smoke_03.png, smoke_05.png, fire_01.png, light_01.png,
+spark_04.png, star_04.png
+
+Los nombres de archivo se cambiaron a espanol para cargarlos por tema.
+No se usa el logo ni el fantasma oficial de Snapchat.

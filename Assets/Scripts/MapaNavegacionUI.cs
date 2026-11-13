@@ -118,6 +118,16 @@ public class MapaNavegacionUI : MonoBehaviour
 
     private void Awake()
     {
+        // Mantiene el acceso historico al mapa, pero abre la escena 3D separada.
+        if (SceneManager.GetActiveScene().name == "MapaNiveles")
+        {
+            if (Application.CanStreamedLevelBeLoaded("MapaNiveles3D"))
+                SceneManager.LoadScene("MapaNiveles3D");
+            else
+                Debug.LogError("MapaNiveles3D no esta habilitada en la lista de escenas del proyecto.");
+            return;
+        }
+
         if (niveles.Count == 0) CargarEjemplo();
 
         fuente = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

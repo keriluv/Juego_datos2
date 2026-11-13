@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/LevelSelector.unity
     guid: df2d326ebbb7b8a41958501442ab7d93
   - enabled: 1
+    path: Assets/MapaNiveles3D.unity
+    guid: c21ff040b9d341a09e1f88013d9d8175
+  - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 1

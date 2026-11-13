@@ -15,7 +15,7 @@ public class MultijugadorJuego : MonoBehaviour
 
     [Header("Configuración")]
     [Tooltip("Niveles reales que el anfitrión puede cargar en red.")]
-    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2" };
+    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat" };
 
     public int indiceEscena;
     public int maxJugadores = 4;
@@ -232,6 +232,9 @@ public class MultijugadorJuego : MonoBehaviour
     {
         if (ocupado || sesion != null) return;
 
+        if (EscenaElegida == "LevelSnapchat")
+            maxJugadores = 2;
+
         ocupado = true;
         try
         {
@@ -260,6 +263,18 @@ public class MultijugadorJuego : MonoBehaviour
         {
             ocupado = false;
         }
+    }
+
+    public void CrearPartidaSnapchat()
+    {
+        if (escenasDisponibles == null) return;
+
+        int indice = System.Array.IndexOf(escenasDisponibles, "LevelSnapchat");
+        if (indice < 0) return;
+
+        indiceEscena = indice;
+        maxJugadores = 2;
+        CrearPartida();
     }
 
     public async void UnirseConCodigo(string codigo)
@@ -375,7 +390,7 @@ public class MultijugadorJuego : MonoBehaviour
         if (sesion == null && escena != "MainMenu") return;
 
         float ancho = panelAbierto ? 370f : 230f;
-        float alto = panelAbierto ? 450f : 58f;
+        float alto = panelAbierto ? 500f : 58f;
 
         GUILayout.BeginArea(new Rect(10f, 10f, ancho, alto), GUI.skin.box);
 
@@ -408,6 +423,9 @@ public class MultijugadorJuego : MonoBehaviour
 
         if (GUILayout.Button("Crear partida (anfitrión)"))
             CrearPartida();
+
+        if (GUILayout.Button("Crear partida Snapchat co-op (2)"))
+            CrearPartidaSnapchat();
 
         GUILayout.Label("Código para unirse:");
         codigoTemporal = GUILayout.TextField((codigoTemporal ?? "").ToUpperInvariant());

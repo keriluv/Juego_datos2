@@ -63,6 +63,14 @@ public class JuegoOnlineEscena : MonoBehaviour
             return;
         }
 
+        if (escena.name == "LevelSnapchat")
+        {
+            HayPuntoAparicion = false;
+            return;
+        }
+
+        NetworkManager red = NetworkManager.Singleton;
+        if (red == null || !red.IsListening) return;
         StartCoroutine(EsperarRed());
     }
 

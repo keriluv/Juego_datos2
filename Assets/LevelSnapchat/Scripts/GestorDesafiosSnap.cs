@@ -14,6 +14,11 @@ public class GestorDesafiosSnap : MonoBehaviour
     public VinetaHalloween vineta;
     public Sprite spriteAndy;
     public Sprite spriteFantasma;
+    public Sprite spriteGlobosCumpleanos;
+    public Sprite spriteGloboRojo;
+    public Sprite spriteGloboVerde;
+    public Sprite spriteGloboMorado;
+    public Sprite spritePastel;
 
     [Header("Zoom")]
     public float escalaZoom = 1.7f;
@@ -49,6 +54,26 @@ public class GestorDesafiosSnap : MonoBehaviour
 #endif
             if (spriteFantasma == null)
                 Debug.LogError("GestorDesafiosSnap no tiene asignado el sprite Assets/LevelSnapchat/Sprites/fantasma.png.", this);
+        }
+
+        if (spriteGlobosCumpleanos == null || spriteGloboRojo == null ||
+            spriteGloboVerde == null || spriteGloboMorado == null || spritePastel == null)
+        {
+#if UNITY_EDITOR
+            spriteGlobosCumpleanos = spriteGlobosCumpleanos != null ? spriteGlobosCumpleanos :
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/LevelSnapchat/Sprites/globos_sin_fondo.png");
+            spriteGloboRojo = spriteGloboRojo != null ? spriteGloboRojo :
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/LevelSnapchat/Sprites/globo_rojo_sin_fondo.png");
+            spriteGloboVerde = spriteGloboVerde != null ? spriteGloboVerde :
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/LevelSnapchat/Sprites/globo_verde_sin_fondo.png");
+            spriteGloboMorado = spriteGloboMorado != null ? spriteGloboMorado :
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/LevelSnapchat/Sprites/globo_morado_sin_fondo.png");
+            spritePastel = spritePastel != null ? spritePastel :
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/LevelSnapchat/Sprites/pastel.png");
+#endif
+            if (spriteGlobosCumpleanos == null || spriteGloboRojo == null ||
+                spriteGloboVerde == null || spriteGloboMorado == null || spritePastel == null)
+                Debug.LogError("GestorDesafiosSnap necesita los sprites de globos y pastel de la historia HBD.", this);
         }
 
         if (jugador == null)
@@ -360,6 +385,14 @@ public class GestorDesafiosSnap : MonoBehaviour
             escape.nivel = indice;
             if (indice == 1)
                 escape.spriteFantasma = spriteFantasma;
+            else if (indice == 2)
+            {
+                escape.spriteGlobosCumpleanos = spriteGlobosCumpleanos;
+                escape.spriteGloboRojo = spriteGloboRojo;
+                escape.spriteGloboVerde = spriteGloboVerde;
+                escape.spriteGloboMorado = spriteGloboMorado;
+                escape.spritePastel = spritePastel;
+            }
             desafio = escape;
         }
 

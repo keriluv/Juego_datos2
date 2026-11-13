@@ -12,6 +12,11 @@ public static class MontarJugadorSnapchat
     private const string RutaEscena = "Assets/LevelSnapchat/Scenes/LevelSnapchat.unity";
     private const string RutaSprite = "Assets/TutorialGoogle/Sprites/JugadorTutorial.png";
     private const string RutaFantasma = "Assets/LevelSnapchat/Sprites/fantasma.png";
+    private const string RutaGlobosCumpleanos = "Assets/LevelSnapchat/Sprites/globos_sin_fondo.png";
+    private const string RutaGloboRojo = "Assets/LevelSnapchat/Sprites/globo_rojo_sin_fondo.png";
+    private const string RutaGloboVerde = "Assets/LevelSnapchat/Sprites/globo_verde_sin_fondo.png";
+    private const string RutaGloboMorado = "Assets/LevelSnapchat/Sprites/globo_morado_sin_fondo.png";
+    private const string RutaPastel = "Assets/LevelSnapchat/Sprites/pastel.png";
     private const string NombreVentana = "VentanaSnap";
     private const string NombreMundo = "MundoSnap";
     private const string NombreJugador = "JugadorSnap";
@@ -180,6 +185,32 @@ public static class MontarJugadorSnapchat
             else if (gestor.spriteFantasma != spriteFantasma)
             {
                 gestor.spriteFantasma = spriteFantasma;
+                EditorUtility.SetDirty(gestor);
+                cambiada = true;
+            }
+
+            Sprite spriteGlobos = AssetDatabase.LoadAssetAtPath<Sprite>(RutaGlobosCumpleanos);
+            Sprite spriteGloboRojo = AssetDatabase.LoadAssetAtPath<Sprite>(RutaGloboRojo);
+            Sprite spriteGloboVerde = AssetDatabase.LoadAssetAtPath<Sprite>(RutaGloboVerde);
+            Sprite spriteGloboMorado = AssetDatabase.LoadAssetAtPath<Sprite>(RutaGloboMorado);
+            Sprite spritePastel = AssetDatabase.LoadAssetAtPath<Sprite>(RutaPastel);
+
+            if (spriteGlobos == null || spriteGloboRojo == null || spriteGloboVerde == null ||
+                spriteGloboMorado == null || spritePastel == null)
+            {
+                Debug.LogError("SNAP_JUGADOR: no se pudieron cargar todos los sprites HBD.");
+            }
+            else if (gestor.spriteGlobosCumpleanos != spriteGlobos ||
+                gestor.spriteGloboRojo != spriteGloboRojo ||
+                gestor.spriteGloboVerde != spriteGloboVerde ||
+                gestor.spriteGloboMorado != spriteGloboMorado ||
+                gestor.spritePastel != spritePastel)
+            {
+                gestor.spriteGlobosCumpleanos = spriteGlobos;
+                gestor.spriteGloboRojo = spriteGloboRojo;
+                gestor.spriteGloboVerde = spriteGloboVerde;
+                gestor.spriteGloboMorado = spriteGloboMorado;
+                gestor.spritePastel = spritePastel;
                 EditorUtility.SetDirty(gestor);
                 cambiada = true;
             }

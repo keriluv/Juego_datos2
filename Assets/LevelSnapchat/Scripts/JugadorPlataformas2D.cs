@@ -42,7 +42,6 @@ public class JugadorPlataformas2D : MonoBehaviour
     {
         bool enSuelo = ComprobarSuelo();
 
-        // Un pelin de coyote time para que el salto perdone fallos de timing.
         if (enSuelo) coyote = 0.12f;
         else coyote -= Time.fixedDeltaTime;
 
@@ -61,7 +60,6 @@ public class JugadorPlataformas2D : MonoBehaviour
 
         saltoPedido = false;
 
-        // Caida mas rapida.
         if (velocidadActual.y < 0f)
             velocidadActual.y += Physics2D.gravity.y * (multiplicadorCaida - 1f) * Time.fixedDeltaTime;
 

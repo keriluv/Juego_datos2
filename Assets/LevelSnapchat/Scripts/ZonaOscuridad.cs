@@ -20,7 +20,6 @@ public class ZonaOscuridad : MonoBehaviour
         if (colisionador3D != null) colisionador3D.isTrigger = true;
     }
 
-    // ---- Trigger 2D ----
     private void OnTriggerEnter2D(Collider2D otro)
     {
         if (!EsJugador(otro)) return;
@@ -33,7 +32,6 @@ public class ZonaOscuridad : MonoBehaviour
         Activar(false);
     }
 
-    // ---- Trigger 3D ----
     private void OnTriggerEnter(Collider otro)
     {
         if (!EsJugador(otro)) return;

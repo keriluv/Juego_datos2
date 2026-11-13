@@ -55,7 +55,6 @@ public class VinetaHalloween : MonoBehaviour
         Aplicar(alphaBase + extra);
     }
 
-    /// <summary>Oscurece los bordes de la pantalla.</summary>
     public void Entrar()
     {
         activa = true;
@@ -68,7 +67,6 @@ public class VinetaHalloween : MonoBehaviour
         }
     }
 
-    /// <summary>Retira la oscuridad de los bordes.</summary>
     public void Salir()
     {
         activa = false;
@@ -81,7 +79,6 @@ public class VinetaHalloween : MonoBehaviour
         }
     }
 
-    /// <summary>Activa o desactiva la vineta sin animacion.</summary>
     public void Fijar(bool oscuro)
     {
         if (transicion != null) StopCoroutine(transicion);

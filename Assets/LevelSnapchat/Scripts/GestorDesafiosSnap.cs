@@ -12,9 +12,12 @@ public class GestorDesafiosSnap : MonoBehaviour
     public RectTransform panelPrincipal;
     public RectTransform[] historias = new RectTransform[3];
     public VinetaHalloween vineta;
+    public Sprite spriteAndy;
+    public Sprite spriteFantasma;
 
     [Header("Zoom")]
     public float escalaZoom = 1.7f;
+    public float escalaJugadorHistoria = 0.52f;
     public float duracionZoom = 1.05f;
     public float pausaEntreHistorias = 0.3f;
     public float duracionAviso = 0.25f;
@@ -22,16 +25,242 @@ public class GestorDesafiosSnap : MonoBehaviour
     private RectTransform raizDesafio;
     private DesafioSnap desafioActual;
     private Image overlayHalloween;
-    private GameObject panelFinal;
     private int historiaActual = -1;
     private bool ocupado;
     private bool terminado;
     private bool botonesBloqueados;
+    private Vector2 tamanoJugadorBase = new Vector2(72f, 96f);
+
+    private RedSnapchat red;
+    private JugadorTutorial jugador2;
+    private RectTransform jugador2RT;
+    private bool online;
+    private bool esAnfitrion;
+    private int ultimaHistoriaRemota = -1;
+    private bool finalMostrado;
+
+    private void Awake()
+    {
+        if (spriteFantasma == null)
+        {
+#if UNITY_EDITOR
+            spriteFantasma = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/LevelSnapchat/Sprites/fantasma.png");
+#endif
+            if (spriteFantasma == null)
+                Debug.LogError("GestorDesafiosSnap no tiene asignado el sprite Assets/LevelSnapchat/Sprites/fantasma.png.", this);
+        }
+
+        if (jugador == null)
+            jugador = FindAnyObjectByType<JugadorTutorial>(FindObjectsInactive.Include);
+
+        if (snap == null)
+            snap = FindAnyObjectByType<SnapWebApp>(FindObjectsInactive.Include);
+
+        if (vineta == null)
+            vineta = FindAnyObjectByType<VinetaHalloween>(FindObjectsInactive.Include);
+
+        if (ventana == null && snap != null)
+            ventana = snap.transform.parent as RectTransform;
+
+        if (mundo == null && ventana != null)
+            mundo = ventana.Find("MundoSnap") as RectTransform;
+
+        if (panelPrincipal == null && ventana != null)
+            panelPrincipal = ventana.Find("Main") as RectTransform;
+
+        if (pausaEntreHistorias <= 0f) pausaEntreHistorias = 0.3f;
+        if (duracionAviso <= 0f) duracionAviso = 0.25f;
+
+        if (jugador != null)
+        {
+            RectTransform rtJugador = (RectTransform)jugador.transform;
+            if (rtJugador.rect.width > 1f)
+                tamanoJugadorBase = rtJugador.rect.size;
+        }
+
+        if (snap != null)
+            snap.gestorDesafios = this;
+    }
+
+    private void Update()
+    {
+        if (red == null)
+        {
+            if (!RedSnapchat.HayRed) return;
+
+            red = RedSnapchat.Autoridad;
+            if (red == null) return;
+
+            ConfigurarRed();
+        }
+
+        if (online)
+        {
+            if (esAnfitrion)
+                red.RegistrarJugadores(jugador, jugador2);
+            else
+                ProcesarHistoriaRemota();
+        }
+
+        if (desafioActual == null)
+            SincronizarJugador2Visual();
+    }
+
+    private void ConfigurarRed()
+    {
+        online = true;
+        esAnfitrion = RedSnapchat.EsAnfitrion;
+
+        CrearJugador2();
+        red.RegistrarJugadores(jugador, jugador2);
+
+        if (esAnfitrion)
+            red.FijarHistoria(-1);
+    }
+
+    private void CrearJugador2()
+    {
+        if (jugador == null || jugador2 != null) return;
+
+        GameObject copia = Instantiate(jugador.gameObject, jugador.transform.parent);
+        copia.name = "JugadorSnap2";
+
+        jugador2 = copia.GetComponent<JugadorTutorial>();
+        jugador2RT = (RectTransform)copia.transform;
+
+        if (jugador2 != null && jugador2.sprite != null)
+            jugador2.sprite.color = new Color(0.42f, 0.74f, 1f, 1f);
+
+        jugador2.enabled = false;
+        jugador2.usarEntradaRemota = true;
+        jugador2RT.anchoredPosition = ((RectTransform)jugador.transform).anchoredPosition
+            + new Vector2(84f, 0f);
+    }
+
+    private void SincronizarJugador2Visual()
+    {
+        if (jugador == null || jugador2RT == null) return;
+
+        RectTransform rt = (RectTransform)jugador.transform;
+
+        bool activo = jugador.gameObject.activeSelf;
+        if (jugador2.gameObject.activeSelf != activo)
+            jugador2.gameObject.SetActive(activo);
+
+        if (!activo) return;
+
+        jugador2RT.sizeDelta = rt.sizeDelta;
+        jugador2RT.anchoredPosition = rt.anchoredPosition + new Vector2(84f, 0f);
+    }
+
+    private void ProcesarHistoriaRemota()
+    {
+        if (ocupado) return;
+
+        int historia = red.HistoriaActual;
+        if (historia == ultimaHistoriaRemota) return;
+
+        ultimaHistoriaRemota = historia;
+
+        if (historia == -2)
+        {
+            if (!finalMostrado)
+                StartCoroutine(RutinaFinalRemota());
+
+            return;
+        }
+
+        if (historia < 0) return;
+
+        StartCoroutine(RutinaEntrarRemota(historia));
+    }
+
+    private IEnumerator RutinaEntrarRemota(int indice)
+    {
+        ocupado = true;
+
+        if (historiaActual >= 0)
+        {
+            DestruirDesafio();
+
+            if (historiaActual == 1)
+            {
+                if (vineta != null)
+                    vineta.Salir();
+
+                if (overlayHalloween != null)
+                    yield return FadeOverlay(overlayHalloween, 0f, 0.6f);
+            }
+
+            yield return ZoomSalir(duracionZoom);
+        }
+
+        historiaActual = indice;
+
+        if (!botonesBloqueados)
+            BloquearBotonesHistoria(true);
+
+        if (indice == 1)
+            PrepararHalloween();
+
+        ColocarJugadorEnHistoria(indice);
+
+        if (indice == 0 && jugador != null)
+            jugador.gameObject.SetActive(false);
+
+        yield return ZoomAHistoria(historias[indice], escalaZoom, duracionZoom);
+
+        Canvas.ForceUpdateCanvases();
+
+        if (indice == 1 && overlayHalloween != null)
+            StartCoroutine(FadeOverlay(overlayHalloween, 0.42f, 0.8f));
+
+        yield return new WaitForSecondsRealtime(pausaEntreHistorias);
+
+        CrearDesafio(indice);
+        ocupado = false;
+    }
+
+    private IEnumerator RutinaFinalRemota()
+    {
+        ocupado = true;
+        finalMostrado = true;
+
+        DestruirDesafio();
+
+        if (historiaActual == 1)
+        {
+            if (vineta != null)
+                vineta.Salir();
+
+            if (overlayHalloween != null)
+                yield return FadeOverlay(overlayHalloween, 0f, 0.6f);
+        }
+
+        yield return ZoomSalir(duracionZoom);
+
+        MostrarFinal();
+        terminado = true;
+        ocupado = false;
+    }
 
     public void IniciarEnHistoria(int indice)
     {
         if (terminado || ocupado) return;
+        if (RedSnapchat.HayRed && !RedSnapchat.EsAnfitrion) return;
         if (indice < 0 || indice >= historias.Length || historias[indice] == null) return;
+
+        if (red == null && RedSnapchat.HayRed)
+        {
+            red = RedSnapchat.Autoridad;
+
+            if (red != null && !online)
+                ConfigurarRed();
+        }
+
+        if (online && esAnfitrion && red != null)
+            red.FijarHistoria(indice);
 
         StartCoroutine(RutinaEntrar(indice));
     }
@@ -48,6 +277,9 @@ public class GestorDesafiosSnap : MonoBehaviour
             PrepararHalloween();
 
         ColocarJugadorEnHistoria(indice);
+
+        if (indice == 0 && jugador != null)
+            jugador.gameObject.SetActive(false);
 
         yield return ZoomAHistoria(historias[indice], escalaZoom, duracionZoom);
 
@@ -70,6 +302,9 @@ public class GestorDesafiosSnap : MonoBehaviour
         yield return new WaitForSecondsRealtime(duracionAviso);
 
         DestruirDesafio();
+
+        if (online && esAnfitrion && red != null)
+            red.FijarHistoria(indice + 1 < historias.Length ? indice + 1 : -2);
 
         if (indice == 1)
         {
@@ -113,17 +348,19 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         DesafioSnap desafio;
 
-        switch (indice)
+        if (indice == 0)
         {
-            case 0:
-                desafio = go.AddComponent<DesafioTiming>();
-                break;
-            case 1:
-                desafio = go.AddComponent<DesafioFantasmas>();
-                break;
-            default:
-                desafio = go.AddComponent<DesafioSecuencia>();
-                break;
+            DesafioSnapPerfecto snapPerfecto = go.AddComponent<DesafioSnapPerfecto>();
+            snapPerfecto.spriteObjetivo = spriteAndy;
+            desafio = snapPerfecto;
+        }
+        else
+        {
+            DesafioEscape escape = go.AddComponent<DesafioEscape>();
+            escape.nivel = indice;
+            if (indice == 1)
+                escape.spriteFantasma = spriteFantasma;
+            desafio = escape;
         }
 
         desafio.Completado = () => StartCoroutine(CompletarDesafio(indice));
@@ -136,12 +373,22 @@ public class GestorDesafiosSnap : MonoBehaviour
             mundo = mundo,
             jugador = jugador,
             jugadorRT = jugador != null ? (RectTransform)jugador.transform : null,
-            vineta = vineta
+            jugador2 = jugador2,
+            jugador2RT = jugador2RT,
+            vineta = vineta,
+            online = online,
+            esAnfitrion = esAnfitrion,
+            red = red
         };
 
         raizDesafio = rt;
         desafioActual = desafio;
         desafio.Iniciar(contexto);
+
+        Debug.Log("SNAP_DESAFIO creado para la historia " + indice
+            + " | jugador=" + (jugador != null)
+            + " snap=" + (snap != null)
+            + " mundo=" + (mundo != null));
     }
 
     private void DestruirDesafio()
@@ -172,6 +419,11 @@ public class GestorDesafiosSnap : MonoBehaviour
         Vector3 escalaFinal = new Vector3(escala, escala, 1f);
         Vector2 posicionFinal = objetivo - centro * escala;
 
+        RectTransform jugadorRT = jugador != null ? (RectTransform)jugador.transform : null;
+        Vector2 tamanoJugadorInicial = jugadorRT != null ? jugadorRT.rect.size : tamanoJugadorBase;
+        Vector2 tamanoJugadorFinal = tamanoJugadorBase * escalaJugadorHistoria;
+        Vector2 tamanoJugador2Inicial = jugador2RT != null ? jugador2RT.rect.size : tamanoJugadorBase;
+
         float t = 0f;
 
         while (t < duracion)
@@ -183,11 +435,23 @@ public class GestorDesafiosSnap : MonoBehaviour
             ventana.localScale = Vector3.LerpUnclamped(escalaInicial, escalaFinal, suave);
             ventana.anchoredPosition = Vector2.LerpUnclamped(posicionInicial, posicionFinal, suave);
 
+            if (jugadorRT != null)
+                jugadorRT.sizeDelta = Vector2.LerpUnclamped(tamanoJugadorInicial, tamanoJugadorFinal, suave);
+
+            if (jugador2RT != null)
+                jugador2RT.sizeDelta = Vector2.LerpUnclamped(tamanoJugador2Inicial, tamanoJugadorFinal, suave);
+
             yield return null;
         }
 
         ventana.localScale = escalaFinal;
         ventana.anchoredPosition = posicionFinal;
+
+        if (jugadorRT != null)
+            jugadorRT.sizeDelta = tamanoJugadorFinal;
+
+        if (jugador2RT != null)
+            jugador2RT.sizeDelta = tamanoJugadorFinal;
     }
 
     private IEnumerator ZoomSalir(float duracion)
@@ -200,6 +464,10 @@ public class GestorDesafiosSnap : MonoBehaviour
         Vector3 escalaFinal = Vector3.one;
         Vector2 posicionFinal = Vector2.zero;
 
+        RectTransform jugadorRT = jugador != null ? (RectTransform)jugador.transform : null;
+        Vector2 tamanoJugadorInicial = jugadorRT != null ? jugadorRT.rect.size : tamanoJugadorBase;
+        Vector2 tamanoJugador2Inicial = jugador2RT != null ? jugador2RT.rect.size : tamanoJugadorBase;
+
         float t = 0f;
 
         while (t < duracion)
@@ -211,11 +479,23 @@ public class GestorDesafiosSnap : MonoBehaviour
             ventana.localScale = Vector3.LerpUnclamped(escalaInicial, escalaFinal, suave);
             ventana.anchoredPosition = Vector2.LerpUnclamped(posicionInicial, posicionFinal, suave);
 
+            if (jugadorRT != null)
+                jugadorRT.sizeDelta = Vector2.LerpUnclamped(tamanoJugadorInicial, tamanoJugadorBase, suave);
+
+            if (jugador2RT != null)
+                jugador2RT.sizeDelta = Vector2.LerpUnclamped(tamanoJugador2Inicial, tamanoJugadorBase, suave);
+
             yield return null;
         }
 
         ventana.localScale = Vector3.one;
         ventana.anchoredPosition = Vector2.zero;
+
+        if (jugadorRT != null)
+            jugadorRT.sizeDelta = tamanoJugadorBase;
+
+        if (jugador2RT != null)
+            jugador2RT.sizeDelta = tamanoJugadorBase;
     }
 
     private void ColocarJugadorEnHistoria(int indice)
@@ -224,6 +504,9 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         RectTransform historia = historias[indice];
         if (historia == null) return;
+
+        if (!jugador.gameObject.activeSelf)
+            jugador.gameObject.SetActive(true);
 
         if (jugador.enabled)
             jugador.enabled = false;
@@ -237,6 +520,13 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         Vector2 local = mundo.InverseTransformPoint(punto);
         rt.anchoredPosition = new Vector2(local.x - rt.rect.width * 0.5f, local.y);
+
+        if (jugador2 == null || jugador2RT == null) return;
+
+        jugador2.gameObject.SetActive(true);
+        jugador2.enabled = false;
+        jugador2RT.sizeDelta = rt.sizeDelta;
+        jugador2RT.anchoredPosition = rt.anchoredPosition + new Vector2(84f, 0f);
     }
 
     private void PrepararHalloween()
@@ -322,8 +612,6 @@ public class GestorDesafiosSnap : MonoBehaviour
         rt.sizeDelta = Vector2.zero;
         rt.SetAsLastSibling();
 
-        panelFinal = go;
-
         Image fondo = go.AddComponent<Image>();
         fondo.color = new Color(0f, 0f, 0f, 0.72f);
         fondo.raycastTarget = true;
@@ -343,28 +631,10 @@ public class GestorDesafiosSnap : MonoBehaviour
             "Completaste las 3 historias de Snapchat", 22f, Color.white);
         UtilidadesDesafio.Colocar(subtitulo.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 18f), new Vector2(560f, 40f));
 
-        Button volver = UtilidadesDesafio.CrearBoton("Volver", tarjeta.transform, sprite, fuente,
-            "VOLVER AL CHAT", new Color(0.13f, 0.77f, 0.37f, 1f),
-            new Vector2(0f, -92f), new Vector2(300f, 64f), 22f);
-
-        volver.onClick.AddListener(CerrarFinal);
-    }
-
-    private void CerrarFinal()
-    {
-        if (panelFinal != null)
-        {
-            Destroy(panelFinal);
-            panelFinal = null;
-        }
-
-        BloquearBotonesHistoria(false);
-
-        if (jugador != null)
-            jugador.gameObject.SetActive(false);
-
-        if (snap != null)
-            snap.MostrarSeccion(0);
+        TextMeshProUGUI estado = UtilidadesDesafio.CrearTexto("Estado", tarjeta.transform, fuente,
+            "NIVEL COMPLETADO", 22f, new Color(0.35f, 1f, 0.55f, 1f));
+        UtilidadesDesafio.Colocar(estado.rectTransform, new Vector2(0.5f, 0.5f),
+            new Vector2(0f, -92f), new Vector2(420f, 44f));
     }
 
     private void BloquearBotonesHistoria(bool bloquear)

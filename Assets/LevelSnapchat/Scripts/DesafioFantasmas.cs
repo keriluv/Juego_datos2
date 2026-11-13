@@ -30,6 +30,7 @@ public class DesafioFantasmas : DesafioSnap
     private float tiempoRestante = TiempoInicial;
     private float temporizadorAparicion = 0.5f;
     private float duracionVisible = 1.5f;
+    private float duracionMaxima = 1.5f;
 
     private static readonly Color FondoCelda = new Color(0.1f, 0.07f, 0.16f, 0.96f);
     private static readonly Color Verde = new Color(0.13f, 0.77f, 0.37f, 1f);
@@ -48,15 +49,15 @@ public class DesafioFantasmas : DesafioSnap
         fondo.raycastTarget = false;
 
         TextMeshProUGUI titulo = UtilidadesDesafio.CrearTexto("Titulo", raiz, Fuente,
-            "CAZA DE FANTASMAS", 28f, Naranja);
+            "SNAPS DE HALLOWEEN", 28f, Naranja);
         UtilidadesDesafio.Colocar(titulo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(420f, 38f));
 
         TextMeshProUGUI subtitulo = UtilidadesDesafio.CrearTexto("Subtitulo", raiz, Fuente,
-            "Golpea solo cuando aparezca un fantasma", 14f, Gris);
+            "Abre el snap antes de que desaparezca", 14f, Gris);
         UtilidadesDesafio.Colocar(subtitulo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(420f, 24f));
 
         textoFantasmas = UtilidadesDesafio.CrearTexto("Fantasmas", raiz, Fuente,
-            "FANTASMAS 0/" + Objetivo, 16f, Color.white, TextAlignmentOptions.Left);
+            "SNAPS 0/" + Objetivo, 16f, Color.white, TextAlignmentOptions.Left);
         UtilidadesDesafio.Colocar(textoFantasmas.rectTransform, new Vector2(0f, 1f), new Vector2(110f, -98f), new Vector2(220f, 26f));
 
         textoTiempo = UtilidadesDesafio.CrearTexto("Tiempo", raiz, Fuente,
@@ -173,6 +174,8 @@ public class DesafioFantasmas : DesafioSnap
             else
             {
                 duracionVisible -= Time.unscaledDeltaTime;
+                float restante = Mathf.Clamp01(duracionVisible / Mathf.Max(0.01f, duracionMaxima));
+                iconoContenedor.localScale = Vector3.one * Mathf.Lerp(0.45f, 1f, restante);
                 if (duracionVisible <= 0f) OcultarSinGolpe();
             }
         }
@@ -193,6 +196,7 @@ public class DesafioFantasmas : DesafioSnap
         celdaActiva = indice;
         esFantasma = Random.value > ProbabilidadCalabaza();
         duracionVisible = Mathf.Lerp(1.6f, 0.8f, fantasmas / (float)Objetivo);
+        duracionMaxima = duracionVisible;
 
         celdas[indice].color = esFantasma
             ? new Color(0.16f, 0.3f, 0.42f, 1f)
@@ -204,10 +208,13 @@ public class DesafioFantasmas : DesafioSnap
         iconoContenedor.pivot = new Vector2(0.5f, 0.5f);
         iconoContenedor.anchoredPosition = Vector2.zero;
         iconoContenedor.sizeDelta = new Vector2(70f, 70f);
+        iconoContenedor.localScale = Vector3.one;
         iconoContenedor.gameObject.SetActive(true);
 
         fantasmaGO.SetActive(esFantasma);
         calabazaGO.SetActive(!esFantasma);
+
+        UtilidadesDesafio.Sonido("sfx_lente", 0.2f);
     }
 
     private void OcultarSinGolpe()
@@ -225,7 +232,7 @@ public class DesafioFantasmas : DesafioSnap
     {
         if (celdaActiva < 0)
         {
-            textoFeedback.text = "Muy tarde";
+            textoFeedback.text = "SE ESCAPO";
             textoFeedback.color = Gris;
             return;
         }
@@ -239,10 +246,13 @@ public class DesafioFantasmas : DesafioSnap
         if (fantasma)
         {
             fantasmas++;
-            textoFantasmas.text = "FANTASMAS " + fantasmas + "/" + Objetivo;
-            textoFeedback.text = "ATRAPADO!";
+            textoFantasmas.text = "SNAPS " + fantasmas + "/" + Objetivo;
+            textoFeedback.text = "ABIERTO!";
             textoFeedback.color = Verde;
             celdas[indice].color = Verde;
+
+            UtilidadesDesafio.Sonido("sfx_acierto");
+            UtilidadesDesafio.Sacudir(raiz, 5f, 0.14f);
 
             if (fantasmas >= Objetivo)
             {
@@ -254,9 +264,12 @@ public class DesafioFantasmas : DesafioSnap
         else
         {
             tiempoRestante = Mathf.Max(0f, tiempoRestante - 2f);
-            textoFeedback.text = "CALABAZA! -2s";
+            textoFeedback.text = "SNAP CADUCADO -2s";
             textoFeedback.color = Rojo;
             celdas[indice].color = Rojo;
+
+            UtilidadesDesafio.Sonido("sfx_fallo");
+            UtilidadesDesafio.Sacudir(raiz, 14f, 0.22f);
         }
 
         StartCoroutine(Resolver(indice));
@@ -286,12 +299,13 @@ public class DesafioFantasmas : DesafioSnap
         iconoContenedor.gameObject.SetActive(false);
         textoFeedback.text = "SE ACABO EL TIEMPO";
         textoFeedback.color = Rojo;
+        UtilidadesDesafio.Sonido("sfx_fallo");
 
         yield return new WaitForSecondsRealtime(1.2f);
 
         fantasmas = 0;
         tiempoRestante = TiempoInicial;
-        textoFantasmas.text = "FANTASMAS 0/" + Objetivo;
+        textoFantasmas.text = "SNAPS 0/" + Objetivo;
         textoFeedback.text = "";
         reiniciando = false;
         resolviendo = false;
@@ -303,6 +317,7 @@ public class DesafioFantasmas : DesafioSnap
     {
         textoFeedback.text = "DESAFIO COMPLETADO";
         textoFeedback.color = Naranja;
+        UtilidadesDesafio.Sonido("sfx_ronda");
         yield return new WaitForSecondsRealtime(0.9f);
         Completar();
     }

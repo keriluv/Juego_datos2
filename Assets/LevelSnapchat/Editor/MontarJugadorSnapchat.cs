@@ -11,7 +11,7 @@ public static class MontarJugadorSnapchat
 {
     private const string RutaEscena = "Assets/LevelSnapchat/Scenes/LevelSnapchat.unity";
     private const string RutaSprite = "Assets/TutorialGoogle/Sprites/JugadorTutorial.png";
-    private const string RutaVineta = "Assets/LevelSnapchat/Prefabs/VinetaHalloween.prefab";
+    private const string RutaFantasma = "Assets/LevelSnapchat/Sprites/fantasma.png";
     private const string NombreVentana = "VentanaSnap";
     private const string NombreMundo = "MundoSnap";
     private const string NombreJugador = "JugadorSnap";
@@ -163,8 +163,6 @@ public static class MontarJugadorSnapchat
         if (nuevaBoton) cambiada = true;
 
         GestorDesafiosSnap gestor = AsegurarGestor(canvasT, ref cambiada);
-        VinetaHalloween vineta = AsegurarVineta(escena, ref cambiada);
-
         RectTransform[] historias = new RectTransform[3];
         historias[0] = panelHistorias.Find("Historia_PLAYA") as RectTransform;
         historias[1] = panelHistorias.Find("Historia_FUEGO") as RectTransform;
@@ -172,13 +170,19 @@ public static class MontarJugadorSnapchat
 
         if (gestor != null)
         {
-            gestor.jugador = jugador;
-            gestor.snap = snap;
             gestor.ventana = ventana;
-            gestor.mundo = mundo;
             gestor.panelPrincipal = main as RectTransform;
             gestor.historias = historias;
-            gestor.vineta = vineta;
+
+            Sprite spriteFantasma = AssetDatabase.LoadAssetAtPath<Sprite>(RutaFantasma);
+            if (spriteFantasma == null)
+                Debug.LogError("SNAP_JUGADOR: no se pudo cargar " + RutaFantasma + ".");
+            else if (gestor.spriteFantasma != spriteFantasma)
+            {
+                gestor.spriteFantasma = spriteFantasma;
+                EditorUtility.SetDirty(gestor);
+                cambiada = true;
+            }
         }
 
         SecuenciaHistoriasSnap secuencia = AsegurarSecuencia(raizUI, ref cambiada);
@@ -190,7 +194,7 @@ public static class MontarJugadorSnapchat
             secuencia.botonHistorias = navHistorias.GetComponent<Button>();
             secuencia.snap = snap;
             secuencia.mundo = mundo;
-            secuencia.primeraHistoria = (RectTransform)primeraHistoria;
+            secuencia.primeraHistoria = historias[0];
             secuencia.contactoInicial = (RectTransform)inicio;
             secuencia.gestor = gestor;
         }
@@ -270,40 +274,6 @@ public static class MontarJugadorSnapchat
         }
 
         return gestor;
-    }
-
-    private static VinetaHalloween AsegurarVineta(Scene escena, ref bool cambiada)
-    {
-        VinetaHalloween vineta = BuscarComponente<VinetaHalloween>(escena);
-
-        if (vineta != null)
-            return vineta;
-
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RutaVineta);
-
-        if (prefab == null)
-        {
-            Debug.LogWarning("SNAP_JUGADOR: falta el prefab " + RutaVineta);
-            return null;
-        }
-
-        GameObject instancia = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-
-        if (instancia == null)
-            instancia = Object.Instantiate(prefab);
-
-        instancia.name = "VinetaHalloween";
-
-        vineta = instancia.GetComponent<VinetaHalloween>();
-
-        if (vineta != null)
-        {
-            vineta.empezarOscuro = false;
-            vineta.alphaMaximo = 0.6f;
-        }
-
-        cambiada = true;
-        return vineta;
     }
 
     private static SecuenciaHistoriasSnap AsegurarSecuencia(Transform padre, ref bool cambiada)

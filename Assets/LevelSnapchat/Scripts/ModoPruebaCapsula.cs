@@ -53,7 +53,6 @@ public class ModoPruebaCapsula : MonoBehaviour
         camaraCapsula.CopyFrom(camaraJuego);
         camaraCapsula.enabled = true;
 
-        // Fondo transparente: solo se vera el mundo, no el color de la camara.
         camaraCapsula.clearFlags = CameraClearFlags.SolidColor;
         camaraCapsula.backgroundColor = new Color(0f, 0f, 0f, 0f);
         camaraCapsula.depth = camaraJuego.depth + 1;
@@ -151,7 +150,6 @@ public class ModoPruebaCapsula : MonoBehaviour
             cambiados++;
         }
 
-        // Si la app esta oculta, la camara principal ya muestra el mundo.
         if (camaraCapsula != null)
             camaraCapsula.enabled = interfazVisible && capsulaVisible;
 

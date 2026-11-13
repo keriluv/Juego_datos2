@@ -9,6 +9,7 @@ public static class UtilidadesDesafio
 {
     private static bool gatilloAnterior;
     private static float stickAnterior;
+    private static AudioSource audioFuente;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ReiniciarEstado()
@@ -23,9 +24,9 @@ public static class UtilidadesDesafio
         stickAnterior = 0f;
     }
 
-    public static bool GolpePresionado()
+    public static bool GolpePresionado(bool incluirClick = true)
     {
-        bool click = Input.GetMouseButtonDown(0);
+        bool click = incluirClick && Input.GetMouseButtonDown(0);
         bool gatillo = false;
 
         try
@@ -38,7 +39,7 @@ public static class UtilidadesDesafio
         }
 
 #if ENABLE_INPUT_SYSTEM
-        Mouse raton = Mouse.current;
+        Mouse raton = incluirClick ? Mouse.current : null;
         if (raton != null && raton.leftButton.wasPressedThisFrame)
             click = true;
 
@@ -83,6 +84,35 @@ public static class UtilidadesDesafio
 #endif
 
         return Mathf.Clamp(dir, -1, 1);
+    }
+
+    public static void Sonido(string nombre, float volumen = 0.75f)
+    {
+        if (string.IsNullOrEmpty(nombre)) return;
+
+        if (audioFuente == null)
+        {
+            GameObject go = new GameObject("AudioDesafiosSnap");
+            Object.DontDestroyOnLoad(go);
+            audioFuente = go.AddComponent<AudioSource>();
+            audioFuente.playOnAwake = false;
+            audioFuente.spatialBlend = 0f;
+        }
+
+        AudioClip clip = Resources.Load<AudioClip>(nombre);
+        if (clip != null)
+            audioFuente.PlayOneShot(clip, Mathf.Clamp01(volumen));
+    }
+
+    public static void Sacudir(RectTransform objetivo, float intensidad = 14f, float duracion = 0.25f)
+    {
+        if (objetivo == null) return;
+
+        SacudidaUI sacudida = objetivo.GetComponent<SacudidaUI>();
+        if (sacudida == null)
+            sacudida = objetivo.gameObject.AddComponent<SacudidaUI>();
+
+        sacudida.Iniciar(intensidad, duracion);
     }
 
     public static RectTransform CrearRect(string nombre, Transform padre)
@@ -174,5 +204,50 @@ public class ContextoDesafio
     public RectTransform mundo;
     public JugadorTutorial jugador;
     public RectTransform jugadorRT;
+    public JugadorTutorial jugador2;
+    public RectTransform jugador2RT;
     public VinetaHalloween vineta;
+    public bool online;
+    public bool esAnfitrion;
+    public RedSnapchat red;
+}
+
+public class SacudidaUI : MonoBehaviour
+{
+    private RectTransform objetivo;
+    private Vector2 basePosicion;
+    private float intensidad;
+    private float duracion;
+    private float tiempo;
+    private bool activa;
+
+    public void Iniciar(float fuerza, float tiempoTotal)
+    {
+        objetivo = (RectTransform)transform;
+        basePosicion = objetivo.anchoredPosition;
+        intensidad = fuerza;
+        duracion = Mathf.Max(0.05f, tiempoTotal);
+        tiempo = 0f;
+        activa = true;
+    }
+
+    private void Update()
+    {
+        if (!activa || objetivo == null) return;
+
+        tiempo += Time.unscaledDeltaTime;
+        float k = Mathf.Clamp01(tiempo / duracion);
+
+        if (k >= 1f)
+        {
+            objetivo.anchoredPosition = basePosicion;
+            activa = false;
+            return;
+        }
+
+        float amplitud = intensidad * (1f - k);
+        objetivo.anchoredPosition = basePosicion + new Vector2(
+            Random.Range(-amplitud, amplitud),
+            Random.Range(-amplitud, amplitud));
+    }
 }

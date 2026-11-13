@@ -9,6 +9,7 @@ public class DesafioSecuencia : DesafioSnap
     private const int TotalColores = 4;
 
     private readonly Image[] paneles = new Image[TotalColores];
+    private static readonly string[] Nombres = { "GAFAS", "CORONA", "BIGOTE", "GATO" };
     private readonly Color[] colores =
     {
         new Color(0.1f, 0.72f, 0.95f, 1f),
@@ -44,11 +45,11 @@ public class DesafioSecuencia : DesafioSnap
         fondo.raycastTarget = false;
 
         TextMeshProUGUI titulo = UtilidadesDesafio.CrearTexto("Titulo", raiz, Fuente,
-            "SECUENCIA DE LA CIUDAD", 27f, Color.white);
+            "ORDEN DE LENTES", 27f, Color.white);
         UtilidadesDesafio.Colocar(titulo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(420f, 38f));
 
         TextMeshProUGUI subtitulo = UtilidadesDesafio.CrearTexto("Subtitulo", raiz, Fuente,
-            "Memoriza el orden. A/D te mueve, click o gatillo elige", 13f, Gris);
+            "Memoriza el orden de las lentes y repitelo", 13f, Gris);
         UtilidadesDesafio.Colocar(subtitulo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -58f), new Vector2(420f, 24f));
 
         textoRonda = UtilidadesDesafio.CrearTexto("Ronda", raiz, Fuente,
@@ -72,9 +73,9 @@ public class DesafioSecuencia : DesafioSnap
             rt.anchoredPosition = new Vector2(-147f + i * 98f, 0f);
             rt.sizeDelta = new Vector2(88f, 120f);
 
-            TextMeshProUGUI numero = UtilidadesDesafio.CrearTexto("Numero", rt, Fuente,
-                (i + 1).ToString(), 30f, new Color(1f, 1f, 1f, 0.85f));
-            UtilidadesDesafio.Estirar(numero.rectTransform, 4f);
+            TextMeshProUGUI nombre = UtilidadesDesafio.CrearTexto("Nombre", rt, Fuente,
+                Nombres[i], 14f, new Color(1f, 1f, 1f, 0.95f));
+            UtilidadesDesafio.Estirar(nombre.rectTransform, 6f);
 
             paneles[i] = panel;
         }
@@ -105,6 +106,8 @@ public class DesafioSecuencia : DesafioSnap
         textoProgreso.text = "0 / " + longitud;
         textoEstado.text = "OBSERVA";
         textoEstado.color = Color.white;
+
+        UtilidadesDesafio.Sonido("sfx_ronda", 0.35f);
 
         StartCoroutine(MostrarSecuencia(longitud));
     }
@@ -194,6 +197,7 @@ public class DesafioSecuencia : DesafioSnap
         {
             indiceEntrada++;
             textoProgreso.text = indiceEntrada + " / " + secuencia.Length;
+            UtilidadesDesafio.Sonido("sfx_lente", 0.5f);
 
             if (indiceEntrada >= secuencia.Length)
             {
@@ -229,6 +233,7 @@ public class DesafioSecuencia : DesafioSnap
         castigo = true;
         textoEstado.text = "FALLASTE";
         textoEstado.color = Rojo;
+        UtilidadesDesafio.Sonido("sfx_fallo");
 
         Image panel = paneles[indice];
         Color baseColor = colores[indice];
@@ -251,6 +256,7 @@ public class DesafioSecuencia : DesafioSnap
     {
         textoEstado.text = "RONDA SUPERADA";
         textoEstado.color = Verde;
+        UtilidadesDesafio.Sonido("sfx_acierto");
 
         yield return new WaitForSecondsRealtime(0.9f);
 
@@ -261,6 +267,7 @@ public class DesafioSecuencia : DesafioSnap
             terminado = true;
             textoEstado.text = "DESAFIO COMPLETADO";
             textoEstado.color = Color.white;
+            UtilidadesDesafio.Sonido("sfx_ronda");
             yield return new WaitForSecondsRealtime(1f);
             Completar();
             yield break;

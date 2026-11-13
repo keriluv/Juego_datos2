@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: -3596088580305927383}
   - component: {fileID: 4252643517170484408}
   - component: {fileID: -1984183481028999538}
+  - component: {fileID: -7214123584022104471}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Player
@@ -771,3 +772,16 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d560cc9c408b2424c8bf637e8a35156f, type: 3}
   m_PrefabInstance: {fileID: 9033176295212416049}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &-7214123584022104471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7f1c2d3e4a5467890abcdef12345678, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RedSnapchat
+

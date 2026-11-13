@@ -19,46 +19,93 @@ public class SecuenciaHistoriasSnap : MonoBehaviour
     public float pausaAntesZoom = 0.2f;
     public float margenHistoria = 24f;
 
-    private bool activada;
+    private bool historiaActivada;
 
     private void OnEnable()
     {
-        if (jugador != null) jugador.alGolpear += AlGolpear;
+        if (jugador != null) jugador.alAterrizar += AlAterrizar;
     }
 
     private void OnDisable()
     {
-        if (jugador != null) jugador.alGolpear -= AlGolpear;
+        if (jugador != null) jugador.alAterrizar -= AlAterrizar;
     }
 
     private IEnumerator Start()
     {
-        if (jugador == null) yield break;
+        if (jugador == null || mundo == null)
+        {
+            Debug.LogWarning("SNAP_SECUENCIA: faltan el jugador o el mundo.");
+            yield break;
+        }
 
         yield return null;
         Canvas.ForceUpdateCanvases();
 
-        if (contactoInicial != null)
-            jugador.IrA(contactoInicial);
+        RectTransform jugadorRT = (RectTransform)jugador.transform;
+        float ancho = jugadorRT.rect.width;
+        float xInicial = contactoInicial != null
+            ? PlataformaUI.RectDe(mundo, contactoInicial).center.x - ancho * 0.5f
+            : jugador.posicionInicial.x;
+        float maxX = Mathf.Max(0f, mundo.rect.width - ancho);
+        jugador.ColocarEn(new Vector2(
+            Mathf.Clamp(xInicial, 0f, maxX),
+            Mathf.Max(0f, jugador.alturaSuelo)));
     }
 
-    private void AlGolpear(PlataformaUI plataforma)
+    private void AlAterrizar(PlataformaUI plataforma)
     {
-        if (activada) return;
-        if (plataformaBoton == null) return;
+        if (historiaActivada || plataforma != plataformaBoton) return;
 
-        bool golpeoBoton = plataforma == plataformaBoton;
-        bool encimaDelBoton = jugador != null && jugador.PlataformaActual == plataformaBoton;
-
-        if (!golpeoBoton && !encimaDelBoton) return;
-
-        activada = true;
+        historiaActivada = true;
         StartCoroutine(Secuencia());
+    }
+
+    private IEnumerator AnimarToque(RectTransform spriteRT, Button boton)
+    {
+        Vector3 escalaSpriteInicial = spriteRT != null ? spriteRT.localScale : Vector3.one;
+        Quaternion rotacionSpriteInicial = spriteRT != null ? spriteRT.localRotation : Quaternion.identity;
+        Vector3 escalaBotonInicial = boton != null
+            ? boton.transform.localScale
+            : Vector3.one;
+        float duracion = 0.24f;
+        float tiempo = 0f;
+
+        while (tiempo < duracion)
+        {
+            tiempo += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(tiempo / duracion);
+            float golpe = Mathf.Sin(t * Mathf.PI);
+
+            if (spriteRT != null)
+            {
+                spriteRT.localScale = Vector3.Scale(escalaSpriteInicial,
+                    new Vector3(1f + 0.18f * golpe, 1f - 0.2f * golpe, 1f));
+                spriteRT.localRotation = rotacionSpriteInicial * Quaternion.Euler(0f, 0f, -18f * golpe);
+            }
+
+            if (boton != null)
+                boton.transform.localScale = escalaBotonInicial * (1f - 0.08f * golpe);
+
+            yield return null;
+        }
+
+        if (spriteRT != null)
+        {
+            spriteRT.localScale = escalaSpriteInicial;
+            spriteRT.localRotation = rotacionSpriteInicial;
+        }
+
+        if (boton != null)
+            boton.transform.localScale = escalaBotonInicial;
     }
 
     private IEnumerator Secuencia()
     {
         RectTransform jugadorRT = jugador != null ? (RectTransform)jugador.transform : null;
+        RectTransform spriteRT = jugador != null && jugador.sprite != null
+            ? jugador.sprite.rectTransform
+            : null;
 
         if (jugador != null)
         {
@@ -66,6 +113,8 @@ public class SecuenciaHistoriasSnap : MonoBehaviour
             jugador.usarGatillo = false;
             jugador.enabled = false;
         }
+
+        yield return AnimarToque(spriteRT, botonHistorias);
 
         if (snap != null)
             snap.MostrarSeccion(2);

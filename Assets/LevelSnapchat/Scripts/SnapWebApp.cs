@@ -48,6 +48,7 @@ public class SnapWebApp : MonoBehaviour
 
     [Header("Historias")]
     public Button[] botonesHistoria = new Button[0];
+    public GestorDesafiosSnap gestorDesafios;
 
     [Header("Estilo")]
     public Sprite spriteRedondeado;
@@ -153,9 +154,20 @@ public class SnapWebApp : MonoBehaviour
     private Coroutine rutinaDestello;
     private bool flashActivo;
     private bool temporizadorActivo;
-
+    private Image fondoPrincipal;
+    private Color colorFondoPrincipal;
+    private bool fondoPrincipalInicializado;
     private void Start()
     {
+        Transform raizVentana = transform.parent;
+        Transform panelPrincipal = raizVentana != null ? raizVentana.Find("Main") : null;
+        fondoPrincipal = panelPrincipal != null ? panelPrincipal.GetComponent<Image>() : null;
+        if (fondoPrincipal != null)
+        {
+            colorFondoPrincipal = fondoPrincipal.color;
+            fondoPrincipalInicializado = true;
+        }
+
         ConfigurarNavegacion();
         ConfigurarConversaciones();
         ConfigurarHistorias();
@@ -198,6 +210,11 @@ public class SnapWebApp : MonoBehaviour
     public void MostrarSeccion(int indice)
     {
         if (secciones == null || secciones.Length == 0) return;
+
+        if (fondoPrincipalInicializado && fondoPrincipal != null)
+            fondoPrincipal.color = indice == 2
+                ? new Color(0.025f, 0.035f, 0.065f, 1f)
+                : colorFondoPrincipal;
 
         for (int i = 0; i < secciones.Length; i++)
         {
@@ -243,6 +260,14 @@ public class SnapWebApp : MonoBehaviour
     public void AbrirHistoria(int indice)
     {
         if (indice < 0 || indice >= Nombres.Length) return;
+
+        if (RedSnapchat.HayRed && !RedSnapchat.EsAnfitrion) return;
+
+        if (gestorDesafios != null)
+        {
+            gestorDesafios.IniciarEnHistoria(indice);
+            return;
+        }
 
         MostrarSeccion(0);
         SeleccionarConversacion(indice);

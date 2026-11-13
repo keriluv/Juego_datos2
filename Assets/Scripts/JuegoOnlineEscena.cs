@@ -4,12 +4,14 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[DefaultExecutionOrder(10000)]
 public class JuegoOnlineEscena : MonoBehaviour
 {
     public static Vector3 PuntoAparicion { get; private set; }
     public static bool HayPuntoAparicion { get; private set; }
 
     private static JuegoOnlineEscena instancia;
+    private NetworkManager redActual;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Crear()
@@ -21,30 +23,55 @@ public class JuegoOnlineEscena : MonoBehaviour
         instancia = objeto.AddComponent<JuegoOnlineEscena>();
     }
 
+    private void Update()
+    {
+        if (MultijugadorJuego.Instancia != null)
+        {
+            Debug.Log(
+                "[ESCENA] Singleton=" + (NetworkManager.Singleton != null) +
+                " | Red=" + (MultijugadorJuego.Instancia.Red != null)
+            );
+        }
+    }
+
     private void OnEnable()
     {
         SceneManager.sceneLoaded += AlCargarEscena;
+        MultijugadorJuego.AlCrearRed += RecibirRed;
     }
 
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= AlCargarEscena;
+        MultijugadorJuego.AlCrearRed -= RecibirRed;
+    }
+
+    private void RecibirRed(NetworkManager nuevaRed)
+    {
+        redActual = nuevaRed;
+
+        Debug.Log("[Online] RED RECIBIDA: " + (redActual != null));
     }
 
     private void AlCargarEscena(Scene escena, LoadSceneMode modo)
     {
         StopAllCoroutines();
 
-        if (escena.name == "MainMenu" || escena.name == "pruebaLobby")
+        if (escena.name == "MainMenu")
         {
             HayPuntoAparicion = false;
             return;
         }
 
-        NetworkManager red = NetworkManager.Singleton;
-        if (red == null || !red.IsListening) return;
+        StartCoroutine(EsperarRed());
+    }
 
-        StartCoroutine(PrepararEscena());
+    private IEnumerator EsperarRed()
+    {
+        while (redActual == null || !redActual.IsListening)
+            yield return null;
+
+        yield return StartCoroutine(PrepararEscena());
     }
 
     private IEnumerator PrepararEscena()

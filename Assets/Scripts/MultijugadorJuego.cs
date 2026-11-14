@@ -352,6 +352,20 @@ public class MultijugadorJuego : MonoBehaviour
         Debug.Log("[Multijugador] CARGANDO_ESCENA=" + escena);
         red.SceneManager.LoadScene(escena, LoadSceneMode.Single);
     }
+    public void CargarSiguienteEscena(string escena)
+    {
+        if (red == null || !red.IsServer) return;
+
+        if (!Application.CanStreamedLevelBeLoaded(escena))
+        {
+            mensajeEstado = "La escena " + escena + " no está en Build Settings.";
+            return;
+        }
+
+        mensajeEstado = "Cargando " + escena + "...";
+        Debug.Log("[Multijugador] CARGANDO_ESCENA=" + escena);
+        red.SceneManager.LoadScene(escena, LoadSceneMode.Single);
+    }
 
     public async void SalirDePartida()
     {

@@ -138,6 +138,10 @@ public class MovePlayer1 : NetworkBehaviour
             transform.localScale = startSize;
             mover = true;
         }
+        if (SceneManager.GetActiveScene().name == "LevelYoutubev2" && !isPlatform)
+        {
+            isPlatform = true;
+        }
         if (!ControlaEsteCliente) return;
         if (Keyboard.current == null) return;
 

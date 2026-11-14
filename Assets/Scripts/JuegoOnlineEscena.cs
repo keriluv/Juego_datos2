@@ -153,8 +153,11 @@ public class JuegoOnlineEscena : MonoBehaviour
         if (camara != null && !EsJugadorDeRed(camara.transform))
         {
             string escena = SceneManager.GetActiveScene().name;
-
-            if (escena == "LevelYoutube" || escena == "LevelYoutubev2")
+            if (escena == "pruebaLobby")
+            {
+                
+            }
+            else if (escena == "LevelYoutube" || escena == "LevelYoutubev2")
             {
                 camara.GetComponent<FollowPlayer>().enabled = true;
             }

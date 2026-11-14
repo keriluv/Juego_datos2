@@ -37,7 +37,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6146368101489438540}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: -2.02, y: 1.74424, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
@@ -48,7 +48,7 @@ Transform:
   - {fileID: 8851526577891056602}
   - {fileID: 4100332344566110616}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!33 &5995549106005902976
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -342,6 +342,23 @@ MonoBehaviour:
   - nombre: Klee
     modelo: {fileID: 3723524879590884130}
     icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
+--- !u!114 &-7214123584022104471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7f1c2d3e4a5467890abcdef12345678, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RedSnapchat
+  ShowTopMostFoldoutHeaderGroup: 1
+  escapeEscombros:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
 --- !u!1 &7145590744847819147
 GameObject:
   m_ObjectHideFlags: 0
@@ -806,16 +823,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d560cc9c408b2424c8bf637e8a35156f, type: 3}
   m_PrefabInstance: {fileID: 9033176295212416049}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-7214123584022104471
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6146368101489438540}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7f1c2d3e4a5467890abcdef12345678, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RedSnapchat
-

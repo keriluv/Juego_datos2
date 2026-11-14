@@ -12,6 +12,8 @@ public class MovePlayer1 : NetworkBehaviour
     [SerializeField] private float jumpForce = 1f;
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private Transform target;
+    private bool mover = true;
+    private Vector3 startSize;
 
     [SerializeField] private bool isPlatform = false;
 
@@ -44,6 +46,7 @@ public class MovePlayer1 : NetworkBehaviour
 
     void Awake()
     {
+        startSize = transform.localScale;
         Debug.Log("PLAYER: Awake ejecutado");
 
         rb = GetComponent<Rigidbody>();
@@ -57,6 +60,11 @@ public class MovePlayer1 : NetworkBehaviour
         if (SceneManager.GetActiveScene().name == "LevelYoutubev2")
         {
             isPlatform = true;
+        }
+        if (SceneManager.GetActiveScene().name == "pruebaLobby")
+        {
+            NoMover();
+            this.gameObject.transform.localScale = new Vector3(1.8f, 1.8f, 1.8f);
         }
     }
 
@@ -125,6 +133,11 @@ public class MovePlayer1 : NetworkBehaviour
 
     void Update()
     {
+        if (SceneManager.GetActiveScene().name != "pruebaLobby" && !mover)
+        {
+            transform.localScale = startSize;
+            mover = true;
+        }
         if (!ControlaEsteCliente) return;
         if (Keyboard.current == null) return;
 
@@ -158,6 +171,7 @@ public class MovePlayer1 : NetworkBehaviour
 
         if (target == null) RefrescarCamara();
         if (target == null) return;
+        if (!mover) return;
 
 
         Vector3 forward = target.forward;
@@ -240,5 +254,9 @@ public class MovePlayer1 : NetworkBehaviour
     public void AsignarAnimator(Animator nuevo)
     {
         animator = nuevo;
+    }
+    public void NoMover()
+    {
+        mover = !mover;
     }
 }

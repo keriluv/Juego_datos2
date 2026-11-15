@@ -43,6 +43,29 @@ public static class CreadorEscenaDino
         Debug.Log("DINO_CONTINUACION_OK: escena creada e integrada al tutorial.");
     }
 
+    [MenuItem("Tools/Tutorial Google/Preparar Dino para editar en escena")]
+    public static void PrepararParaEditar()
+    {
+        if (!File.Exists(Ruta))
+        {
+            Debug.LogError("No existe la escena del Dino: " + Ruta);
+            return;
+        }
+
+        Scene escena = EditorSceneManager.OpenScene(Ruta, OpenSceneMode.Single);
+        JuegoDinoChrome juego = Object.FindObjectOfType<JuegoDinoChrome>();
+        if (juego == null)
+        {
+            Debug.LogError("No se encontró JuegoDinoChrome en la escena.");
+            return;
+        }
+
+        juego.GenerarVistaEditable();
+        EditorSceneManager.MarkSceneDirty(escena);
+        EditorSceneManager.SaveScene(escena);
+        Debug.Log("DINO_EDITABLE_OK: Canvas, dino, suelo, nubes y HUD guardados en la escena.");
+    }
+
     private static void ActualizarEnlaceTutorial()
     {
         string tutorial = "Assets/Scenes/TutorialGoogle.unity";

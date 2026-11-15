@@ -109,5 +109,10 @@ public class SkinJugador : NetworkBehaviour
         MovePlayer1 mover = GetComponent<MovePlayer1>();
         if (mover != null && anim != null)
             mover.AsignarAnimator(anim);
+
+        PlayerHit golpe = GetComponent<PlayerHit>();
+        if (golpe == null) golpe = GetComponentInChildren<PlayerHit>(true);
+        if (golpe != null && anim != null)
+            golpe.AsignarAnimator(anim);
     }
 }

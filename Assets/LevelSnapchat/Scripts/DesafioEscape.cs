@@ -7,14 +7,20 @@ using UnityEngine.UI;
 
 public class DesafioEscape : DesafioSnap
 {
-    private const float VelocidadFantasmas = 105f;
+    private const float VelocidadPatrullaFantasmas = 90f;
+    private const float VelocidadCazaFantasmas = 78f;
     private const float SeparacionMinimaFantasmas = 96f;
-    private const float DistanciaDetencionCaza = 8f;
-    private const float DuracionCazaFantasmas = 3.2f;
-    private const float DuracionPatrullaFantasmas = 1.6f;
+    private const float DistanciaDetencionCaza = 44f;
+    private const float DuracionCazaFantasmas = 2.2f;
+    private const float DuracionPatrullaFantasmas = 4.5f;
 
     public int nivel;
     public Sprite spriteFantasma;
+    public Sprite spriteGlobosCumpleanos;
+    public Sprite spriteGloboRojo;
+    public Sprite spriteGloboVerde;
+    public Sprite spriteGloboMorado;
+    public Sprite spritePastel;
 
     private class PlataformaEscape
     {
@@ -279,14 +285,14 @@ public class DesafioEscape : DesafioSnap
                 fuerzaSalto = 1320f;
                 usaMarea = true;
                 subidaVelocidad = 44f;
-                totalLlaves = 0;
-                colorPeligro = new Color(1f, 0.38f, 0.08f, 0.62f);
-                colorFondo = new Color(0.08f, 0.03f, 0.02f, 0.93f);
+                totalLlaves = 3;
+                colorPeligro = new Color(1f, 0.36f, 0.64f, 0.68f);
+                colorFondo = new Color(0.14f, 0.04f, 0.18f, 0.93f);
                 colorPlataforma = Color.white;
-                colorAcento = new Color(1f, 0.48f, 0.1f, 1f);
-                alfaVelo = 0.42f;
-                tituloNivel = "FUGA EN LA CIUDAD";
-                subtituloNivel = "El fuego sube: destruye los drones y llega a la salida";
+                colorAcento = new Color(1f, 0.82f, 0.28f, 1f);
+                alfaVelo = 1f;
+                tituloNivel = "HBD: MISION PASTEL";
+                subtituloNivel = "Junta las 3 velas y llega al pastel";
                 break;
         }
 
@@ -344,15 +350,39 @@ public class DesafioEscape : DesafioSnap
                     new Color(0.82f, 0.78f, 1f, 0.5f));
                 break;
             default:
-                Prop("prop_antena", -178f, -altoCarta * 0.5f, 230f, new Color(0.5f, 0.56f, 0.82f, 1f));
-                Prop("prop_antena", 186f, -altoCarta * 0.5f, 180f, new Color(0.42f, 0.48f, 0.72f, 1f));
-                Prop("prop_letrero", 132f, -altoCarta * 0.5f + 190f, 66f, new Color(1f, 0.35f, 0.72f, 0.95f));
-                PropTecho("prop_banner", -anchoCarta * 0.5f + 46f, 130f, new Color(1f, 0.32f, 0.68f, 0.95f));
-                PropTecho("prop_banner", anchoCarta * 0.5f - 46f, 96f, new Color(0.35f, 0.85f, 1f, 0.95f));
-                Brillo("Neon", new Vector2(0.5f, 0f), new Vector2(0f, 150f), 260f,
-                    new Color(1f, 0.3f, 0.7f, 0.18f));
+                CrearDecoracionCumpleanos();
                 break;
         }
+    }
+
+    private void CrearDecoracionCumpleanos()
+    {
+        Image banner = UtilidadesDesafio.CrearPanel("BannerHBD", raiz, SpriteRedondeado,
+            new Color(0.42f, 0.16f, 0.58f, 0.92f), false);
+        UtilidadesDesafio.Colocar(banner.rectTransform, new Vector2(0.5f, 1f),
+            new Vector2(0f, -82f), new Vector2(190f, 48f));
+
+        TextMeshProUGUI textoHbd = UtilidadesDesafio.CrearTexto("TextoHBD", raiz, Fuente,
+            "HBD!", 25f, colorAcento);
+        UtilidadesDesafio.Colocar(textoHbd.rectTransform, new Vector2(0.5f, 1f),
+            new Vector2(0f, -82f), new Vector2(180f, 40f));
+
+        CrearGloboDecorativo(spriteGlobosCumpleanos, -150f, 150f, new Vector2(105f, 145f));
+        CrearGloboDecorativo(spriteGloboMorado, 158f, 145f, new Vector2(70f, 95f));
+    }
+
+    private void CrearGloboDecorativo(Sprite sprite, float x, float y, Vector2 tamano)
+    {
+        if (sprite == null)
+        {
+            Debug.LogError("DesafioEscape necesita los sprites de globos para la historia HBD.", this);
+            return;
+        }
+
+        Image globo = UtilidadesDesafio.CrearPanel("GloboDecorativo", raiz, sprite, Color.white, false);
+        globo.preserveAspect = true;
+        UtilidadesDesafio.Colocar(globo.rectTransform, new Vector2(0.5f, 0.5f),
+            new Vector2(x, y), tamano);
     }
 
     private Image Prop(string archivo, float x, float y, float alto, Color tinte)
@@ -369,23 +399,6 @@ public class DesafioEscape : DesafioSnap
         rt.pivot = new Vector2(0.5f, 0f);
         rt.sizeDelta = new Vector2(alto * sprite.rect.width / sprite.rect.height, alto);
         rt.anchoredPosition = new Vector2(x, y);
-        return img;
-    }
-
-    private Image PropTecho(string archivo, float x, float alto, Color tinte)
-    {
-        Sprite sprite = TemasEscape.Obtener(nivel, archivo);
-        if (sprite == null) return null;
-
-        Image img = UtilidadesDesafio.CrearPanel("Prop_" + archivo, raiz, sprite, tinte, false);
-        img.preserveAspect = true;
-
-        RectTransform rt = img.rectTransform;
-        rt.anchorMin = new Vector2(0.5f, 0.5f);
-        rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.pivot = new Vector2(0.5f, 1f);
-        rt.sizeDelta = new Vector2(alto * sprite.rect.width / sprite.rect.height, alto);
-        rt.anchoredPosition = new Vector2(x, altoCarta * 0.5f);
         return img;
     }
 
@@ -422,11 +435,25 @@ public class DesafioEscape : DesafioSnap
             float y = Random.Range(-altoCarta * 0.5f, altoCarta * 0.5f);
             rt.anchoredPosition = new Vector2(x, y);
 
-            Color color = nivel == 0
-                ? new Color(0.8f, 0.95f, 1f, Random.Range(0.12f, 0.3f))
-                : nivel == 1
-                    ? new Color(0.75f, 0.6f, 1f, Random.Range(0.1f, 0.28f))
-                    : new Color(1f, 0.55f, 0.2f, Random.Range(0.12f, 0.32f));
+            Color color;
+            if (nivel == 2)
+            {
+                Color[] fiesta =
+                {
+                    new Color(1f, 0.38f, 0.62f),
+                    new Color(0.35f, 0.78f, 1f),
+                    new Color(1f, 0.8f, 0.25f),
+                    new Color(0.4f, 0.95f, 0.62f)
+                };
+                color = fiesta[i % fiesta.Length];
+                color.a = Random.Range(0.12f, 0.3f);
+            }
+            else
+            {
+                color = nivel == 0
+                    ? new Color(0.8f, 0.95f, 1f, Random.Range(0.12f, 0.3f))
+                    : new Color(0.75f, 0.6f, 1f, Random.Range(0.1f, 0.28f));
+            }
             img.color = color;
 
             ambiente.Add(new ImagenAmbiente
@@ -553,8 +580,11 @@ public class DesafioEscape : DesafioSnap
         UtilidadesDesafio.Colocar(textoProgreso.rectTransform, new Vector2(1f, 1f),
             new Vector2(-102f, -262f), new Vector2(200f, 24f));
 
+        string textoAyudaNivel = nivel == 2
+            ? "A/D mover   Espacio saltar   Click / Gatillo reventar globos"
+            : "A/D mover   Espacio saltar   Click / Gatillo golpear";
         textoAyuda = UtilidadesDesafio.CrearTexto("Ayuda", raiz, Fuente,
-            "A/D mover   Espacio saltar   Click / Gatillo golpear", 10f, Gris);
+            textoAyudaNivel, 10f, Gris);
         UtilidadesDesafio.Colocar(textoAyuda.rectTransform, new Vector2(0.5f, 1f),
             new Vector2(0f, -178f), new Vector2(430f, 16f));
 
@@ -582,8 +612,8 @@ public class DesafioEscape : DesafioSnap
                 CrearPlataforma(130f, ySuelo + paso * 2f, 120f, new Color(0.55f, 0.9f, 1f, 1f), true, 25f, 1.1f, false);
                 break;
             default:
-                CrearPlataforma(-140f, ySuelo + paso, 140f, new Color(1f, 0.58f, 0.32f, 1f), false, 0f, 0f, true);
-                CrearPlataforma(130f, ySuelo + paso * 2f, 120f, new Color(0.55f, 0.9f, 1f, 1f), true, 30f, 1.2f, false);
+                CrearPlataforma(-140f, ySuelo + paso, 140f, new Color(1f, 0.55f, 0.72f, 1f), false, 0f, 0f, true);
+                CrearPlataforma(130f, ySuelo + paso * 2f, 120f, new Color(0.48f, 0.82f, 1f, 1f), true, 30f, 1.2f, false);
                 break;
         }
 
@@ -674,8 +704,8 @@ public class DesafioEscape : DesafioSnap
         }
         else
         {
-            CrearDron(-150f, ySuelo + paso * 2.4f, 0.4f, 96f);
-            CrearDron(150f, ySuelo + paso * 3.4f, 2.2f, 108f);
+            CrearGloboPeligro(-150f, ySuelo + paso * 2.4f, 0.4f, 96f);
+            CrearGloboPeligro(150f, ySuelo + paso * 3.4f, 2.2f, 108f);
         }
     }
 
@@ -746,54 +776,31 @@ public class DesafioEscape : DesafioSnap
             direccionPatrulla = direccionPatrulla,
             persigueJugador = false,
             tiempoModo = 0.7f + esquinaInicial * 0.55f,
-            velocidadPersecucion = VelocidadFantasmas,
+            velocidadPersecucion = VelocidadCazaFantasmas,
             aturdido = 0f
         });
     }
 
-    private void CrearDron(float x, float y, float fase, float velocidadPersecucion)
+    private void CrearGloboPeligro(float x, float y, float fase, float velocidadPersecucion)
     {
-        RectTransform cont = UtilidadesDesafio.CrearRect("Dron", capaJuego);
+        RectTransform cont = UtilidadesDesafio.CrearRect(nivel == 2 ? "Globo" : "Dron", capaJuego);
         cont.anchorMin = new Vector2(0.5f, 0.5f);
         cont.anchorMax = new Vector2(0.5f, 0.5f);
         cont.pivot = new Vector2(0.5f, 0.5f);
-        cont.sizeDelta = new Vector2(64f, 44f);
+        cont.sizeDelta = new Vector2(72f, 72f);
         cont.anchoredPosition = new Vector2(x, y);
 
-        Sprite luz = TemasEscape.ObtenerSuave(nivel, "luz");
-
-        if (luz != null)
+        Sprite spriteGlobo = fase < 1f ? spriteGloboRojo : spriteGloboVerde;
+        if (spriteGlobo == null)
         {
-            Image aura = UtilidadesDesafio.CrearPanel("Aura", cont, luz,
-                new Color(1f, 0.42f, 0.15f, 0.3f), false);
-            UtilidadesDesafio.Colocar(aura.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero,
-                new Vector2(96f, 96f));
+            Debug.LogError("DesafioEscape necesita los sprites individuales de globos para la historia HBD.", this);
+            return;
         }
 
-        Image rotorI = UtilidadesDesafio.CrearPanel("RotorI", cont, SpriteRedondeado,
-            new Color(0.6f, 0.66f, 0.82f, 0.9f), false);
-        UtilidadesDesafio.Colocar(rotorI.rectTransform, new Vector2(0.5f, 0.5f),
-            new Vector2(-24f, 12f), new Vector2(20f, 5f));
-
-        Image rotorD = UtilidadesDesafio.CrearPanel("RotorD", cont, SpriteRedondeado,
-            new Color(0.6f, 0.66f, 0.82f, 0.9f), false);
-        UtilidadesDesafio.Colocar(rotorD.rectTransform, new Vector2(0.5f, 0.5f),
-            new Vector2(24f, 12f), new Vector2(20f, 5f));
-
-        Image cuerpo = UtilidadesDesafio.CrearPanel("Cuerpo", cont, SpriteRedondeado,
-            new Color(0.24f, 0.27f, 0.4f, 1f), false);
+        Image cuerpo = UtilidadesDesafio.CrearPanel("ImagenGlobo", cont, spriteGlobo, Color.white, false);
+        cuerpo.preserveAspect = true;
         UtilidadesDesafio.Colocar(cuerpo.rectTransform, new Vector2(0.5f, 0.5f),
-            new Vector2(0f, 2f), new Vector2(46f, 22f));
-
-        Image ojo = UtilidadesDesafio.CrearPanel("Ojo", cont, SpriteRedondeado,
-            new Color(1f, 0.25f, 0.2f, 1f), false);
-        UtilidadesDesafio.Colocar(ojo.rectTransform, new Vector2(0.5f, 0.5f),
-            new Vector2(0f, 2f), new Vector2(14f, 8f));
-
-        Image foco = UtilidadesDesafio.CrearPanel("Foco", cont, SpriteRedondeado,
-            new Color(1f, 0.6f, 0.2f, 0.75f), false);
-        UtilidadesDesafio.Colocar(foco.rectTransform, new Vector2(0.5f, 0.5f),
-            new Vector2(0f, -14f), new Vector2(8f, 12f));
+            Vector2.zero, new Vector2(72f, 72f));
 
         peligros.Add(new PeligroEscape
         {
@@ -909,6 +916,8 @@ public class DesafioEscape : DesafioSnap
 
         CrearLlave(-140f, ySuelo + paso + 110f, 0f);
         CrearLlave(-140f, ySuelo + paso * 2f + 110f, 1.7f);
+        if (nivel == 2)
+            CrearLlave(130f, ySuelo + paso * 2f + 110f, 3.4f);
     }
 
     private void CrearLlave(float x, float y, float fase)
@@ -925,7 +934,9 @@ public class DesafioEscape : DesafioSnap
         if (luz != null)
         {
             Image aura = UtilidadesDesafio.CrearPanel("Aura", rt, luz,
-                new Color(1f, 0.84f, 0.2f, 0.35f), false);
+                nivel == 2
+                    ? new Color(1f, 0.48f, 0.68f, 0.42f)
+                    : new Color(1f, 0.84f, 0.2f, 0.35f), false);
             UtilidadesDesafio.Colocar(aura.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero,
                 new Vector2(84f, 84f));
         }
@@ -933,7 +944,18 @@ public class DesafioEscape : DesafioSnap
         Sprite sprite = TemasEscape.Obtener(nivel, "coleccionable");
         Image cuerpo;
 
-        if (nivel == 1)
+        if (nivel == 2)
+        {
+            Color[] coloresVelas =
+            {
+                new Color(1f, 0.35f, 0.55f, 1f),
+                new Color(0.3f, 0.72f, 1f, 1f),
+                new Color(0.45f, 0.9f, 0.55f, 1f)
+            };
+            cuerpo = CrearVelaVisual(rt, Vector2.zero, 1f,
+                coloresVelas[llaves.Count % coloresVelas.Length], "Vela");
+        }
+        else if (nivel == 1)
         {
             cuerpo = UtilidadesDesafio.CrearPanel("Cuerpo", rt, TemasEscape.Caramelo(),
                 new Color(1f, 0.45f, 0.72f, 1f), false);
@@ -969,13 +991,32 @@ public class DesafioEscape : DesafioSnap
         });
     }
 
+    private Image CrearVelaVisual(Transform padre, Vector2 posicion, float escala, Color color, string nombre)
+    {
+        Image cuerpo = UtilidadesDesafio.CrearPanel(nombre, padre, SpriteRedondeado, color, false);
+        UtilidadesDesafio.Colocar(cuerpo.rectTransform, new Vector2(0.5f, 0.5f),
+            posicion + new Vector2(0f, -3f * escala), new Vector2(12f * escala, 22f * escala));
+
+        Image franja = UtilidadesDesafio.CrearPanel("Franja", cuerpo.transform, SpriteRedondeado,
+            new Color(1f, 1f, 1f, 0.75f), false);
+        UtilidadesDesafio.Colocar(franja.rectTransform, new Vector2(0.5f, 0.5f),
+            Vector2.zero, new Vector2(13f * escala, 3f * escala));
+
+        Image llama = UtilidadesDesafio.CrearPanel("Llama", padre, SpriteRedondeado,
+            new Color(1f, 0.72f, 0.18f, 1f), false);
+        UtilidadesDesafio.Colocar(llama.rectTransform, new Vector2(0.5f, 0.5f),
+            posicion + new Vector2(0f, 12f * escala), new Vector2(9f * escala, 11f * escala));
+
+        return cuerpo;
+    }
+
     private void CrearSalida()
     {
         salida = UtilidadesDesafio.CrearRect("Salida", capaJuego);
         salida.anchorMin = new Vector2(0.5f, 0.5f);
         salida.anchorMax = new Vector2(0.5f, 0.5f);
         salida.pivot = new Vector2(0.5f, 0f);
-        salida.sizeDelta = new Vector2(90f, 92f);
+        salida.sizeDelta = nivel == 2 ? new Vector2(124f, 172f) : new Vector2(90f, 92f);
         salida.anchoredPosition = new Vector2(0f, yTope);
 
         Sprite luz = TemasEscape.ObtenerSuave(nivel, "luz");
@@ -987,29 +1028,43 @@ public class DesafioEscape : DesafioSnap
             UtilidadesDesafio.Estirar(brilloSalida.rectTransform, -26f);
         }
 
-        Sprite puerta = TemasEscape.Obtener(nivel, "salida");
-
-        if (puerta != null)
+        if (nivel == 2)
         {
-            marcoSalida = UtilidadesDesafio.CrearPanel("Marco", salida, puerta, Color.white, false);
+            if (spritePastel == null)
+                Debug.LogError("DesafioEscape necesita el sprite Assets/LevelSnapchat/Sprites/pastel.png.", this);
+
+            marcoSalida = UtilidadesDesafio.CrearPanel("Pastel", salida, spritePastel, Color.white, false);
             marcoSalida.preserveAspect = true;
-            UtilidadesDesafio.Colocar(marcoSalida.rectTransform, new Vector2(0.5f, 0f),
-                new Vector2(0f, 44f), new Vector2(60f, 88f));
+            UtilidadesDesafio.Colocar(marcoSalida.rectTransform, new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(124f, 172f));
         }
         else
         {
-            marcoSalida = UtilidadesDesafio.CrearPanel("Marco", salida, SpriteRedondeado,
-                new Color(0.35f, 0.35f, 0.45f, 1f));
-            UtilidadesDesafio.Estirar(marcoSalida.rectTransform);
+            Sprite puerta = TemasEscape.Obtener(nivel, "salida");
 
-            Image hueco = UtilidadesDesafio.CrearPanel("Hueco", salida, null,
-                new Color(0.03f, 0.03f, 0.07f, 0.95f), false);
-            UtilidadesDesafio.Estirar(hueco.rectTransform, 7f);
+            if (puerta != null)
+            {
+                marcoSalida = UtilidadesDesafio.CrearPanel("Marco", salida, puerta, Color.white, false);
+                marcoSalida.preserveAspect = true;
+                UtilidadesDesafio.Colocar(marcoSalida.rectTransform, new Vector2(0.5f, 0f),
+                    new Vector2(0f, 44f), new Vector2(60f, 88f));
+            }
+            else
+            {
+                marcoSalida = UtilidadesDesafio.CrearPanel("Marco", salida, SpriteRedondeado,
+                    new Color(0.35f, 0.35f, 0.45f, 1f));
+                UtilidadesDesafio.Estirar(marcoSalida.rectTransform);
+
+                Image hueco = UtilidadesDesafio.CrearPanel("Hueco", salida, null,
+                    new Color(0.03f, 0.03f, 0.07f, 0.95f), false);
+                UtilidadesDesafio.Estirar(hueco.rectTransform, 7f);
+            }
         }
 
-        textoSalida = UtilidadesDesafio.CrearTexto("Texto", salida, Fuente, "SALIDA", 11f, Gris);
+        textoSalida = UtilidadesDesafio.CrearTexto("Texto", salida, Fuente,
+            nivel == 2 ? "PASTEL" : "SALIDA", 11f, Gris);
         UtilidadesDesafio.Colocar(textoSalida.rectTransform, new Vector2(0.5f, 0f),
-            new Vector2(0f, 44f), new Vector2(90f, 18f));
+            new Vector2(0f, nivel == 2 ? -4f : 44f), new Vector2(90f, 18f));
     }
 
     private void CrearDestello()
@@ -1027,7 +1082,9 @@ public class DesafioEscape : DesafioSnap
         Color color = salidaAbierta ? Color.white : new Color(0.45f, 0.42f, 0.55f, 1f);
         marcoSalida.color = color;
         textoSalida.color = salidaAbierta ? Verde : Gris;
-        textoSalida.text = salidaAbierta ? "SALIDA" : "BLOQUEADA";
+        textoSalida.text = nivel == 2
+            ? (salidaAbierta ? "HBD!" : "VELAS")
+            : (salidaAbierta ? "SALIDA" : "BLOQUEADA");
 
         if (brilloSalida != null)
             brilloSalida.color = salidaAbierta
@@ -1041,9 +1098,9 @@ public class DesafioEscape : DesafioSnap
 
         if (totalLlaves > 0)
         {
-            string etiqueta = nivel == 1 ? "DULCES " : "SNAPS ";
+            string etiqueta = nivel == 1 ? "DULCES " : nivel == 2 ? "VELAS " : "SNAPS ";
             textoProgreso.text = salidaAbierta
-                ? "SALIDA ABIERTA"
+                ? (nivel == 2 ? "PASTEL LISTO" : "SALIDA ABIERTA")
                 : etiqueta + llavesRecogidas + "/" + totalLlaves;
             textoProgreso.color = salidaAbierta ? Verde : Amarillo;
         }
@@ -1225,11 +1282,12 @@ public class DesafioEscape : DesafioSnap
         {
             UtilidadesDesafio.Sonido("sfx_snap", 0.6f);
             UtilidadesDesafio.Sacudir(raiz, 4f, 0.12f);
-            MostrarEstado((nivel == 1 ? "DULCE " : "SNAP ") + llavesRecogidas + "/" + totalLlaves, Amarillo, 0.8f);
+            string etiqueta = nivel == 1 ? "DULCE " : nivel == 2 ? "VELA " : "SNAP ";
+            MostrarEstado(etiqueta + llavesRecogidas + "/" + totalLlaves, Amarillo, 0.8f);
         }
         else if (evento == 3)
         {
-            MostrarEstado("SALIDA ABIERTA", Verde, 1.2f);
+            MostrarEstado(nivel == 2 ? "PASTEL LISTO" : "SALIDA ABIERTA", Verde, 1.2f);
             UtilidadesDesafio.Sonido("sfx_ronda", 0.7f);
         }
         else if (evento == 4)
@@ -1242,7 +1300,7 @@ public class DesafioEscape : DesafioSnap
         }
         else if (evento == 6)
         {
-            MostrarEstado("ESCAPASTE", Verde, 2f);
+            MostrarEstado(nivel == 2 ? "FELIZ CUMPLE!" : "ESCAPASTE", Verde, 2f);
             UtilidadesDesafio.Sonido("sfx_acierto");
         }
     }
@@ -1280,17 +1338,17 @@ public class DesafioEscape : DesafioSnap
 
     private void CrearEscombroRemoto()
     {
-        RectTransform rt = UtilidadesDesafio.CrearRect("EscombroRemoto", capaJuego);
+        RectTransform rt = UtilidadesDesafio.CrearRect(nivel == 2 ? "RegaloRemoto" : "EscombroRemoto", capaJuego);
         rt.anchorMin = new Vector2(0.5f, 0.5f);
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(28f, 28f);
+        rt.sizeDelta = new Vector2(nivel == 2 ? 22f : 28f, nivel == 2 ? 22f : 28f);
 
         Image img = rt.gameObject.AddComponent<Image>();
         img.sprite = SpriteRedondeado;
         img.type = Image.Type.Sliced;
-        img.color = new Color(1f, 0.45f, 0.12f, 1f);
         img.raycastTarget = false;
+        ConfigurarEscombroVisual(img, rt, escombros.Count);
 
         escombros.Add(new EscombroEscape { rt = rt, velocidad = 0f, giro = 0f });
     }
@@ -1532,7 +1590,7 @@ public class DesafioEscape : DesafioSnap
             float distancia = haciaJugador.magnitude;
             if (distancia > 0.01f)
             {
-                float paso = Mathf.Min(VelocidadFantasmas * dt, distancia);
+                float paso = Mathf.Min(fantasma.velocidadPersecucion * dt, distancia);
                 fantasma.rt.anchoredPosition = posicionActual + haciaJugador / distancia * paso;
             }
 
@@ -1540,7 +1598,7 @@ public class DesafioEscape : DesafioSnap
             return;
         }
 
-        float distanciaRestante = VelocidadFantasmas * dt;
+        float distanciaRestante = VelocidadPatrullaFantasmas * dt;
         int pasos = 0;
         while (distanciaRestante > 0f && pasos < fantasma.rutaPatrulla.Length)
         {
@@ -1679,18 +1737,18 @@ public class DesafioEscape : DesafioSnap
 
     private void CrearEscombro()
     {
-        RectTransform rt = UtilidadesDesafio.CrearRect("Escombro", capaJuego);
+        RectTransform rt = UtilidadesDesafio.CrearRect(nivel == 2 ? "Regalo" : "Escombro", capaJuego);
         rt.anchorMin = new Vector2(0.5f, 0.5f);
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(28f, 28f);
+        rt.sizeDelta = new Vector2(nivel == 2 ? 22f : 28f, nivel == 2 ? 22f : 28f);
         rt.anchoredPosition = new Vector2(Random.Range(-170f, 170f), yTope + 100f);
 
         Image img = rt.gameObject.AddComponent<Image>();
         img.sprite = SpriteRedondeado;
         img.type = Image.Type.Sliced;
-        img.color = new Color(1f, 0.45f, 0.12f, 1f);
         img.raycastTarget = false;
+        ConfigurarEscombroVisual(img, rt, escombros.Count);
 
         escombros.Add(new EscombroEscape
         {
@@ -1698,6 +1756,32 @@ public class DesafioEscape : DesafioSnap
             velocidad = Random.Range(260f, 360f),
             giro = Random.Range(-140f, 140f)
         });
+    }
+
+    private void ConfigurarEscombroVisual(Image imagen, Transform padre, int indice)
+    {
+        if (nivel != 2)
+        {
+            imagen.color = new Color(1f, 0.45f, 0.12f, 1f);
+            return;
+        }
+
+        Color[] coloresRegalo =
+        {
+            new Color(1f, 0.35f, 0.55f, 1f),
+            new Color(0.3f, 0.72f, 1f, 1f),
+            new Color(0.55f, 0.9f, 0.45f, 1f)
+        };
+        imagen.color = coloresRegalo[indice % coloresRegalo.Length];
+
+        Image cintaVertical = UtilidadesDesafio.CrearPanel("CintaVertical", padre, SpriteRedondeado,
+            new Color(1f, 0.84f, 0.3f, 1f), false);
+        UtilidadesDesafio.Estirar(cintaVertical.rectTransform, 8f);
+
+        Image cintaHorizontal = UtilidadesDesafio.CrearPanel("CintaHorizontal", padre, SpriteRedondeado,
+            new Color(1f, 0.84f, 0.3f, 1f), false);
+        UtilidadesDesafio.Colocar(cintaHorizontal.rectTransform, new Vector2(0.5f, 0.5f),
+            Vector2.zero, new Vector2(22f, 4f));
     }
 
     private void LimpiarEscombros()
@@ -1735,7 +1819,8 @@ public class DesafioEscape : DesafioSnap
 
             UtilidadesDesafio.Sonido("sfx_snap", 0.6f);
             UtilidadesDesafio.Sacudir(raiz, 4f, 0.12f);
-            MostrarEstado((nivel == 1 ? "DULCE " : "SNAP ") + llavesRecogidas + "/" + totalLlaves, Amarillo, 0.8f);
+            string etiqueta = nivel == 1 ? "DULCE " : nivel == 2 ? "VELA " : "SNAP ";
+            MostrarEstado(etiqueta + llavesRecogidas + "/" + totalLlaves, Amarillo, 0.8f);
             ActualizarProgreso();
 
             if (online && esAnfitrion && red != null)
@@ -1753,7 +1838,7 @@ public class DesafioEscape : DesafioSnap
         salidaAbierta = true;
         ActualizarSalida();
         ActualizarProgreso();
-        MostrarEstado("SALIDA ABIERTA", Verde, 1.2f);
+        MostrarEstado(nivel == 2 ? "PASTEL LISTO" : "SALIDA ABIERTA", Verde, 1.2f);
         UtilidadesDesafio.Sonido("sfx_ronda", 0.7f);
 
         if (online && esAnfitrion && red != null)
@@ -1778,7 +1863,7 @@ public class DesafioEscape : DesafioSnap
 
         if (usaMarea && jugadorRect.yMin < subidaY)
         {
-            RecibirDano("TE ALCANZO LA MAREA", esP2);
+            RecibirDano(nivel == 2 ? "TE ALCANZO EL GLASEADO" : "TE ALCANZO LA MAREA", esP2);
             return true;
         }
 
@@ -1814,7 +1899,7 @@ public class DesafioEscape : DesafioSnap
 
             Destroy(e.rt.gameObject);
             escombros.RemoveAt(i);
-            RecibirDano("TE GOLPEO UN ESCOMBRO", esP2);
+            RecibirDano(nivel == 2 ? "TE CAYO UN REGALO" : "TE GOLPEO UN ESCOMBRO", esP2);
             return true;
         }
 
@@ -1979,7 +2064,7 @@ public class DesafioEscape : DesafioSnap
         if (!activo) return;
 
         activo = false;
-        MostrarEstado("ESCAPASTE", Verde, 2f);
+        MostrarEstado(nivel == 2 ? "FELIZ CUMPLE!" : "ESCAPASTE", Verde, 2f);
         UtilidadesDesafio.Sonido("sfx_acierto");
         LimpiarEscombros();
 

@@ -9,18 +9,20 @@ using UnityEngine.InputSystem;
 public class JuegoDinoChrome : MonoBehaviour
 {
     private const float SueloY = 112f;
+    private const float DinoX = 150f;
     private static readonly string[] NombresExtensiones = { "YOUTUBE", "MAPS", "DRIVE", "TRADUCTOR", "GMAIL" };
     private static readonly string[] SiglasExtensiones = { "YT", "M", "D", "TR", "G" };
     private readonly List<RectTransform> obstaculos = new List<RectTransform>();
-    private readonly List<RectTransform> nubes = new List<RectTransform>();
+    [SerializeField] private List<RectTransform> nubes = new List<RectTransform>();
     private readonly List<ObjetivoExtension> objetivos = new List<ObjetivoExtension>();
     private readonly HashSet<int> extensionesGolpeadas = new HashSet<int>();
-    private RectTransform dino;
-    private RectTransform suelo;
-    private TextMeshProUGUI puntuacion;
-    private TextMeshProUGUI progresoExtensiones;
-    private TextMeshProUGUI aviso;
-    private RectTransform brazoGolpe;
+    [SerializeField] private RectTransform dino;
+    [SerializeField] private RectTransform suelo;
+    [SerializeField] private TextMeshProUGUI puntuacion;
+    [SerializeField] private TextMeshProUGUI progresoExtensiones;
+    [SerializeField] private TextMeshProUGUI aviso;
+    [SerializeField] private RectTransform brazoGolpe;
+    [SerializeField, HideInInspector] private bool interfazCreada;
     private GameObject panelFinal;
     private float velocidadY;
     private float relojObstaculo = 1.5f;
@@ -40,7 +42,43 @@ public class JuegoDinoChrome : MonoBehaviour
         public RectTransform rect;
     }
 
-    private void Start() { CrearInterfaz(); }
+    private void Start()
+    {
+        if (!interfazCreada) CrearInterfaz();
+        else
+        {
+            AplicarEscalaGrande();
+            escalaDino = dino.sizeDelta;
+        }
+    }
+
+    private void AplicarEscalaGrande()
+    {
+        // The scene may already contain an older, smaller baked Canvas.
+        const float escala = 2f;
+        dino.sizeDelta = new Vector2(220f, 235f);
+        suelo.sizeDelta = new Vector2(suelo.sizeDelta.x, 8f);
+        foreach (RectTransform nube in nubes)
+            if (nube != null) nube.sizeDelta *= escala;
+
+        RectTransform puntuacionRect = puntuacion.rectTransform;
+        puntuacionRect.sizeDelta *= escala;
+        puntuacion.fontSize *= escala;
+        RectTransform progresoRect = progresoExtensiones.rectTransform;
+        progresoRect.sizeDelta *= escala;
+        progresoExtensiones.fontSize *= escala;
+        RectTransform avisoRect = aviso.rectTransform;
+        avisoRect.sizeDelta *= escala;
+        aviso.fontSize *= escala;
+        brazoGolpe.sizeDelta *= escala;
+    }
+
+    public void GenerarVistaEditable()
+    {
+        if (interfazCreada) return;
+        CrearInterfaz();
+        interfazCreada = true;
+    }
 
     private void Update()
     {
@@ -52,14 +90,14 @@ public class JuegoDinoChrome : MonoBehaviour
 
         bool saltar = SaltarPresionado();
         agachado = AgacharsePresionado();
-        if (saltar && Mathf.Abs(dino.anchoredPosition.y - SueloY) < 0.5f && !agachado) velocidadY = 760f;
-        velocidadY -= 1900f * Time.deltaTime;
+        if (saltar && Mathf.Abs(dino.anchoredPosition.y - SueloY) < 0.5f && !agachado) velocidadY = 740f;
+        velocidadY -= 1800f * Time.deltaTime;
         Vector2 posDino = dino.anchoredPosition;
         posDino.y = Mathf.Max(SueloY, posDino.y + velocidadY * Time.deltaTime);
         if (posDino.y <= SueloY) velocidadY = 0f;
         dino.anchoredPosition = posDino;
         bool tumbado = agachado && posDino.y <= SueloY;
-        dino.sizeDelta = tumbado ? new Vector2(100f, 48f) : escalaDino;
+        dino.sizeDelta = tumbado ? new Vector2(190f, 110f) : escalaDino;
         dino.GetComponent<Image>().preserveAspect = !tumbado;
 
         puntos += Time.deltaTime * 10f;
@@ -97,11 +135,15 @@ public class JuegoDinoChrome : MonoBehaviour
             RectTransform o = obstaculos[i];
             o.anchoredPosition += Vector2.left * (420f + puntos * 1.2f) * Time.deltaTime;
             if (o.anchoredPosition.x < -1050f) { Destroy(o.gameObject); obstaculos.RemoveAt(i); continue; }
-            bool solapaX = Mathf.Abs(o.anchoredPosition.x - dino.anchoredPosition.x) < (o.sizeDelta.x + dino.sizeDelta.x) * 0.38f;
             bool ave = o.name == "Ave pixel";
             float obstaculoAbajo = ave ? o.anchoredPosition.y - o.sizeDelta.y * 0.5f : o.anchoredPosition.y;
             float obstaculoArriba = ave ? o.anchoredPosition.y + o.sizeDelta.y * 0.5f : o.anchoredPosition.y + o.sizeDelta.y;
-            bool solapaY = dino.anchoredPosition.y < obstaculoArriba && dino.anchoredPosition.y + dino.sizeDelta.y > obstaculoAbajo;
+            float anchoObstaculo = ave ? 58f : 68f;
+            const float anchoHitboxDino = 58f;
+            const float altoHitboxDino = 68f;
+            bool solapaX = Mathf.Abs(o.anchoredPosition.x - dino.anchoredPosition.x) < (anchoObstaculo + anchoHitboxDino) * 0.5f;
+            bool solapaY = dino.anchoredPosition.y < obstaculoArriba &&
+                dino.anchoredPosition.y + altoHitboxDino > obstaculoAbajo;
             if (jugando && solapaX && solapaY) Terminar();
         }
 
@@ -120,28 +162,28 @@ public class JuegoDinoChrome : MonoBehaviour
         RectTransform root = canvas.GetComponent<RectTransform>();
         Color tinta = new Color(0.32f, 0.34f, 0.35f);
         CrearImagen("Fondo", root, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1920, 1080), Color.white);
-        puntuacion = Texto("00000", root, new Vector2(1f, 1f), new Vector2(-105f, -70f), new Vector2(210, 42), 24, tinta, FontStyles.Bold);
+        puntuacion = Texto("00000", root, new Vector2(1f, 1f), new Vector2(-120f, -76f), new Vector2(240, 52), 30, tinta, FontStyles.Bold);
         puntuacion.alignment = TextAlignmentOptions.Right;
-        progresoExtensiones = Texto("EXTENSIONES  0/5", root, new Vector2(1f, 1f), new Vector2(-105f, -108f), new Vector2(210, 30), 15, tinta, FontStyles.Normal);
+        progresoExtensiones = Texto("EXTENSIONES  0/5", root, new Vector2(1f, 1f), new Vector2(-120f, -122f), new Vector2(260, 38), 18, tinta, FontStyles.Normal);
         progresoExtensiones.alignment = TextAlignmentOptions.Right;
-        aviso = Texto("ESPACIO: SALTAR  ·  ↓: AGACHARSE  ·  CLIC / X / RT: GOLPEAR", root, new Vector2(0.5f, 1f), new Vector2(0, -70f), new Vector2(620, 34), 15, new Color(0.55f, 0.57f, 0.58f), FontStyles.Normal);
+        aviso = Texto("ESPACIO: SALTAR  ·  ↓: AGACHARSE  ·  CLIC / X / RT: GOLPEAR", root, new Vector2(0.5f, 1f), new Vector2(0, -78f), new Vector2(820, 46), 19, new Color(0.55f, 0.57f, 0.58f), FontStyles.Normal);
         CrearNube(root, 720f, 590f);
         CrearNube(root, 1240f, 720f);
         CrearNube(root, 1770f, 530f);
-        suelo = CrearImagen("Suelo", root, new Vector2(0.5f, 0), new Vector2(0, 112), new Vector2(2200, 3), tinta);
+        suelo = CrearImagen("Suelo", root, new Vector2(0.5f, 0), new Vector2(0, 112), new Vector2(2200, 5), tinta);
         for (int i = 0; i < 55; i++)
         {
             float x = i * 43f;
             CrearImagen("Marca del suelo", suelo, new Vector2(0, 0.5f), new Vector2(x, 0), new Vector2(8, 2), new Color(0.68f, 0.69f, 0.69f));
             if (i % 3 == 0) CrearImagen("Marca del suelo", suelo, new Vector2(0, 0.5f), new Vector2(x + 17f, -1f), new Vector2(3, 2), new Color(0.72f, 0.73f, 0.73f));
         }
-        dino = CrearImagen("Dino Chrome", root, new Vector2(0, 0), new Vector2(300, SueloY), new Vector2(96, 84), tinta);
+        dino = CrearImagen("Dino Chrome", root, new Vector2(0, 0), new Vector2(DinoX, SueloY), new Vector2(220, 235), tinta);
         dino.pivot = new Vector2(0.5f, 0f);
         Sprite sprite = Resources.Load<Sprite>("Dino_Chrome");
         if (sprite == null) sprite = UnityEditorAssetSprite();
         if (sprite != null) dino.GetComponent<Image>().sprite = sprite;
         dino.GetComponent<Image>().preserveAspect = true; escalaDino = dino.sizeDelta;
-        brazoGolpe = CrearImagen("Golpe", root, Vector2.zero, Vector2.zero, new Vector2(38f, 15f), tinta);
+        brazoGolpe = CrearImagen("Golpe", root, Vector2.zero, Vector2.zero, new Vector2(50f, 19f), tinta);
         brazoGolpe.gameObject.SetActive(false);
         MostrarAviso("ESPACIO: SALTAR  ·  ↓: AGACHARSE  ·  CLIC / X / RT: GOLPEAR", 5f);
     }
@@ -185,11 +227,11 @@ public class JuegoDinoChrome : MonoBehaviour
         int indice = disponibles[Random.Range(0, disponibles.Count)];
         float y = Random.value > 0.5f ? SueloY + 68f : SueloY + 126f;
         RectTransform placa = CrearImagen("Extension " + NombresExtensiones[indice], dino.parent,
-            Vector2.zero, new Vector2(2050f, y), new Vector2(42f, 42f), new Color(0.32f, 0.34f, 0.35f));
+            Vector2.zero, new Vector2(2050f, y), new Vector2(104f, 104f), new Color(0.32f, 0.34f, 0.35f));
         RectTransform fondo = CrearImagen("Fondo icono", placa, new Vector2(0.5f, 0.5f), Vector2.zero,
-            new Vector2(34f, 34f), Color.white);
+            new Vector2(84f, 84f), Color.white);
         Texto(SiglasExtensiones[indice], fondo, new Vector2(0.5f, 0.5f), Vector2.zero,
-            new Vector2(32f, 30f), 15f, new Color(0.32f, 0.34f, 0.35f), FontStyles.Bold);
+            new Vector2(80f, 76f), 36f, new Color(0.32f, 0.34f, 0.35f), FontStyles.Bold);
         objetivos.Add(new ObjetivoExtension { indice = indice, rect = placa });
     }
 
@@ -263,11 +305,11 @@ public class JuegoDinoChrome : MonoBehaviour
 
     private void CrearNube(Transform root, float x, float y)
     {
-        RectTransform nube = CrearImagen("Nube", root, Vector2.zero, new Vector2(x, y), new Vector2(112, 16), new Color(0.87f, 0.88f, 0.88f));
+        RectTransform nube = CrearImagen("Nube", root, Vector2.zero, new Vector2(x, y), new Vector2(132, 20), new Color(0.87f, 0.88f, 0.88f));
         nube.pivot = new Vector2(0.5f, 0.5f);
-        CrearImagen("Nube pixel", nube, new Vector2(0.5f, 0.5f), new Vector2(-24, 9), new Vector2(28, 16), nube.GetComponent<Image>().color);
-        CrearImagen("Nube pixel", nube, new Vector2(0.5f, 0.5f), new Vector2(1, 14), new Vector2(32, 22), nube.GetComponent<Image>().color);
-        CrearImagen("Nube pixel", nube, new Vector2(0.5f, 0.5f), new Vector2(27, 7), new Vector2(27, 14), nube.GetComponent<Image>().color);
+        CrearImagen("Nube pixel", nube, new Vector2(0.5f, 0.5f), new Vector2(-28, 12), new Vector2(34, 20), nube.GetComponent<Image>().color);
+        CrearImagen("Nube pixel", nube, new Vector2(0.5f, 0.5f), new Vector2(1, 17), new Vector2(40, 28), nube.GetComponent<Image>().color);
+        CrearImagen("Nube pixel", nube, new Vector2(0.5f, 0.5f), new Vector2(31, 9), new Vector2(32, 18), nube.GetComponent<Image>().color);
         nubes.Add(nube);
     }
 
@@ -305,23 +347,26 @@ public class JuegoDinoChrome : MonoBehaviour
     private void CrearObstaculo()
     {
         bool ave = Random.value > 0.76f && puntos > 80;
-        float alto = ave ? 44f : Random.Range(54f, 86f);
-        RectTransform o = CrearImagen(ave ? "Ave pixel" : "Cactus", dino.parent, new Vector2(0, 0), new Vector2(2050, SueloY), new Vector2(ave ? 72 : 38, alto), new Color(0.24f, 0.27f, 0.28f));
+        float alto = ave ? 38f : Random.Range(78f, 124f);
+        Color tinta = new Color(0.32f, 0.34f, 0.35f);
+        RectTransform o = CrearImagen(ave ? "Ave pixel" : "Cactus", dino.parent, new Vector2(0, 0), new Vector2(2050, SueloY), new Vector2(ave ? 58 : 32, alto), tinta);
         if (ave)
         {
-            o.sizeDelta = new Vector2(58f, 18f);
+            o.sizeDelta = new Vector2(58f, 28f);
             o.anchoredPosition = new Vector2(2050, SueloY + 94f);
-            CrearImagen("Ala pixel", o, new Vector2(0.5f, 0.5f), new Vector2(-4, 10), new Vector2(15, 20), o.GetComponent<Image>().color);
-            CrearImagen("Pico pixel", o, new Vector2(0.5f, 0.5f), new Vector2(34, 2), new Vector2(13, 7), o.GetComponent<Image>().color);
-            CrearImagen("Cola pixel", o, new Vector2(0.5f, 0.5f), new Vector2(-33, 1), new Vector2(11, 12), o.GetComponent<Image>().color);
+            CrearImagen("Ala pixel", o, new Vector2(0.5f, 0.5f), new Vector2(-4, 9), new Vector2(13, 20), o.GetComponent<Image>().color);
+            CrearImagen("Pico pixel", o, new Vector2(0.5f, 0.5f), new Vector2(27, 2), new Vector2(11, 7), o.GetComponent<Image>().color);
+            CrearImagen("Cola pixel", o, new Vector2(0.5f, 0.5f), new Vector2(-27, 1), new Vector2(10, 12), o.GetComponent<Image>().color);
         }
         else
         {
+            // The main rect is only the narrow cactus trunk. Its arms stay
+            // separate so increasing its height never turns the cactus into a block.
             o.pivot = new Vector2(0.5f, 0f);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-23, 5), new Vector2(18, 12), o.GetComponent<Image>().color);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-30, 14), new Vector2(12, 26), o.GetComponent<Image>().color);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(23, 18), new Vector2(18, 12), o.GetComponent<Image>().color);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(30, 28), new Vector2(12, 28), o.GetComponent<Image>().color);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-22, 8), new Vector2(18, 12), o.GetComponent<Image>().color);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-30, 16), new Vector2(11, 28), o.GetComponent<Image>().color);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(22, 20), new Vector2(18, 12), o.GetComponent<Image>().color);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(30, 30), new Vector2(11, 29), o.GetComponent<Image>().color);
         }
         obstaculos.Add(o); relojObstaculo = Random.Range(1.25f, 2.15f);
     }
@@ -341,7 +386,7 @@ public class JuegoDinoChrome : MonoBehaviour
         obstaculos.Clear(); if (panelFinal != null) Destroy(panelFinal);
         foreach (ObjetivoExtension objetivo in objetivos) if (objetivo.rect != null) Destroy(objetivo.rect.gameObject);
         objetivos.Clear();
-        puntos = 0; velocidadY = 0; relojObstaculo = 1.5f; dino.anchoredPosition = new Vector2(300, SueloY); dino.sizeDelta = escalaDino; jugando = true;
+        puntos = 0; velocidadY = 0; relojObstaculo = 1.5f; dino.anchoredPosition = new Vector2(DinoX, SueloY); dino.sizeDelta = escalaDino; jugando = true;
         relojObjetivo = 2.4f; relojSuelo = 0f; extensionesGolpeadas.Clear(); tiempoGolpe = 0f; progresoExtensiones.text = "EXTENSIONES  0/5"; puntuacion.text = "00000"; brazoGolpe.gameObject.SetActive(false);
         MostrarAviso("ESPACIO: SALTAR  ·  ↓: AGACHARSE  ·  CLIC / X / RT: GOLPEAR", 5f);
     }

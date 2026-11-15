@@ -17,6 +17,7 @@ public class part2Youtube : MonoBehaviour
     [SerializeField] private GameObject camera;
 
     private bool toStart = false;
+  
     private void Start()
     {
         loadingImage.gameObject.SetActive(false);
@@ -91,6 +92,7 @@ public class part2Youtube : MonoBehaviour
             yield return null;
         }
         Time.timeScale = 1f;
-        SceneManager.LoadScene("LevelYoutubev2");
+
+        MultijugadorJuego.Instancia.CargarSiguienteEscena("LevelYoutubev2");
     }
 }

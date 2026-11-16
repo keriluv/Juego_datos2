@@ -12,22 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 558a8e2b6826cf840aae193990ba9f2e, type: 3}
   m_Name: ShadowsMidtonesHighlights
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ShadowsMidtonesHighlights
-  active: 0
+  active: 1
   shadows:
     m_OverrideState: 1
-    m_Value: {x: 0.9911534, y: 1, z: 0.9688968, w: 0}
+    m_Value: {x: 0.9431815, y: 0.75814, z: 1, w: -0.29990074}
   midtones:
     m_OverrideState: 1
-    m_Value: {x: 0.8156828, y: 0.9260387, z: 1, w: 0}
+    m_Value: {x: 0.7224338, y: 0.7383846, z: 1, w: -1}
   highlights:
-    m_OverrideState: 0
-    m_Value: {x: 0.9706744, y: 1, z: 0, w: -0.07350074}
-  shadowsStart:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: {x: 0.5343665, y: 0.8443565, z: 1, w: 1}
+  shadowsStart:
+    m_OverrideState: 0
+    m_Value: 10
   shadowsEnd:
     m_OverrideState: 1
-    m_Value: 0.343
+    m_Value: 22
   highlightsStart:
     m_OverrideState: 0
     m_Value: 0.55
@@ -55,22 +55,22 @@ MonoBehaviour:
     m_Value: 1.2
   intensity:
     m_OverrideState: 1
-    m_Value: 0.1
+    m_Value: 1.29
   scatter:
     m_OverrideState: 1
-    m_Value: 0.485
+    m_Value: 0.986
   clamp:
     m_OverrideState: 1
     m_Value: 10
   tint:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: {r: 0, g: 0, b: 0, a: 1}
   highQualityFiltering:
     m_OverrideState: 1
     m_Value: 1
   filter:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0
   downscale:
     m_OverrideState: 0
     m_Value: 0
@@ -96,16 +96,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66f335fb1ffd8684294ad653bf1c7564, type: 3}
   m_Name: ColorAdjustments
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ColorAdjustments
-  active: 0
+  active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: 1.78
+    m_Value: -0.07
   contrast:
     m_OverrideState: 0
     m_Value: 0
   colorFilter:
-    m_OverrideState: 1
-    m_Value: {r: 0.88429105, g: 0.745283, b: 1, a: 1}
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
   hueShift:
     m_OverrideState: 0
     m_Value: 0
@@ -127,10 +127,10 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 2.66
+    m_Value: 3.12
   tintColor:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 1, b: 1, a: 1}
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
   bloomMip:
     m_OverrideState: 0
     m_Value: 1
@@ -191,10 +191,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 899c54efeace73346a0a16faa3afe726, type: 3}
   m_Name: Vignette
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   color:
     m_OverrideState: 1
-    m_Value: {r: 0, g: 0, b: 0, a: 1}
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
   center:
     m_OverrideState: 0
     m_Value: {x: 0.5, y: 0.5}
@@ -286,11 +286,11 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 1
   gaussianStart:
-    m_OverrideState: 1
-    m_Value: 16.8
+    m_OverrideState: 0
+    m_Value: 10
   gaussianEnd:
     m_OverrideState: 1
-    m_Value: 33.8
+    m_Value: 22
   gaussianMaxRadius:
     m_OverrideState: 0
     m_Value: 1
@@ -330,7 +330,7 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.101
+    m_Value: 0.247
 --- !u!114 &7391319092446245454
 MonoBehaviour:
   m_ObjectHideFlags: 3

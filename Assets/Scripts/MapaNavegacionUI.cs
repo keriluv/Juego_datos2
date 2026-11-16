@@ -50,6 +50,7 @@ public class ConexionConfig
 public class MapaNavegacionUI : MonoBehaviour
 {
     private enum Modo { Navegar, Ruta, Completar }
+    [SerializeField] private RectTransform panelMapa;
 
     private class NodoVisual
     {
@@ -135,7 +136,6 @@ public class MapaNavegacionUI : MonoBehaviour
         CrearInterfaz();
         DeterminarNivelActual();
         Refrescar();
-        ActualizarBotonesModo();
         MostrarInfo(MensajeNavegar);
     }
 
@@ -233,34 +233,23 @@ public class MapaNavegacionUI : MonoBehaviour
 
     private void CrearInterfaz()
     {
-        var canvasGO = new GameObject("CanvasMapa", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        canvasGO.transform.SetParent(transform, false);
+        if (panelMapa == null)
+        {
+            Debug.LogError("No has asignado el PanelMapa.");
+            return;
+        }
 
-        var canvas = canvasGO.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-
-        var scaler = canvasGO.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1280, 720);
-        scaler.matchWidthOrHeight = 0.5f;
-
-        if (FindFirstObjectByType<EventSystem>() == null)
-            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+        raiz = panelMapa;
 
         spriteFlecha = CrearSpriteFlecha();
 
-        raiz = CrearRect("Fondo", canvasGO.transform);
-        Estirar(raiz);
-        var fondo = raiz.gameObject.AddComponent<Image>();
-        fondo.sprite = CrearSpriteDegradado();
-        fondo.color = Color.white;
-        fondo.raycastTarget = false;
+        foreach (var c in conexiones)
+            DibujarArista(c);
 
-        foreach (var c in conexiones) DibujarArista(c);
-        foreach (var n in niveles) DibujarNodo(n);
+        foreach (var n in niveles)
+            DibujarNodo(n);
+
         CrearPastillas();
-        CrearHUD();
-        CrearLeyenda();
     }
 
     private void DibujarArista(ConexionConfig c)
@@ -432,16 +421,6 @@ public class MapaNavegacionUI : MonoBehaviour
         sombra.effectColor = new Color(0f, 0f, 0f, 0.45f);
         sombra.effectDistance = new Vector2(0f, -4f);
 
-        var boton = r.gameObject.AddComponent<Button>();
-        boton.targetGraphic = borde;
-        boton.transition = Selectable.Transition.None;
-        int id = n.id;
-        boton.onClick.AddListener(() => AlHacerClicNodo(id));
-
-        var trigger = r.gameObject.AddComponent<EventTrigger>();
-        AgregarEvento(trigger, EventTriggerType.PointerEnter, () => idHover = id);
-        AgregarEvento(trigger, EventTriggerType.PointerExit, () => { if (idHover == id) idHover = -1; });
-
         var relleno = CrearRect("Relleno", r);
         Estirar(relleno);
         relleno.offsetMin = new Vector2(3f, 3f);
@@ -475,213 +454,10 @@ public class MapaNavegacionUI : MonoBehaviour
         estado.rectTransform.anchorMax = new Vector2(1f, 0.45f);
         estado.rectTransform.offsetMin = new Vector2(18f, 0f);
         estado.rectTransform.offsetMax = new Vector2(-6f, 0f);
+        int id = n.id;
 
         nodos[id] = new NodoVisual { rect = r, borde = borde, barra = barra, nombre = nombre, estado = estado };
     }
-
-    private void AgregarEvento(EventTrigger trigger, EventTriggerType tipo, UnityEngine.Events.UnityAction accion)
-    {
-        var entrada = new EventTrigger.Entry { eventID = tipo };
-        entrada.callback.AddListener(_ => accion());
-        trigger.triggers.Add(entrada);
-    }
-
-    private void CrearHUD()
-    {
-        var titulo = CrearTexto("Titulo", raiz, "Mapa de navegación", 32, TextAnchor.MiddleCenter);
-        titulo.fontStyle = FontStyle.Bold;
-        titulo.rectTransform.anchorMin = titulo.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-        titulo.rectTransform.sizeDelta = new Vector2(600f, 44f);
-        titulo.rectTransform.anchoredPosition = new Vector2(0f, -36f);
-
-        var subtitulo = CrearTexto("Subtitulo", raiz, "Grafo dirigido y ponderado de niveles", 15, TextAnchor.MiddleCenter);
-        subtitulo.color = colorTextoSuave;
-        subtitulo.rectTransform.anchorMin = subtitulo.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-        subtitulo.rectTransform.sizeDelta = new Vector2(600f, 24f);
-        subtitulo.rectTransform.anchoredPosition = new Vector2(0f, -66f);
-
-        var panel = CrearRect("PanelInfo", raiz);
-        panel.anchorMin = panel.anchorMax = new Vector2(0.5f, 0f);
-        panel.sizeDelta = new Vector2(900f, 96f);
-        panel.anchoredPosition = new Vector2(100f, 62f);
-        var panelImg = panel.gameObject.AddComponent<Image>();
-        panelImg.sprite = SpriteRedondeado(14);
-        panelImg.type = Image.Type.Sliced;
-        panelImg.color = new Color(0.07f, 0.08f, 0.13f, 0.92f);
-        panelImg.raycastTarget = false;
-
-        textoInfo = CrearTexto("Info", panel, "", 20, TextAnchor.MiddleCenter);
-        Estirar(textoInfo.rectTransform);
-        textoInfo.rectTransform.offsetMin = new Vector2(16f, 8f);
-        textoInfo.rectTransform.offsetMax = new Vector2(-16f, -8f);
-
-        botonesModo[0] = CrearBotonHUD("Navegar", 0, () => CambiarModo(Modo.Navegar));
-        botonesModo[1] = CrearBotonHUD("Ruta más corta", 1, () => CambiarModo(Modo.Ruta));
-        botonesModo[2] = CrearBotonHUD("Completar (demo)", 2, () => CambiarModo(Modo.Completar));
-        CrearBotonHUD("Recorrido BFS", 3, () => MostrarRecorrido(true));
-        CrearBotonHUD("Recorrido DFS", 4, () => MostrarRecorrido(false));
-        CrearBotonHUD("Reiniciar progreso", 5, ReiniciarProgreso);
-    }
-
-    private Image CrearBotonHUD(string texto, int indice, UnityEngine.Events.UnityAction accion)
-    {
-        var r = CrearRect("Boton_" + texto, raiz);
-        r.anchorMin = r.anchorMax = new Vector2(0f, 1f);
-        r.pivot = new Vector2(0f, 1f);
-        r.sizeDelta = new Vector2(210f, 44f);
-        r.anchoredPosition = new Vector2(20f, -100f - indice * 54f);
-
-        var img = r.gameObject.AddComponent<Image>();
-        img.sprite = SpriteRedondeado(10);
-        img.type = Image.Type.Sliced;
-        img.color = colorBoton;
-
-        var sombra = r.gameObject.AddComponent<Shadow>();
-        sombra.effectColor = new Color(0f, 0f, 0f, 0.35f);
-        sombra.effectDistance = new Vector2(0f, -3f);
-
-        var boton = r.gameObject.AddComponent<Button>();
-        boton.targetGraphic = img;
-        var colores = boton.colors;
-        colores.normalColor = Color.white;
-        colores.highlightedColor = new Color(0.82f, 0.88f, 1f);
-        colores.pressedColor = new Color(0.65f, 0.70f, 0.88f);
-        colores.selectedColor = Color.white;
-        colores.fadeDuration = 0.08f;
-        boton.colors = colores;
-        boton.onClick.AddListener(accion);
-
-        var t = CrearTexto("Texto", r, texto, 17, TextAnchor.MiddleCenter);
-        Estirar(t.rectTransform);
-        return img;
-    }
-
-    private void CrearLeyenda()
-    {
-        var items = new[]
-        {
-            new KeyValuePair<string, Color>("Estás aquí", colorActual),
-            new KeyValuePair<string, Color>("Disponible", colorDisponible),
-            new KeyValuePair<string, Color>("Completado", colorCompletado),
-            new KeyValuePair<string, Color>("Bloqueado", colorBloqueado),
-            new KeyValuePair<string, Color>("Ruta más corta", colorRuta),
-        };
-
-        for (int i = 0; i < items.Length; i++)
-        {
-            float y = 28f + (items.Length - 1 - i) * 26f;
-
-            var punto = CrearRect("Punto", raiz);
-            punto.anchorMin = punto.anchorMax = new Vector2(0f, 0f);
-            punto.pivot = new Vector2(0f, 0.5f);
-            punto.sizeDelta = new Vector2(14f, 14f);
-            punto.anchoredPosition = new Vector2(22f, y);
-            var img = punto.gameObject.AddComponent<Image>();
-            img.sprite = SpriteRedondeado(5);
-            img.type = Image.Type.Sliced;
-            img.color = items[i].Value;
-            img.raycastTarget = false;
-
-            var t = CrearTexto("Leyenda", raiz, items[i].Key, 14, TextAnchor.MiddleLeft);
-            t.color = colorTextoSuave;
-            t.rectTransform.anchorMin = t.rectTransform.anchorMax = new Vector2(0f, 0f);
-            t.rectTransform.pivot = new Vector2(0f, 0.5f);
-            t.rectTransform.sizeDelta = new Vector2(170f, 22f);
-            t.rectTransform.anchoredPosition = new Vector2(44f, y);
-        }
-
-        float yPeso = 28f + items.Length * 26f;
-        Text textoMuestra;
-        var muestra = CrearPastillaPeso(raiz, "n", Vector2.zero, 26f, 22f, 15, out textoMuestra);
-        muestra.rectTransform.anchorMin = muestra.rectTransform.anchorMax = new Vector2(0f, 0f);
-        muestra.rectTransform.pivot = new Vector2(0f, 0.5f);
-        muestra.rectTransform.anchoredPosition = new Vector2(20f, yPeso);
-
-        var explicacion = CrearTexto("LeyendaPeso", raiz, "Peso (costo) del camino", 14, TextAnchor.MiddleLeft);
-        explicacion.color = colorTextoSuave;
-        explicacion.rectTransform.anchorMin = explicacion.rectTransform.anchorMax = new Vector2(0f, 0f);
-        explicacion.rectTransform.pivot = new Vector2(0f, 0.5f);
-        explicacion.rectTransform.sizeDelta = new Vector2(190f, 22f);
-        explicacion.rectTransform.anchoredPosition = new Vector2(54f, yPeso);
-    }
-
-    private void CambiarModo(Modo nuevo)
-    {
-        modo = nuevo;
-        LimpiarRuta();
-        ActualizarBotonesModo();
-
-        switch (modo)
-        {
-            case Modo.Navegar:
-                MostrarInfo(MensajeNavegar);
-                break;
-            case Modo.Ruta:
-                MostrarInfo("Modo ruta: haz clic en un nivel destino para ver el camino más corto desde " + Nombre(idActual) + ".");
-                break;
-            case Modo.Completar:
-                MostrarInfo("Modo demo: haz clic en un nivel disponible para marcarlo como completado.");
-                break;
-        }
-    }
-
-    private void ActualizarBotonesModo()
-    {
-        for (int i = 0; i < botonesModo.Length; i++)
-        {
-            if (botonesModo[i] == null) continue;
-            botonesModo[i].color = (int)modo == i ? colorDisponible : colorBoton;
-        }
-    }
-
-    private void AlHacerClicNodo(int id)
-    {
-        var nivel = grafo.Obtener(id);
-
-        switch (modo)
-        {
-            case Modo.Navegar:
-            {
-                if (id == idActual)
-                {
-                    MostrarInfo("Ya estás en " + nivel.nombre + ".");
-                }
-                else if (!nivel.desbloqueado)
-                {
-                    MostrarInfo(nivel.nombre + " está bloqueado: completa un nivel que conduzca a él.");
-                }
-                else if (config[id].falso)
-                {
-                    MostrarInfo(nivel.nombre + " es un nivel de relleno: todavía no tiene escena.");
-                }
-                else if (!Application.CanStreamedLevelBeLoaded(nivel.escena))
-                {
-                    MostrarInfo("La escena " + nivel.escena + " no está en Build Profiles > Scene List, o el nombre no coincide.");
-                }
-                else
-                {
-                    SceneManager.LoadScene(nivel.escena);
-                }
-                break;
-            }
-            case Modo.Ruta:
-                MostrarRuta(id);
-                break;
-            case Modo.Completar:
-            {
-                if (!nivel.desbloqueado)
-                {
-                    MostrarInfo(nivel.nombre + " está bloqueado, no se puede completar todavía.");
-                    break;
-                }
-                ProgresoNiveles.Completar(Clave(config[id]));
-                Refrescar();
-                MostrarInfo("Completado: " + nivel.nombre + ". Se desbloquearon sus niveles vecinos.");
-                break;
-            }
-        }
-    }
-
     private void MostrarRuta(int destino)
     {
         LimpiarRuta();
@@ -890,4 +666,32 @@ public class MapaNavegacionUI : MonoBehaviour
         t.verticalOverflow = VerticalWrapMode.Overflow;
         return t;
     }
+    public void MostrarBFS()
+    {
+        var orden = grafo.BFS(idActual);
+        Debug.Log("BFS: " + string.Join(" -> ", orden));
+    }
+
+    public void MostrarDFS()
+    {
+        var orden = grafo.DFS(idActual);
+        Debug.Log("DFS: " + string.Join(" -> ", orden));
+    }
+
+    public void MostrarRutaDesdeBoton(int destino)
+    {
+        MostrarRuta(destino);
+    }
+
+    public void CompletarDesdeBoton(int id)
+    {
+        ProgresoNiveles.Completar(Clave(config[id]));
+        Refrescar();
+    }
+
+    public void ReiniciarDesdeBoton()
+    {
+        ReiniciarProgreso();
+    }
+
 }

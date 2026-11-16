@@ -30,6 +30,7 @@ public class GestorDesafiosSnap : MonoBehaviour
     private RectTransform raizDesafio;
     private DesafioSnap desafioActual;
     private Image overlayHalloween;
+    private RawImage fondoHistoria3;
     private int historiaActual = -1;
     private bool ocupado;
     private bool terminado;
@@ -106,6 +107,67 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         if (snap != null)
             snap.gestorDesafios = this;
+    }
+
+    private void Start()
+    {
+        AplicarColoresTextoHistorias();
+        Canvas.ForceUpdateCanvases();
+        CrearFondoHistoria3();
+    }
+
+    private void AplicarColoresTextoHistorias()
+    {
+        if (historias == null) return;
+
+        foreach (RectTransform historia in historias)
+        {
+            if (historia == null) continue;
+
+            TextMeshProUGUI[] textos = historia.GetComponentsInChildren<TextMeshProUGUI>(true);
+            foreach (TextMeshProUGUI texto in textos)
+            {
+                bool esTextoBadge = texto.transform.parent != null &&
+                    texto.transform.parent.name == "Badge";
+                texto.color = esTextoBadge ? Color.black : Color.white;
+            }
+        }
+    }
+
+    private void CrearFondoHistoria3()
+    {
+        if (ventana == null || ventana.parent == null || historias == null ||
+            historias.Length < 3 || historias[2] == null)
+        {
+            Debug.LogError("GestorDesafiosSnap no puede crear el fondo de la historia 3.", this);
+            return;
+        }
+
+        RectTransform contenedor = ventana.parent as RectTransform;
+        if (contenedor == null)
+        {
+            Debug.LogError("GestorDesafiosSnap necesita un Canvas válido para el fondo de la historia 3.", this);
+            return;
+        }
+
+        GameObject fondo = new GameObject("FondoHistoria3",
+            typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+        fondo.layer = ventana.gameObject.layer;
+
+        RectTransform rt = fondo.GetComponent<RectTransform>();
+        rt.SetParent(contenedor, false);
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = Vector2.zero;
+
+        fondoHistoria3 = fondo.GetComponent<RawImage>();
+        fondoHistoria3.texture = Texture2D.whiteTexture;
+        fondoHistoria3.color = Color.black;
+        fondoHistoria3.raycastTarget = false;
+        rt.SetSiblingIndex(ventana.GetSiblingIndex());
+        fondo.SetActive(false);
     }
 
     private void Update()
@@ -440,6 +502,10 @@ public class GestorDesafiosSnap : MonoBehaviour
         if (ventana == null || historia == null || panelPrincipal == null)
             yield break;
 
+        if (fondoHistoria3 != null)
+            fondoHistoria3.gameObject.SetActive(historias != null &&
+                historias.Length > 2 && historia == historias[2]);
+
         ventana.localScale = Vector3.one;
         ventana.anchoredPosition = Vector2.zero;
         Canvas.ForceUpdateCanvases();
@@ -529,6 +595,9 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         if (jugador2RT != null)
             jugador2RT.sizeDelta = tamanoJugadorBase;
+
+        if (fondoHistoria3 != null)
+            fondoHistoria3.gameObject.SetActive(false);
     }
 
     private void ColocarJugadorEnHistoria(int indice)
@@ -574,9 +643,9 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         RectTransform historia = historias[1];
 
-        CambiarTexto(historia, "Etiqueta", "HALLOWEEN", new Color(1f, 0.58f, 0.12f, 1f));
-        CambiarTexto(historia, "Subtitulo", "Noche de fantasmas", new Color(1f, 0.72f, 0.35f, 1f));
-        CambiarTexto(historia, "Badge/Texto", "ESPECIAL", null);
+        CambiarTexto(historia, "Etiqueta", "HALLOWEEN", Color.white);
+        CambiarTexto(historia, "Subtitulo", "Noche de fantasmas", Color.white);
+        CambiarTexto(historia, "Badge/Texto", "ESPECIAL", Color.black);
 
         if (overlayHalloween != null) return;
 

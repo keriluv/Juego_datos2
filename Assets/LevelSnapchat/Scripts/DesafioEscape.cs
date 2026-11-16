@@ -304,19 +304,22 @@ public class DesafioEscape : DesafioSnap
 
     private void CrearFondo()
     {
-        Color tinteVelo = colorFondo;
-        tinteVelo.a = alfaVelo;
-        Image velo = UtilidadesDesafio.CrearPanel("Velo", raiz, null, tinteVelo, false);
-        UtilidadesDesafio.Estirar(velo.rectTransform);
+        if (nivel != 2)
+        {
+            Color tinteVelo = colorFondo;
+            tinteVelo.a = alfaVelo;
+            Image velo = UtilidadesDesafio.CrearPanel("Velo", raiz, null, tinteVelo, false);
+            UtilidadesDesafio.Estirar(velo.rectTransform);
 
-        Image sombraBase = UtilidadesDesafio.CrearPanel("SombraBase", raiz,
-            TemasEscape.Degradado(new Color(0f, 0f, 0f, 0f), new Color(0f, 0f, 0f, 0.42f)), Color.white, false);
-        RectTransform srt = sombraBase.rectTransform;
-        srt.anchorMin = new Vector2(0f, 0f);
-        srt.anchorMax = new Vector2(1f, 0f);
-        srt.pivot = new Vector2(0.5f, 0f);
-        srt.sizeDelta = new Vector2(0f, altoCarta * 0.55f);
-        srt.anchoredPosition = Vector2.zero;
+            Image sombraBase = UtilidadesDesafio.CrearPanel("SombraBase", raiz,
+                TemasEscape.Degradado(new Color(0f, 0f, 0f, 0f), new Color(0f, 0f, 0f, 0.42f)), Color.white, false);
+            RectTransform srt = sombraBase.rectTransform;
+            srt.anchorMin = new Vector2(0f, 0f);
+            srt.anchorMax = new Vector2(1f, 0f);
+            srt.pivot = new Vector2(0.5f, 0f);
+            srt.sizeDelta = new Vector2(0f, altoCarta * 0.55f);
+            srt.anchoredPosition = Vector2.zero;
+        }
 
         CrearDecorado();
         CrearAmbiente();
@@ -546,14 +549,17 @@ public class DesafioEscape : DesafioSnap
 
     private void CrearInterfaz()
     {
-        Image sombra = UtilidadesDesafio.CrearPanel("SombraTexto", raiz,
-            TemasEscape.Degradado(new Color(0f, 0f, 0f, 0.62f), new Color(0f, 0f, 0f, 0f)), Color.white, false);
-        RectTransform srt = sombra.rectTransform;
-        srt.anchorMin = new Vector2(0f, 1f);
-        srt.anchorMax = new Vector2(1f, 1f);
-        srt.pivot = new Vector2(0.5f, 1f);
-        srt.sizeDelta = new Vector2(0f, 270f);
-        srt.anchoredPosition = Vector2.zero;
+        if (nivel != 2)
+        {
+            Image sombra = UtilidadesDesafio.CrearPanel("SombraTexto", raiz,
+                TemasEscape.Degradado(new Color(0f, 0f, 0f, 0.62f), new Color(0f, 0f, 0f, 0f)), Color.white, false);
+            RectTransform srt = sombra.rectTransform;
+            srt.anchorMin = new Vector2(0f, 1f);
+            srt.anchorMax = new Vector2(1f, 1f);
+            srt.pivot = new Vector2(0.5f, 1f);
+            srt.sizeDelta = new Vector2(0f, 270f);
+            srt.anchoredPosition = Vector2.zero;
+        }
 
         TextMeshProUGUI titulo = UtilidadesDesafio.CrearTexto("Titulo", raiz, Fuente,
             tituloNivel, 28f, colorAcento);

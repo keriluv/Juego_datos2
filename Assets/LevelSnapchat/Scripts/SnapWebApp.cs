@@ -63,7 +63,7 @@ public class SnapWebApp : MonoBehaviour
 
     private static readonly string[] Nombres =
     {
-        "Nicole", "Daniel", "Joseph", "Harry", "Raul", "Keren", "Jesus"
+        "Nicole", "Daniel", "Laura", "Harry", "Raul", "Keren", "Jesus"
     };
 
     private static readonly string[] Horas =
@@ -100,10 +100,10 @@ public class SnapWebApp : MonoBehaviour
     {
         new[]
         {
-            "Hola, Viste mi historia?",
-            "Si! Esa foto quedo increible",
-            "Jaja te adoro",
-            "Nos vemos luegooo"
+            "¿Ya sabes que debes hacer en esta ventana?",
+            "No, no me queda claro",
+            "No te preocupes, te lo explico: debes subir hasta golpear el icono de historias y liso, !a jugar!",
+            "Vale, gracias!"
         },
         new[]
         {
@@ -224,7 +224,7 @@ public class SnapWebApp : MonoBehaviour
             if (fondosNav != null && i < fondosNav.Length && fondosNav[i] != null)
                 fondosNav[i].color = activo ? Amarillo : new Color(1f, 1f, 1f, 0f);
             if (textosNav != null && i < textosNav.Length && textosNav[i] != null)
-                textosNav[i].color = activo ? Tinta : Gris;
+                textosNav[i].color = activo ? Color.white : Gris;
             if (botonesNav != null && i < botonesNav.Length && botonesNav[i] != null)
             {
                 ColorBlock cb = botonesNav[i].colors;
@@ -639,12 +639,33 @@ public class SnapWebApp : MonoBehaviour
     {
         StartCoroutine(Destello());
 
+        Sprite personaje = ObtenerSpritePersonaje();
+        if (personaje != null && personaje.texture != null && vistaCamara != null)
+            vistaCamara.texture = personaje.texture;
+
         AnadirMensaje(true, "Snap enviado");
         AjustarAlturaMensajes();
         StartCoroutine(IrAlFinal());
         ActualizarUltimoMensaje("Tu: Snap enviado");
 
         Debug.Log("SNAP_WEB_CAPTURA snap enviado a " + Nombres[conversacionActual]);
+    }
+
+    private Sprite ObtenerSpritePersonaje()
+    {
+        if (fotos != null && conversacionActual >= 0 && conversacionActual < fotos.Length && fotos[conversacionActual] != null)
+            return fotos[conversacionActual];
+
+        if (gestorDesafios != null && gestorDesafios.jugador != null)
+        {
+            Image img = gestorDesafios.jugador.sprite;
+            if (img != null && img.sprite != null) return img.sprite;
+        }
+
+        if (avatarGenerico != null) return avatarGenerico;
+        if (fotos != null && fotos.Length > 0 && fotos[0] != null) return fotos[0];
+
+        return null;
     }
 
     public void AlternarFlash()

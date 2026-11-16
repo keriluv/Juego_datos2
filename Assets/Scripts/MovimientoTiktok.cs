@@ -11,6 +11,8 @@ public class MovimientoTiktok : MonoBehaviour
     [Tooltip("Altura del salto en unidades de la escena (aprox. pixeles)")]
     public float alturaSalto = 200f;
 
+    public bool congelado = false;
+
     private bool enSuelo = false;
     private bool saltoPedido = false;
 
@@ -32,6 +34,13 @@ public class MovimientoTiktok : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (congelado)
+        {
+            rb.linearVelocity = Vector3.zero;
+            saltoPedido = false;
+            return;
+        }
+
         float vx = Input.GetAxisRaw("Horizontal") * velocidadHorizontal;
         float vy = rb.linearVelocity.y;
 

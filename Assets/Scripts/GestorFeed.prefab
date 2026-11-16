@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3312360302468737214
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4236975911324756314}
+  - component: {fileID: 573024800784684957}
+  m_Layer: 0
+  m_Name: GestorFeed
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4236975911324756314
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3312360302468737214}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 904.17114, y: 611.9077, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &573024800784684957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3312360302468737214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1decfb6396d9a574fbe29fa37ec9633d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ControladorFeed
+  videoPlayer: {fileID: 0}
+  listaDeVideos:
+  - {fileID: 32900000, guid: c2b34bebb8a98a34899260a1f525d903, type: 3}
+  - {fileID: 32900000, guid: 497be05043875c24ab078949b78611e1, type: 3}
+  - {fileID: 32900000, guid: b8b0f181169b2bc44913cedee4c2139e, type: 3}
+  - {fileID: 32900000, guid: bd0b92bbf0673684086c635fac961742, type: 3}
+  - {fileID: 32900000, guid: 1b04654462dbdec41bc11372e16e4ffa, type: 3}
+  usuarios:
+  - '@CrazyTraffic'
+  - '@CookieEater'
+  - '@CupShuffle'
+  - '@KeyMaster'
+  - '@TextEjemplo'
+  - '@TextEjemplo'
+  descripciones:
+  - Conduce tu auto y esquiva el trafico de barranquilla
+  - RAPIDO! DESTRUYE LA GALLETA ANTES DE QUE TERMINE EL TIEMPO!!
+  - Que tan atento estas? Descubre donde esta la pelota vigilando de cerca los vasos!
+  - Seras capaz de abrir la puerta??
+  - DAVO SALUDA A MIS DOS NOVIAS
+  - ...
+  fotosDePerfil: []
+  textoUsuario: {fileID: 0}
+  textoDescripcion: {fileID: 0}
+  imagenPerfil: {fileID: 0}
+  imagenLike: {fileID: 0}
+  imagenGuardar: {fileID: 0}
+  colorLikeActivo: {r: 1, g: 0, b: 0, a: 1}
+  colorLikeInactivo: {r: 1, g: 1, b: 1, a: 1}
+  colorGuardarActivo: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  colorGuardarInactivo: {r: 1, g: 1, b: 1, a: 1}
+  panelVideo: {fileID: 0}
+  distanciaDeslizar: 600
+  duracionSalida: 0.15
+  duracionEntrada: 0.2

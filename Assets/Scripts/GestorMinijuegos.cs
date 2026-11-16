@@ -33,10 +33,14 @@ public class GestorMinijuegos : MonoBehaviour
     [SerializeField] VideoPlayer videoPlayer;     // el Panel_video; se pausa mientras juegas
     [SerializeField] int victoriasNecesarias = 3;
 
+    [Header("Final del nivel")]
+    [SerializeField] SecuenciaTiktokDorado secuenciaFinal;  // arranca al volver al feed tras completar los minijuegos
     public UnityEvent AlCompletarNivel;
 
     int victorias;
     int indiceActual = -1;
+    bool nivelListo;
+    bool secuenciaLanzada;
     MinijuegoBase actual;
     readonly HashSet<int> asignacionesSuperadas = new HashSet<int>();
 
@@ -51,7 +55,8 @@ public class GestorMinijuegos : MonoBehaviour
     // Conéctalo al botón de like. Mira qué video está sonando y abre SU minijuego.
     public void AlDarLike()
     {
-        if (panelMinijuego.activeSelf) return;     // ya hay un minijuego abierto
+        if (victorias >= victoriasNecesarias) return;   // ya completó los minijuegos
+        if (panelMinijuego.activeSelf) return;          // ya hay un minijuego abierto
 
         int i = BuscarAsignacion();
         if (i < 0)
@@ -109,8 +114,8 @@ public class GestorMinijuegos : MonoBehaviour
 
         if (victorias >= victoriasNecesarias)
         {
-            textoResultado.text = "¡Nivel completado!";
-            if (victorias == victoriasNecesarias) AlCompletarNivel?.Invoke();
+            nivelListo = true;
+            textoResultado.text = "¡Minijuegos completados!";
         }
         else
         {
@@ -129,6 +134,14 @@ public class GestorMinijuegos : MonoBehaviour
         if (actual != null) actual.Detener();
         panelMinijuego.SetActive(false);
         if (videoPlayer != null) videoPlayer.Play();
+
+        // al completar los minijuegos: empieza la secuencia del TikTok dorado
+        if (nivelListo && !secuenciaLanzada)
+        {
+            secuenciaLanzada = true;
+            if (AlCompletarNivel != null) AlCompletarNivel.Invoke();
+            if (secuenciaFinal != null) secuenciaFinal.Iniciar();
+        }
     }
 
     void ActualizarProgreso()

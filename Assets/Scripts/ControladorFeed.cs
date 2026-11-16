@@ -8,6 +8,7 @@ public class ControladorFeed : MonoBehaviour
 {
     public VideoPlayer videoPlayer;
     public VideoClip[] listaDeVideos;
+    public bool iniciarAutomaticamente = true;
 
     [Header("Datos de cada video (mismo orden que la lista de videos)")]
     public string[] usuarios;
@@ -50,8 +51,25 @@ public class ControladorFeed : MonoBehaviour
             estadoLikes = new bool[listaDeVideos.Length];
             estadoGuardados = new bool[listaDeVideos.Length];
 
-            ReproducirVideo(indiceActual);
+            if (iniciarAutomaticamente)
+            {
+                ReproducirVideo(indiceActual);
+            }
+            else
+            {
+                // Deja el primer video y sus datos listos, pero sin reproducir
+                videoPlayer.clip = listaDeVideos[indiceActual];
+                videoPlayer.Prepare();
+                ActualizarEstadoVisualUI();
+                ActualizarDatosUsuario(indiceActual);
+            }
         }
+    }
+
+    public void ComenzarFeed()
+    {
+        if (listaDeVideos.Length == 0) return;
+        videoPlayer.Play();
     }
 
     public void ReproducirVideo(int indice)

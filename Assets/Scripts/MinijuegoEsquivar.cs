@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // Minijuego: esquivar tráfico.
-// Arrastra el mouse (o el dedo) de lado a lado para mover tu carro por la carretera.
+// Mueve tu carro con las flechas ← → (también funcionan A y D).
 // Ganas si aguantas "duracion" segundos sin chocar. Pierdes si chocas con otro carro.
-public class MinijuegoEsquivar : MinijuegoBase, IPointerDownHandler, IDragHandler
+public class MinijuegoEsquivar : MinijuegoBase
 {
     [Header("Elementos de la escena")]
     [SerializeField] RectTransform autoJugador;
@@ -21,7 +20,7 @@ public class MinijuegoEsquivar : MinijuegoBase, IPointerDownHandler, IDragHandle
     [SerializeField] float duracion = 12f;
     [SerializeField] float velocidad = 320f;          // velocidad de la carretera
     [SerializeField] float intervaloTrafico = 0.75f;  // segundos entre carro y carro
-    [SerializeField] float velocidadLateral = 650f;   // qué tan rápido gira tu carro
+    [SerializeField] float velocidadLateral = 500f;   // qué tan rápido se mueve tu carro con las flechas
     [SerializeField] int carriles = 4;
     [SerializeField, Range(0.5f, 1f)] float tamanoChoque = 0.8f; // 1 = choca con todo el dibujo
 
@@ -33,7 +32,6 @@ public class MinijuegoEsquivar : MinijuegoBase, IPointerDownHandler, IDragHandle
     bool activo;
     float tiempo;
     float temporizador;
-    float objetivoX;
     float largoCiclo;
 
     void Awake()
@@ -46,7 +44,6 @@ public class MinijuegoEsquivar : MinijuegoBase, IPointerDownHandler, IDragHandle
         Detener();
         tiempo = duracion;
         temporizador = 0.3f;
-        objetivoX = 0f;
 
         var grafico = autoJugador.GetComponent<Graphic>();
         if (grafico != null) grafico.raycastTarget = false;
@@ -80,9 +77,11 @@ public class MinijuegoEsquivar : MinijuegoBase, IPointerDownHandler, IDragHandle
             temporizador = intervaloTrafico;
         }
 
-        // el carro del jugador se mueve hacia donde apuntas, con velocidad limitada
+        // mover el carro del jugador con el teclado
+        float direccion = LeerDireccion();
         Vector2 pos = autoJugador.anchoredPosition;
-        pos.x = Mathf.MoveTowards(pos.x, objetivoX, velocidadLateral * dt);
+        float mitad = area.rect.width / 2f - autoJugador.sizeDelta.x / 2f;
+        pos.x = Mathf.Clamp(pos.x + direccion * velocidadLateral * dt, -mitad, mitad);
         autoJugador.anchoredPosition = pos;
 
         float limite = -area.rect.height / 2f - 60f;
@@ -119,6 +118,25 @@ public class MinijuegoEsquivar : MinijuegoBase, IPointerDownHandler, IDragHandle
             return;
         }
         ActualizarTexto();
+    }
+
+    // -1 = izquierda, 0 = quieto, 1 = derecha
+    // Funciona con el sistema de Input nuevo o el clásico de Unity.
+    float LeerDireccion()
+    {
+        float dir = 0f;
+#if ENABLE_INPUT_SYSTEM
+        var teclado = UnityEngine.InputSystem.Keyboard.current;
+        if (teclado != null)
+        {
+            if (teclado.leftArrowKey.isPressed || teclado.aKey.isPressed) dir -= 1f;
+            if (teclado.rightArrowKey.isPressed || teclado.dKey.isPressed) dir += 1f;
+        }
+#else
+        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A)) dir -= 1f;
+        if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D)) dir += 1f;
+#endif
+        return dir;
     }
 
     void CrearAuto()
@@ -195,20 +213,5 @@ public class MinijuegoEsquivar : MinijuegoBase, IPointerDownHandler, IDragHandle
     {
         if (textoTiempo != null)
             textoTiempo.text = $"Tiempo: {Mathf.CeilToInt(Mathf.Max(0f, tiempo))}";
-    }
-
-    // Mover con mouse / dedo
-    public void OnPointerDown(PointerEventData e) { Apuntar(e); }
-    public void OnDrag(PointerEventData e) { Apuntar(e); }
-
-    void Apuntar(PointerEventData e)
-    {
-        if (!activo) return;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                area, e.position, e.pressEventCamera, out Vector2 local))
-        {
-            float mitad = area.rect.width / 2f - autoJugador.sizeDelta.x / 2f;
-            objetivoX = Mathf.Clamp(local.x, -mitad, mitad);
-        }
     }
 }

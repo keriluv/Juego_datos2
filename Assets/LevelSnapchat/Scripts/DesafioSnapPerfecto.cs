@@ -266,7 +266,8 @@ public class DesafioSnapPerfecto : DesafioSnap
         for (int i = 0; i < marcoVisor.Length; i++)
             marcoVisor[i].color = color;
 
-        bool disparo = cooldown <= 0f && UtilidadesDesafio.GolpePresionado(false);
+        // Include mouse click — UI Button alone fails when cursor was locked from 3D scenes.
+        bool disparo = cooldown <= 0f && UtilidadesDesafio.GolpePresionado(true);
 
         if (!disparo && red != null)
             disparo = red.ConsumirDisparoCliente();

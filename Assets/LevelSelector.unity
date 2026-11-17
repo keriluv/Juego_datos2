@@ -13546,103 +13546,79 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapaNavegacionUI
   panelMapa: {fileID: 1451718662}
   niveles:
-  - id: 2
+  - id: 1
     nombre: LevelSelector
     escena: LevelSelector
-    posicion: {x: 110, y: -50}
+    posicion: {x: 0, y: 0}
+    inicial: 1
+    falso: 0
+    acento: {r: 0.18, g: 0.74, b: 0.9, a: 1}
+    requisitosProgreso: []
+  - id: 2
+    nombre: Tutorial
+    escena: TutorialGoogle
+    posicion: {x: -220, y: 180}
     inicial: 0
     falso: 0
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    acento: {r: 0.68, g: 0.55, b: 0.94, a: 1}
     requisitosProgreso: []
   - id: 3
-    nombre: Tutorial
-    escena: Tutorial
-    posicion: {x: -130, y: 100}
+    nombre: LevelTiktok
+    escena: EscenaTiktok
+    posicion: {x: 220, y: 180}
     inicial: 0
     falso: 0
-    acento: {r: 0.65, g: 0.55, b: 1, a: 1}
-    requisitosProgreso: []
-  - id: 4
-    nombre: LevelYoutube
-    escena: LevelYoutube
-    posicion: {x: 110, y: 120}
-    inicial: 0
-    falso: 0
-    acento: {r: 1, g: 0.2, b: 0.2, a: 1}
-    requisitosProgreso: []
-  - id: 5
-    nombre: TikTok
-    escena: 
-    posicion: {x: 330, y: 120}
-    inicial: 0
-    falso: 1
     acento: {r: 0.1, g: 0.9, b: 0.9, a: 1}
     requisitosProgreso: []
-  - id: 6
-    nombre: Instagram
-    escena: 
-    posicion: {x: 330, y: -50}
+  - id: 4
+    nombre: LevelSnapchat
+    escena: LevelSnapchat
+    posicion: {x: 220, y: -160}
     inicial: 0
-    falso: 1
-    acento: {r: 0.9, g: 0.25, b: 0.6, a: 1}
+    falso: 0
+    acento: {r: 1, g: 0.9, b: 0.15, a: 1}
     requisitosProgreso: []
-  - id: 7
-    nombre: WhatsApp
-    escena: 
-    posicion: {x: 540, y: 110}
+  - id: 5
+    nombre: LevelYoutube
+    escena: LevelYoutube
+    posicion: {x: -220, y: -160}
     inicial: 0
-    falso: 1
-    acento: {r: 0.15, g: 0.83, b: 0.4, a: 1}
+    falso: 0
+    acento: {r: 0.94, g: 0.2, b: 0.18, a: 1}
     requisitosProgreso: []
   conexiones:
   - origen: 1
     destino: 2
-    peso: 1
+    peso: 284.3
     bidireccional: 1
   - origen: 1
     destino: 3
-    peso: 1
-    bidireccional: 0
+    peso: 284.3
+    bidireccional: 1
+  - origen: 1
+    destino: 4
+    peso: 272
+    bidireccional: 1
+  - origen: 1
+    destino: 5
+    peso: 272
+    bidireccional: 1
+  - origen: 3
+    destino: 2
+    peso: 440
+    bidireccional: 1
   - origen: 3
     destino: 4
-    peso: 2
-    bidireccional: 0
+    peso: 340
+    bidireccional: 1
   - origen: 4
     destino: 5
-    peso: 3
-    bidireccional: 0
-  - origen: 4
-    destino: 6
-    peso: 2
-    bidireccional: 0
+    peso: 440
+    bidireccional: 1
   - origen: 5
-    destino: 7
-    peso: 1
-    bidireccional: 0
-  - origen: 6
-    destino: 7
-    peso: 3
-    bidireccional: 0
-  - origen: 2
-    destino: 3
-    peso: 2
-    bidireccional: 0
-  - origen: 2
-    destino: 4
-    peso: 5
-    bidireccional: 0
-  - origen: 2
-    destino: 5
-    peso: 8
-    bidireccional: 0
-  - origen: 2
-    destino: 6
-    peso: 7
-    bidireccional: 0
-  - origen: 2
-    destino: 7
-    peso: 9
-    bidireccional: 0
+    destino: 2
+    peso: 340
+    bidireccional: 1
   colorFondoArriba: {r: 0.11, g: 0.13, b: 0.22, a: 1}
   colorFondoAbajo: {r: 0.04, g: 0.05, b: 0.09, a: 1}
   colorBloqueado: {r: 0.45, g: 0.48, b: 0.56, a: 1}

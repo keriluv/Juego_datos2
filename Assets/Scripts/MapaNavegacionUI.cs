@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -111,6 +111,7 @@ public class MapaNavegacionUI : MonoBehaviour
         }
 
         if (niveles.Count == 0) CargarEjemplo();
+        else AplicarPesosPorDistancia();
 
         fuente = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         ConstruirGrafo();
@@ -137,35 +138,46 @@ public class MapaNavegacionUI : MonoBehaviour
 
     private void CargarEjemplo()
     {
-        // Only scenes present in Editor Build Settings (skips MapaNiveles3D + SampleScene).
+        // Hub + ring: Selector, Tutorial, TikTok, Snapchat, YouTube.
         niveles = new List<NivelConfig>
         {
-            new NivelConfig { id = 1, nombre = "MainMenu", escena = "MainMenu", posicion = new Vector2(-320, 0), inicial = true, acento = new Color(1f, 0.68f, 0.24f) },
-            new NivelConfig { id = 2, nombre = "LevelSelector", escena = "LevelSelector", posicion = new Vector2(0, 0), acento = new Color(0.18f, 0.74f, 0.90f) },
-            new NivelConfig { id = 3, nombre = "TutorialGoogle", escena = "TutorialGoogle", posicion = new Vector2(-200, 160), acento = new Color(0.65f, 0.55f, 1.00f) },
-            new NivelConfig { id = 4, nombre = "LevelYoutube", escena = "LevelYoutube", posicion = new Vector2(140, 160), acento = new Color(1.00f, 0.20f, 0.20f) },
-            new NivelConfig { id = 5, nombre = "LevelYoutubev2", escena = "LevelYoutubev2", posicion = new Vector2(300, 160), acento = new Color(0.95f, 0.35f, 0.20f), requisitosProgreso = new[] { "level:LevelYoutube" } },
-            new NivelConfig { id = 6, nombre = "LevelYoutubev3", escena = "LevelYoutubev3", posicion = new Vector2(460, 160), acento = new Color(0.85f, 0.15f, 0.35f), requisitosProgreso = new[] { "level:LevelYoutubev2" } },
-            new NivelConfig { id = 7, nombre = "LevelSnapchat", escena = "LevelSnapchat", posicion = new Vector2(140, -140), acento = new Color(1.00f, 0.90f, 0.15f) },
-            new NivelConfig { id = 8, nombre = "EscenaTiktok", escena = "EscenaTiktok", posicion = new Vector2(300, -140), acento = new Color(0.10f, 0.90f, 0.90f) },
-            new NivelConfig { id = 9, nombre = "EscenaVR", escena = "EscenaVR", posicion = new Vector2(-200, -140), acento = new Color(0.45f, 0.35f, 0.95f) },
-            new NivelConfig { id = 10, nombre = "JuegoDinoChrome", escena = "JuegoDinoChrome", posicion = new Vector2(460, -140), acento = new Color(0.55f, 0.55f, 0.58f) },
-            new NivelConfig { id = 11, nombre = "pruebaLobby", escena = "pruebaLobby", posicion = new Vector2(0, -260), acento = new Color(0.25f, 0.85f, 0.55f) },
+            new NivelConfig { id = 1, nombre = "LevelSelector", escena = "LevelSelector", posicion = new Vector2(0, 0), inicial = true, acento = new Color(0.18f, 0.74f, 0.90f) },
+            new NivelConfig { id = 2, nombre = "Tutorial", escena = "TutorialGoogle", posicion = new Vector2(-220, 180), acento = new Color(0.65f, 0.55f, 1.00f) },
+            new NivelConfig { id = 3, nombre = "LevelTiktok", escena = "EscenaTiktok", posicion = new Vector2(220, 180), acento = new Color(0.10f, 0.90f, 0.90f) },
+            new NivelConfig { id = 4, nombre = "LevelSnapchat", escena = "LevelSnapchat", posicion = new Vector2(220, -160), acento = new Color(1.00f, 0.90f, 0.15f) },
+            new NivelConfig { id = 5, nombre = "LevelYoutube", escena = "LevelYoutube", posicion = new Vector2(-220, -160), acento = new Color(1.00f, 0.20f, 0.20f) },
         };
 
         conexiones = new List<ConexionConfig>
         {
-            new ConexionConfig { origen = 1, destino = 2, peso = 1f, bidireccional = true },
-            new ConexionConfig { origen = 2, destino = 3, peso = 2f, bidireccional = true },
-            new ConexionConfig { origen = 2, destino = 4, peso = 2f, bidireccional = true },
-            new ConexionConfig { origen = 2, destino = 7, peso = 3f, bidireccional = true },
-            new ConexionConfig { origen = 2, destino = 8, peso = 3f, bidireccional = true },
-            new ConexionConfig { origen = 2, destino = 9, peso = 3f, bidireccional = true },
-            new ConexionConfig { origen = 2, destino = 10, peso = 4f, bidireccional = true },
-            new ConexionConfig { origen = 2, destino = 11, peso = 2f, bidireccional = true },
-            new ConexionConfig { origen = 4, destino = 5, peso = 2f },
-            new ConexionConfig { origen = 5, destino = 6, peso = 2f },
+            // Selector connected to all
+            new ConexionConfig { origen = 1, destino = 2, bidireccional = true },
+            new ConexionConfig { origen = 1, destino = 3, bidireccional = true },
+            new ConexionConfig { origen = 1, destino = 4, bidireccional = true },
+            new ConexionConfig { origen = 1, destino = 5, bidireccional = true },
+            // TikTok — Tutorial, Snapchat
+            new ConexionConfig { origen = 3, destino = 2, bidireccional = true },
+            new ConexionConfig { origen = 3, destino = 4, bidireccional = true },
+            // Snapchat — YouTube
+            new ConexionConfig { origen = 4, destino = 5, bidireccional = true },
+            // YouTube — Tutorial
+            new ConexionConfig { origen = 5, destino = 2, bidireccional = true },
         };
+
+        AplicarPesosPorDistancia();
+    }
+
+    private void AplicarPesosPorDistancia()
+    {
+        Dictionary<int, Vector2> pos = new Dictionary<int, Vector2>();
+        foreach (NivelConfig n in niveles)
+            pos[n.id] = n.posicion;
+
+        foreach (ConexionConfig c in conexiones)
+        {
+            if (!pos.ContainsKey(c.origen) || !pos.ContainsKey(c.destino)) continue;
+            c.peso = Mathf.Round(Vector2.Distance(pos[c.origen], pos[c.destino]) * 10f) / 10f;
+        }
     }
 
     private void ConstruirGrafo()

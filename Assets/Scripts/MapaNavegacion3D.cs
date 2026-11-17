@@ -87,10 +87,35 @@ public class MapaNavegacion3D : MonoBehaviour
         CrearPuentes();
         CrearIslas();
         CrearHUD();
+        AplicarPesosPorDistancia();
         DeterminarNivelActual();
         RefrescarProgreso();
         ActualizarBotonesModo();
         MostrarInfo("Sigue las carreteras y selecciona un marcador disponible para entrar.");
+    }
+
+    private void AplicarPesosPorDistancia()
+    {
+        Dictionary<int, Vector2> pos = new Dictionary<int, Vector2>();
+        foreach (NivelConfig n in niveles)
+            pos[n.id] = n.posicion;
+
+        foreach (ConexionConfig c in conexiones)
+        {
+            if (!pos.ContainsKey(c.origen) || !pos.ContainsKey(c.destino)) continue;
+            c.peso = Mathf.Round(Vector2.Distance(pos[c.origen], pos[c.destino]) * 10f) / 10f;
+        }
+
+        // Rebuild graph edge weights if the graph was already built from scene data.
+        if (grafo == null) return;
+        grafo = new GrafoNiveles();
+        foreach (NivelConfig nivel in niveles)
+            grafo.AgregarNivel(new Nivel(nivel.id, nivel.nombre, nivel.escena));
+        foreach (ConexionConfig c in conexiones)
+        {
+            if (!configuracion.ContainsKey(c.origen) || !configuracion.ContainsKey(c.destino)) continue;
+            grafo.AgregarCamino(c.origen, c.destino, c.peso, c.bidireccional);
+        }
     }
 
     private void OnEnable()
@@ -623,17 +648,13 @@ public class MapaNavegacion3D : MonoBehaviour
     {
         switch (nivel.nombre)
         {
-            case "MainMenu": return "M";
             case "LevelSelector": return "LS";
-            case "TutorialGoogle": return "TG";
+            case "Tutorial":
+            case "TutorialGoogle": return "T";
             case "LevelYoutube": return "YT";
-            case "LevelYoutubev2": return "Y2";
-            case "LevelYoutubev3": return "Y3";
             case "LevelSnapchat": return "SC";
+            case "LevelTiktok":
             case "EscenaTiktok": return "TT";
-            case "EscenaVR": return "VR";
-            case "JuegoDinoChrome": return "DN";
-            case "pruebaLobby": return "LB";
             default: return "N";
         }
     }
@@ -676,13 +697,13 @@ public class MapaNavegacion3D : MonoBehaviour
         Material acento = MaterialNeon(color);
         Material claro = NuevoMaterial(Color.white, 0.05f, 0.35f);
         string nombre = nivel.nombre;
-        if (nombre == "LevelYoutube" || nombre == "LevelYoutubev2" || nombre == "LevelYoutubev3")
+        if (nombre == "LevelYoutube")
         {
             CrearPrimitiva(PrimitiveType.Cube, "PantallaVideo", padre, new Vector3(0f, 0.62f, 0f),
                 new Vector3(0.88f, 0.56f, 0.12f), acento, false);
             CrearMallaTriangulo(padre, new Vector3(0f, 0.62f, -0.09f), 0.28f, claro);
         }
-        else if (nombre == "EscenaTiktok")
+        else if (nombre == "LevelTiktok" || nombre == "EscenaTiktok")
         {
             CrearPrimitiva(PrimitiveType.Cylinder, "DiscoMusica", padre, new Vector3(0f, 0.54f, 0f),
                 new Vector3(0.46f, 0.10f, 0.46f), acento, false);
@@ -697,15 +718,6 @@ public class MapaNavegacion3D : MonoBehaviour
                 new Vector3(0.72f, 0.56f, 0.22f), acento, false);
             CrearPrimitiva(PrimitiveType.Cylinder, "Lente", padre, new Vector3(0f, 0.67f, -0.14f),
                 new Vector3(0.22f, 0.035f, 0.22f), claro, false);
-        }
-        else if (nombre == "EscenaVR")
-        {
-            CrearPrimitiva(PrimitiveType.Cube, "VisorVR", padre, new Vector3(0f, 0.70f, 0f),
-                new Vector3(0.80f, 0.36f, 0.40f), acento, false);
-            CrearPrimitiva(PrimitiveType.Sphere, "LenteIzq", padre, new Vector3(-0.18f, 0.70f, -0.22f),
-                new Vector3(0.22f, 0.22f, 0.10f), claro, false);
-            CrearPrimitiva(PrimitiveType.Sphere, "LenteDer", padre, new Vector3(0.18f, 0.70f, -0.22f),
-                new Vector3(0.22f, 0.22f, 0.10f), claro, false);
         }
         else
         {
@@ -1138,17 +1150,13 @@ public class MapaNavegacion3D : MonoBehaviour
     {
         switch (nivel.nombre)
         {
-            case "MainMenu": return "Inicio";
             case "LevelSelector": return "Hub";
+            case "Tutorial":
             case "TutorialGoogle": return "Tutorial";
             case "LevelYoutube": return "YouTube";
-            case "LevelYoutubev2": return "YouTube 2";
-            case "LevelYoutubev3": return "YouTube 3";
             case "LevelSnapchat": return "Snapchat";
+            case "LevelTiktok":
             case "EscenaTiktok": return "TikTok";
-            case "EscenaVR": return "VR";
-            case "JuegoDinoChrome": return "Dino";
-            case "pruebaLobby": return "Lobby";
             default: return nivel.nombre;
         }
     }
@@ -1157,17 +1165,13 @@ public class MapaNavegacion3D : MonoBehaviour
     {
         switch (nivel.nombre)
         {
-            case "MainMenu": return "El punto de partida de tu aventura digital.";
             case "LevelSelector": return "El corazon de la ciudad neon: elige tu siguiente mundo.";
+            case "Tutorial":
             case "TutorialGoogle": return "Aprende las reglas y controles del juego.";
             case "LevelYoutube": return "Un mundo de videos, creadores y desafios.";
-            case "LevelYoutubev2": return "Segunda zona YouTube: rompe la grieta Minecraft.";
-            case "LevelYoutubev3": return "Zona final YouTube: recoge las llaves.";
             case "LevelSnapchat": return "Desafios rapidos estilo Snapchat.";
+            case "LevelTiktok":
             case "EscenaTiktok": return "Zona de tendencias y videos cortos.";
-            case "EscenaVR": return "Experiencia en realidad virtual.";
-            case "JuegoDinoChrome": return "Minijuego del dinosaurio.";
-            case "pruebaLobby": return "Lobby multijugador para crear o unirte a una partida.";
             default: return "Un nuevo mundo conectado a la red.";
         }
     }
@@ -1177,17 +1181,13 @@ public class MapaNavegacion3D : MonoBehaviour
         if (nivel.acento.a > 0f) return nivel.acento;
         switch (nivel.nombre)
         {
-            case "MainMenu": return new Color(1f, 0.68f, 0.24f);
             case "LevelSelector": return new Color(0.18f, 0.74f, 0.90f);
+            case "Tutorial":
             case "TutorialGoogle": return new Color(0.68f, 0.55f, 0.94f);
             case "LevelYoutube": return new Color(0.94f, 0.20f, 0.18f);
-            case "LevelYoutubev2": return new Color(0.95f, 0.35f, 0.20f);
-            case "LevelYoutubev3": return new Color(0.85f, 0.15f, 0.35f);
             case "LevelSnapchat": return new Color(1f, 0.90f, 0.15f);
+            case "LevelTiktok":
             case "EscenaTiktok": return new Color(0.16f, 0.83f, 0.83f);
-            case "EscenaVR": return new Color(0.45f, 0.35f, 0.95f);
-            case "JuegoDinoChrome": return new Color(0.55f, 0.55f, 0.58f);
-            case "pruebaLobby": return new Color(0.25f, 0.85f, 0.55f);
             default: return new Color(0.28f, 0.75f, 0.83f);
         }
     }

@@ -206,6 +206,8 @@ public class ContextoDesafio
     public RectTransform jugadorRT;
     public JugadorTutorial jugador2;
     public RectTransform jugador2RT;
+    public JugadorTutorial[] jugadores;
+    public RectTransform[] jugadoresRT;
     public VinetaHalloween vineta;
     public bool online;
     public bool esAnfitrion;

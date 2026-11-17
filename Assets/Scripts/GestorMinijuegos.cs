@@ -37,19 +37,48 @@ public class GestorMinijuegos : MonoBehaviour
     [SerializeField] SecuenciaTiktokDorado secuenciaFinal;  // arranca al volver al feed tras completar los minijuegos
     public UnityEvent AlCompletarNivel;
 
+    public static GestorMinijuegos Instancia { get; private set; }
+
     int victorias;
     int indiceActual = -1;
     bool nivelListo;
     bool secuenciaLanzada;
     MinijuegoBase actual;
     readonly HashSet<int> asignacionesSuperadas = new HashSet<int>();
+    int ultimaVersionRed = -1;
+
+    public bool PanelAbierto =>
+        panelMinijuego != null && panelMinijuego.activeInHierarchy;
 
     void Awake()
     {
+        Instancia = this;
         panelMinijuego.SetActive(false);
         botonReintentar.onClick.AddListener(Reintentar);
         botonVolverFeed.onClick.AddListener(VolverAlFeed);
         ActualizarProgreso();
+    }
+
+    void OnDestroy()
+    {
+        if (Instancia == this) Instancia = null;
+    }
+
+    void Update()
+    {
+        if (!RedTiktok.HayRed || RedTiktok.EsAnfitrion) return;
+
+        RedTiktok autoridad = RedTiktok.Autoridad;
+        if (autoridad == null) return;
+
+        if (autoridad.Version != ultimaVersionRed)
+        {
+            ultimaVersionRed = autoridad.Version;
+            AplicarProgresoRemoto(autoridad.Victorias, autoridad.MascaraSuperadas);
+        }
+
+        if (autoridad.Final && !PanelAbierto && !secuenciaLanzada)
+            IniciarFinal();
     }
 
     // Conéctalo al botón de like. Mira qué video está sonando y abre SU minijuego.
@@ -121,6 +150,21 @@ public class GestorMinijuegos : MonoBehaviour
         {
             textoResultado.text = "¡Bien hecho!";
         }
+
+        if (RedTiktok.HayRed)
+        {
+            if (RedTiktok.EsAnfitrion)
+            {
+                RedTiktok.Autoridad?.FijarProgreso(victorias, MascaraSuperadas());
+
+                if (nivelListo)
+                    RedTiktok.Autoridad?.MarcarFinal();
+            }
+            else
+            {
+                RedTiktok.Local?.ReportarVictoria(indiceActual);
+            }
+        }
     }
 
     void Reintentar()
@@ -136,17 +180,87 @@ public class GestorMinijuegos : MonoBehaviour
         if (videoPlayer != null) videoPlayer.Play();
 
         // al completar los minijuegos: empieza la secuencia del TikTok dorado
-        if (nivelListo && !secuenciaLanzada)
+        if (nivelListo && !secuenciaLanzada &&
+            (!RedTiktok.HayRed || RedTiktok.EsAnfitrion))
         {
-            secuenciaLanzada = true;
-            if (AlCompletarNivel != null) AlCompletarNivel.Invoke();
-            if (secuenciaFinal != null) secuenciaFinal.Iniciar();
+            if (RedTiktok.EsAnfitrion)
+                RedTiktok.Autoridad?.MarcarFinal();
+
+            IniciarFinal();
         }
+    }
+
+    void IniciarFinal()
+    {
+        if (secuenciaLanzada) return;
+
+        secuenciaLanzada = true;
+        if (AlCompletarNivel != null) AlCompletarNivel.Invoke();
+        if (secuenciaFinal != null) secuenciaFinal.Iniciar();
     }
 
     void ActualizarProgreso()
     {
         if (textoProgreso != null)
             textoProgreso.text = $"Minijuegos: {victorias}/{victoriasNecesarias}";
+    }
+
+    int MascaraSuperadas()
+    {
+        int mascara = 0;
+
+        foreach (int i in asignacionesSuperadas)
+        {
+            if (i >= 0 && i < 32)
+                mascara |= 1 << i;
+        }
+
+        return mascara;
+    }
+
+    void AplicarProgresoRemoto(int victoriasRemotas, int mascara)
+    {
+        victorias = Mathf.Clamp(victoriasRemotas, 0, victoriasNecesarias);
+
+        asignacionesSuperadas.Clear();
+
+        for (int i = 0; i < 32; i++)
+        {
+            if ((mascara & (1 << i)) != 0)
+                asignacionesSuperadas.Add(i);
+        }
+
+        nivelListo = victorias >= victoriasNecesarias;
+        ActualizarProgreso();
+    }
+
+    // La llama el anfitrion cuando un cliente gana un minijuego.
+    public void RegistrarVictoriaRemota(int indice)
+    {
+        if (!RedTiktok.HayRed || !RedTiktok.EsAnfitrion) return;
+        if (indice < 0) return;
+
+        if (!asignacionesSuperadas.Contains(indice))
+        {
+            asignacionesSuperadas.Add(indice);
+            victorias++;
+            ActualizarProgreso();
+
+            if (victorias >= victoriasNecesarias)
+            {
+                nivelListo = true;
+                textoResultado.text = "¡Minijuegos completados!";
+                RedTiktok.Autoridad?.MarcarFinal();
+            }
+            else
+            {
+                textoResultado.text = "¡Bien hecho!";
+            }
+        }
+
+        RedTiktok.Autoridad?.FijarProgreso(victorias, MascaraSuperadas());
+
+        if (nivelListo && !PanelAbierto && !secuenciaLanzada)
+            IniciarFinal();
     }
 }

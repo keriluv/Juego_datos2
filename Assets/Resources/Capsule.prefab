@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 8631874819368800385}
   - component: {fileID: -7214123584022104471}
   - component: {fileID: 7059012002168764363}
+  - component: {fileID: -7300000000000000123}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Player
@@ -917,3 +918,18 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d560cc9c408b2424c8bf637e8a35156f, type: 3}
   m_PrefabInstance: {fileID: 9033176295212416049}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &-7300000000000000123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e361ab843d85baf296dcb49b81c968d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RedTiktok
+  velocidadHorizontal: 400
+  gravedadPersonalizada: 2000
+  alturaSalto: 200

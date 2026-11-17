@@ -15,7 +15,7 @@ public class MultijugadorJuego : MonoBehaviour
 
     [Header("Configuración")]
     [Tooltip("Niveles reales que el anfitrión puede cargar en red.")]
-    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat" };
+    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat", "EscenaTiktok" };
 
     public int indiceEscena;
     public int maxJugadores = 4;
@@ -232,8 +232,7 @@ public class MultijugadorJuego : MonoBehaviour
     {
         if (ocupado || sesion != null) return;
 
-        if (EscenaElegida == "LevelSnapchat")
-            maxJugadores = 2;
+        maxJugadores = Mathf.Clamp(maxJugadores, 1, 4);
 
         ocupado = true;
         try
@@ -273,7 +272,17 @@ public class MultijugadorJuego : MonoBehaviour
         if (indice < 0) return;
 
         indiceEscena = indice;
-        maxJugadores = 2;
+        CrearPartida();
+    }
+
+    public void CrearPartidaTiktok()
+    {
+        if (escenasDisponibles == null) return;
+
+        int indice = System.Array.IndexOf(escenasDisponibles, "EscenaTiktok");
+        if (indice < 0) return;
+
+        indiceEscena = indice;
         CrearPartida();
     }
 

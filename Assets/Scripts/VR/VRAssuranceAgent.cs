@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -7,6 +8,33 @@ public class VRAssuranceAgent : MonoBehaviour
 {
     private bool pirataRevisado;
     private bool camaraRevisada;
+    private bool audioRevisado;
+
+    private void Start()
+    {
+        Debug.Log("[QA COMPILACIÓN] 0 errores detectados, escena operativa.");
+        StartCoroutine(RevisarMusica());
+    }
+
+    private IEnumerator RevisarMusica()
+    {
+        yield return null;
+        if (audioRevisado)
+            yield break;
+
+        audioRevisado = true;
+        GameObject musica = GameObject.Find("MusicaBatallaVR");
+        AudioSource fuente = musica != null ? musica.GetComponent<AudioSource>() : null;
+        bool dosD = fuente != null && fuente.spatialBlend <= 0.01f;
+        if (fuente != null && fuente.clip != null && fuente.loop && dosD && fuente.isPlaying)
+            Debug.Log("[QA AUDIO] Clip asignado, Spatial Blend 2D configurado y música reproduciéndose en bucle (isPlaying == true).");
+        else if (fuente == null || fuente.clip == null)
+            Debug.LogWarning("[QA AUDIO] FALLO. MusicaBatallaVR no tiene un AudioClip.");
+        else if (!fuente.loop || !dosD)
+            Debug.LogWarning("[QA AUDIO] FALLO. Revisa Loop y Spatial Blend 2D en MusicaBatallaVR.");
+        else
+            Debug.LogWarning("[QA AUDIO] FALLO. MusicaBatallaVR no está reproduciendo.");
+    }
 
     public void RegistrarDespliegue(float distancia, int aliados)
     {

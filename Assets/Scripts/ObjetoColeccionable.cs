@@ -13,7 +13,7 @@ public class ObjetoColeccionable : MonoBehaviour
     public float amplitudFlotar = 15f;
     public float velocidadFlotar = 2f;
 
-    // Otros scripts (por ejemplo el de los enemigos) pueden suscribirse a esto
+    // System.Action evita el choque con la clase global Action.
     public static event System.Action OnRecogido;
 
     private Vector3 escalaFinal;

@@ -2,6 +2,7 @@ using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class part2Youtube : MonoBehaviour
@@ -14,9 +15,26 @@ public class part2Youtube : MonoBehaviour
     [SerializeField] private Transform player;
     [SerializeField] private float zoomInTime = 2f;
 
-    [SerializeField] private GameObject camera;
+    [SerializeField, FormerlySerializedAs("camera")] private GameObject customCamera;
+    private Camera camaraVista;
 
     private bool toStart = false;
+
+    private void Awake()
+    {
+        if (customCamera != null)
+            camaraVista = customCamera.GetComponent<Camera>();
+    }
+
+    private Transform CamaraTransform
+    {
+        get
+        {
+            if (camaraVista != null)
+                return camaraVista.transform;
+            return customCamera != null ? customCamera.transform : null;
+        }
+    }
   
     private void Start()
     {
@@ -47,12 +65,12 @@ public class part2Youtube : MonoBehaviour
         Debug.Log("zoomin in");
         float time = 0f;
 
-        Vector3 startPosition = camera.transform.position;
+        Vector3 startPosition = CamaraTransform.position;
 
         Vector3 targetPosition = new Vector3(
             player.position.x,
             player.position.y,
-            camera.transform.position.z + zoomIn
+            CamaraTransform.position.z + zoomIn
         );
 
 
@@ -62,7 +80,7 @@ public class part2Youtube : MonoBehaviour
 
             float progress = time / zoomInTime;
 
-            camera.transform.position = Vector3.Lerp(
+            CamaraTransform.position = Vector3.Lerp(
                 startPosition,
                 targetPosition,
                 progress
@@ -70,7 +88,7 @@ public class part2Youtube : MonoBehaviour
 
             yield return null;
         }
-        camera.transform.position = targetPosition;
+        CamaraTransform.position = targetPosition;
         yield return StartCoroutine(Loading());
     }
 

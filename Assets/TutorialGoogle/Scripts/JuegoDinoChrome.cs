@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -14,22 +16,22 @@ public class JuegoDinoChrome : MonoBehaviour
     private const float VelocidadInicial = 420f;
     private const float VelocidadMaxima = 900f;
     private const string ClaveRecord = "JuegoDinoChrome_Record";
-    private const string Instrucciones = "ESPACIO/↑ O TOCA IZQ: SALTAR · ↓/S O MANTÉN ABAJO IZQ: AGACHARSE · CLIC/X/RT O TOCA DER: GOLPEAR";
-    private static readonly string[] NombresExtensiones = { "YOUTUBE", "MAPS", "DRIVE", "TRADUCTOR", "GMAIL" };
-    private static readonly string[] SiglasExtensiones = { "YT", "M", "D", "TR", "G" };
+    private const int ColeccionablesNecesarios = 5;
+    private const string Instrucciones = "ESPACIO/↑ O TOCA IZQ: SALTAR · ↓/S O MANTÉN ABAJO IZQ: AGACHARSE · CLIC/X/RT O TOCA DER: GOLPEAR · RECOGE 5 MONEDAS";
     private const float AnchoHitboxDino = 105f;
     private const float AnchoHitboxDinoAgachado = 84f;
     private const float AltoHitboxDino = 132f;
     private const float AltoHitboxDinoAgachado = 48f;
-    private readonly List<RectTransform> obstaculos = new List<RectTransform>();
+    private readonly List<Obstaculo> obstaculos = new List<Obstaculo>();
     [SerializeField] private List<RectTransform> nubes = new List<RectTransform>();
-    private readonly List<ObjetivoExtension> objetivos = new List<ObjetivoExtension>();
-    private readonly HashSet<int> extensionesGolpeadas = new HashSet<int>();
+    private readonly List<Coleccionable> coleccionables = new List<Coleccionable>();
+    public Sprite spriteColeccionable;
+    private Sprite[] spritesAve;
     [SerializeField] private RectTransform dino;
     [SerializeField] private RectTransform suelo;
     [SerializeField] private TextMeshProUGUI puntuacion;
     private TextMeshProUGUI mejorPuntuacion;
-    [SerializeField] private TextMeshProUGUI progresoExtensiones;
+    [SerializeField] private TextMeshProUGUI progresoColeccionables;
     [SerializeField] private TextMeshProUGUI aviso;
     [SerializeField] private RectTransform brazoGolpe;
     [SerializeField, HideInInspector] private bool interfazCreada;
@@ -38,19 +40,26 @@ public class JuegoDinoChrome : MonoBehaviour
     private float relojObstaculo = 1.5f;
     private float relojSuelo;
     private float puntos;
-    private float relojObjetivo = 2.4f;
+    private float relojColeccionable = 2.4f;
     private float tiempoGolpe;
     private float tiempoAviso;
     private float proximoGolpe;
     private int recorde;
+    private int coleccionablesRecogidos;
     private bool jugando = true;
     private bool agachado;
     private bool nuevoRecord;
+    private bool victoriaEnCurso;
     private Vector2 escalaDino;
 
-    private sealed class ObjetivoExtension
+    private sealed class Obstaculo
     {
-        public int indice;
+        public RectTransform rect;
+        public bool esAve;
+    }
+
+    private sealed class Coleccionable
+    {
         public RectTransform rect;
     }
 
@@ -63,6 +72,7 @@ public class JuegoDinoChrome : MonoBehaviour
             escalaDino = dino.sizeDelta;
         }
 
+        spritesAve = new[] { CrearSpriteAve(true), CrearSpriteAve(false) };
         AsegurarMarcasSuelo();
         recorde = PlayerPrefs.GetInt(ClaveRecord, 0);
         AsegurarEtiquetaRecord();
@@ -100,9 +110,9 @@ public class JuegoDinoChrome : MonoBehaviour
         RectTransform puntuacionRect = puntuacion.rectTransform;
         puntuacionRect.sizeDelta *= escala;
         puntuacion.fontSize *= escala;
-        RectTransform progresoRect = progresoExtensiones.rectTransform;
+        RectTransform progresoRect = progresoColeccionables.rectTransform;
         progresoRect.sizeDelta *= escala;
-        progresoExtensiones.fontSize *= escala;
+        progresoColeccionables.fontSize *= escala;
         RectTransform avisoRect = aviso.rectTransform;
         avisoRect.sizeDelta *= escala;
         aviso.fontSize *= escala;
@@ -120,7 +130,7 @@ public class JuegoDinoChrome : MonoBehaviour
     {
         if (!jugando)
         {
-            if (SaltarPresionado() || GolpePresionado()) Reiniciar();
+            if (!victoriaEnCurso && (SaltarPresionado() || GolpePresionado())) Reiniciar();
             return;
         }
 
@@ -155,7 +165,8 @@ public class JuegoDinoChrome : MonoBehaviour
             if (nube.anchoredPosition.x < -180f) nube.anchoredPosition = new Vector2(2050f + i * 115f, nube.anchoredPosition.y);
         }
 
-        ActualizarObjetivos(Time.deltaTime);
+        ActualizarColeccionables(Time.deltaTime);
+        if (!jugando) return;
         if (tiempoGolpe > 0f)
         {
             tiempoGolpe -= Time.deltaTime;
@@ -176,13 +187,19 @@ public class JuegoDinoChrome : MonoBehaviour
         if (relojObstaculo <= 0f) CrearObstaculo();
         for (int i = obstaculos.Count - 1; i >= 0; i--)
         {
-            RectTransform o = obstaculos[i];
+            Obstaculo obstaculo = obstaculos[i];
+            RectTransform o = obstaculo.rect;
             o.anchoredPosition += Vector2.left * ObtenerVelocidad() * Time.deltaTime;
             if (o.anchoredPosition.x < -1050f) { Destroy(o.gameObject); obstaculos.RemoveAt(i); continue; }
-            bool ave = o.name == "Ave pixel";
-            float obstaculoAbajo = ave ? o.anchoredPosition.y - o.sizeDelta.y * 0.5f : o.anchoredPosition.y;
-            float obstaculoArriba = ave ? o.anchoredPosition.y + o.sizeDelta.y * 0.5f : o.anchoredPosition.y + o.sizeDelta.y;
-            float anchoObstaculo = ave ? 70f : 68f;
+            if (obstaculo.esAve)
+            {
+                Image imagenAve = o.GetComponent<Image>();
+                if (imagenAve != null && spritesAve.Length > 0)
+                    imagenAve.sprite = spritesAve[(Mathf.FloorToInt(Time.time * 8f) + i) % spritesAve.Length];
+            }
+            float obstaculoAbajo = obstaculo.esAve ? o.anchoredPosition.y - 28f : o.anchoredPosition.y;
+            float obstaculoArriba = obstaculo.esAve ? o.anchoredPosition.y + 28f : o.anchoredPosition.y + o.sizeDelta.y;
+            float anchoObstaculo = obstaculo.esAve ? 82f : 68f;
             float anchoDino = tumbado ? AnchoHitboxDinoAgachado : AnchoHitboxDino;
             float altoDino = tumbado ? AltoHitboxDinoAgachado : AltoHitboxDino;
             bool solapaX = Mathf.Abs(o.anchoredPosition.x - dino.anchoredPosition.x) < (anchoObstaculo + anchoDino) * 0.5f;
@@ -208,8 +225,8 @@ public class JuegoDinoChrome : MonoBehaviour
         CrearImagen("Fondo", root, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1920, 1080), Color.white);
         puntuacion = Texto("00000", root, new Vector2(1f, 1f), new Vector2(-120f, -76f), new Vector2(240, 52), 30, tinta, FontStyles.Bold);
         puntuacion.alignment = TextAlignmentOptions.Right;
-        progresoExtensiones = Texto("EXTENSIONES  0/5", root, new Vector2(1f, 1f), new Vector2(-120f, -122f), new Vector2(260, 38), 18, tinta, FontStyles.Normal);
-        progresoExtensiones.alignment = TextAlignmentOptions.Right;
+        progresoColeccionables = Texto("MONEDAS  0/5", root, new Vector2(1f, 1f), new Vector2(-120f, -122f), new Vector2(260, 38), 18, tinta, FontStyles.Normal);
+        progresoColeccionables.alignment = TextAlignmentOptions.Right;
         aviso = Texto(Instrucciones, root, new Vector2(0.5f, 1f), new Vector2(0, -78f), new Vector2(1120, 46), 16, new Color(0.55f, 0.57f, 0.58f), FontStyles.Normal);
         CrearNube(root, 720f, 590f);
         CrearNube(root, 1240f, 720f);
@@ -227,51 +244,77 @@ public class JuegoDinoChrome : MonoBehaviour
         MostrarAviso(Instrucciones, 5f);
     }
 
-    private void ActualizarObjetivos(float dt)
+    private void ActualizarColeccionables(float dt)
     {
-        relojObjetivo -= dt;
-        if (relojObjetivo <= 0f && extensionesGolpeadas.Count < NombresExtensiones.Length)
+        relojColeccionable -= dt;
+        if (relojColeccionable <= 0f && coleccionablesRecogidos < ColeccionablesNecesarios)
         {
-            CrearObjetivo();
-            relojObjetivo = Random.Range(3.8f, 5.2f);
+            CrearColeccionable();
+            relojColeccionable = Random.Range(2.8f, 4f);
         }
 
-        for (int i = objetivos.Count - 1; i >= 0; i--)
+        for (int i = coleccionables.Count - 1; i >= 0; i--)
         {
-            ObjetivoExtension objetivo = objetivos[i];
-            objetivo.rect.anchoredPosition += Vector2.left * ObtenerVelocidad() * dt;
-            if (objetivo.rect.anchoredPosition.x < -100f)
+            Coleccionable coleccionable = coleccionables[i];
+            RectTransform rect = coleccionable.rect;
+            rect.anchoredPosition += Vector2.left * ObtenerVelocidad() * dt;
+            rect.Rotate(0f, 0f, 50f * dt);
+            float pulso = 1f + Mathf.Sin(Time.time * 4f + i) * 0.08f;
+            rect.localScale = new Vector3(pulso, pulso, 1f);
+
+            if (rect.anchoredPosition.x < -100f)
             {
-                Destroy(objetivo.rect.gameObject);
-                objetivos.RemoveAt(i);
+                Destroy(rect.gameObject);
+                coleccionables.RemoveAt(i);
+                continue;
+            }
+
+            float anchoDino = agachado ? AnchoHitboxDinoAgachado : AnchoHitboxDino;
+            float altoDino = agachado ? AltoHitboxDinoAgachado : AltoHitboxDino;
+            bool solapaX = Mathf.Abs(rect.anchoredPosition.x - dino.anchoredPosition.x) <
+                (anchoDino + rect.sizeDelta.x * 0.55f) * 0.5f;
+            bool solapaY = dino.anchoredPosition.y < rect.anchoredPosition.y + rect.sizeDelta.y * 0.4f &&
+                dino.anchoredPosition.y + altoDino > rect.anchoredPosition.y - rect.sizeDelta.y * 0.4f;
+            if (!solapaX || !solapaY) continue;
+
+            coleccionablesRecogidos++;
+            puntos += 50f;
+            progresoColeccionables.text = "MONEDAS  " + coleccionablesRecogidos + "/" + ColeccionablesNecesarios;
+            MostrarAviso("¡Moneda recogida!", 0.8f);
+            Destroy(rect.gameObject);
+            coleccionables.RemoveAt(i);
+
+            if (coleccionablesRecogidos >= ColeccionablesNecesarios)
+            {
+                Ganar();
+                return;
             }
         }
     }
 
-    private void CrearObjetivo()
+    private void CrearColeccionable()
     {
-        List<int> disponibles = new List<int>();
-        for (int i = 0; i < NombresExtensiones.Length; i++)
-        {
-            if (!extensionesGolpeadas.Contains(i))
-            {
-                bool yaEnPantalla = false;
-                for (int j = 0; j < objetivos.Count; j++)
-                    if (objetivos[j].indice == i) yaEnPantalla = true;
-                if (!yaEnPantalla) disponibles.Add(i);
-            }
-        }
-        if (disponibles.Count == 0) return;
+        float y = Random.value > 0.5f ? SueloY + 235f : SueloY + 55f;
+        RectTransform rect;
 
-        int indice = disponibles[Random.Range(0, disponibles.Count)];
-        float y = Random.value > 0.5f ? SueloY + 68f : SueloY + 126f;
-        RectTransform placa = CrearImagen("Extension " + NombresExtensiones[indice], dino.parent,
-            Vector2.zero, new Vector2(2050f, y), new Vector2(104f, 104f), new Color(0.32f, 0.34f, 0.35f));
-        RectTransform fondo = CrearImagen("Fondo icono", placa, new Vector2(0.5f, 0.5f), Vector2.zero,
-            new Vector2(84f, 84f), Color.white);
-        Texto(SiglasExtensiones[indice], fondo, new Vector2(0.5f, 0.5f), Vector2.zero,
-            new Vector2(80f, 76f), 36f, new Color(0.32f, 0.34f, 0.35f), FontStyles.Bold);
-        objetivos.Add(new ObjetivoExtension { indice = indice, rect = placa });
+        if (spriteColeccionable != null)
+        {
+            rect = CrearImagen("Moneda coleccionable", dino.parent, Vector2.zero,
+                new Vector2(2050f, y), new Vector2(72f, 72f), Color.white);
+            Image imagen = rect.GetComponent<Image>();
+            imagen.sprite = spriteColeccionable;
+            imagen.preserveAspect = true;
+        }
+        else
+        {
+            TextMeshProUGUI estrella = Texto("★", dino.parent, Vector2.zero,
+                new Vector2(2050f, y), new Vector2(82f, 82f), 76f,
+                new Color(1f, 0.72f, 0.08f), FontStyles.Bold);
+            estrella.raycastTarget = false;
+            rect = estrella.rectTransform;
+        }
+
+        coleccionables.Add(new Coleccionable { rect = rect });
     }
 
     private bool GolpePresionado()
@@ -305,40 +348,23 @@ public class JuegoDinoChrome : MonoBehaviour
         float x = dino.anchoredPosition.x + dino.sizeDelta.x * 0.5f + 14f;
         float yMin = dino.anchoredPosition.y + 8f;
         float yMax = dino.anchoredPosition.y + dino.sizeDelta.y - 8f;
-        bool impacto = false;
-
-        for (int i = objetivos.Count - 1; i >= 0; i--)
-        {
-            ObjetivoExtension objetivo = objetivos[i];
-            Vector2 pos = objetivo.rect.anchoredPosition;
-            if (pos.x < x || pos.x > x + 155f || pos.y + 21f < yMin || pos.y - 21f > yMax) continue;
-
-            extensionesGolpeadas.Add(objetivo.indice);
-            puntos += 100f;
-            progresoExtensiones.text = "EXTENSIONES  " + extensionesGolpeadas.Count + "/5";
-            MostrarAviso("¡" + NombresExtensiones[objetivo.indice] + "!", 1.2f);
-            Destroy(objetivo.rect.gameObject);
-            objetivos.RemoveAt(i);
-            impacto = true;
-            if (extensionesGolpeadas.Count == NombresExtensiones.Length)
-                MostrarAviso("¡LAS 5 EXTENSIONES APRENDIDAS!", 2.5f);
-            break;
-        }
-
         for (int i = obstaculos.Count - 1; i >= 0; i--)
         {
-            RectTransform obstaculo = obstaculos[i];
+            Obstaculo objetivo = obstaculos[i];
+            RectTransform obstaculo = objetivo.rect;
             if (obstaculo.anchoredPosition.x < x || obstaculo.anchoredPosition.x > x + 155f) continue;
-            float abajo = obstaculo.name == "Ave pixel"
-                ? obstaculo.anchoredPosition.y - obstaculo.sizeDelta.y * 0.5f
+            float abajo = objetivo.esAve
+                ? obstaculo.anchoredPosition.y - 28f
                 : obstaculo.anchoredPosition.y;
-            float arriba = abajo + obstaculo.sizeDelta.y;
+            float arriba = objetivo.esAve
+                ? obstaculo.anchoredPosition.y + 28f
+                : obstaculo.anchoredPosition.y + obstaculo.sizeDelta.y;
             if (arriba < yMin || abajo > yMax) continue;
 
             Destroy(obstaculo.gameObject);
             obstaculos.RemoveAt(i);
             puntos += 25f;
-            if (!impacto) MostrarAviso("¡Buen golpe!", 0.8f);
+            MostrarAviso("¡Buen golpe!", 0.8f);
             break;
         }
     }
@@ -457,29 +483,94 @@ public class JuegoDinoChrome : MonoBehaviour
 
     private void CrearObstaculo()
     {
-        bool ave = Random.value > 0.62f && puntos > 20f;
-        float alto = ave ? 38f : Random.Range(78f, 124f);
+        bool ave = Random.value > 0.52f && puntos > 10f;
         Color tinta = new Color(0.32f, 0.34f, 0.35f);
-        RectTransform o = CrearImagen(ave ? "Ave pixel" : "Cactus", dino.parent, new Vector2(0, 0), new Vector2(2050, SueloY), new Vector2(ave ? 58 : 32, alto), tinta);
+        RectTransform o;
         if (ave)
         {
-            o.sizeDelta = new Vector2(58f, 28f);
-            o.anchoredPosition = new Vector2(2050, SueloY + 94f);
-            CrearImagen("Ala pixel", o, new Vector2(0.5f, 0.5f), new Vector2(-4, 9), new Vector2(13, 20), o.GetComponent<Image>().color);
-            CrearImagen("Pico pixel", o, new Vector2(0.5f, 0.5f), new Vector2(27, 2), new Vector2(11, 7), o.GetComponent<Image>().color);
-            CrearImagen("Cola pixel", o, new Vector2(0.5f, 0.5f), new Vector2(-27, 1), new Vector2(10, 12), o.GetComponent<Image>().color);
+            bool aveAlta = Random.value > 0.5f;
+            float altura = aveAlta ? SueloY + 235f : SueloY + 94f;
+            o = CrearImagen(aveAlta ? "Ave alta" : "Ave baja", dino.parent,
+                Vector2.zero, new Vector2(2050f, altura), new Vector2(128f, 80f), Color.white);
+            Image imagenAve = o.GetComponent<Image>();
+            imagenAve.sprite = spritesAve[0];
+            imagenAve.preserveAspect = true;
         }
         else
         {
-            // The main rect is only the narrow cactus trunk. Its arms stay
-            // separate so increasing its height never turns the cactus into a block.
+            float alto = Random.Range(78f, 124f);
+            o = CrearImagen("Cactus", dino.parent, Vector2.zero,
+                new Vector2(2050f, SueloY), new Vector2(32f, alto), tinta);
             o.pivot = new Vector2(0.5f, 0f);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-22, 8), new Vector2(18, 12), o.GetComponent<Image>().color);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-30, 16), new Vector2(11, 28), o.GetComponent<Image>().color);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(22, 20), new Vector2(18, 12), o.GetComponent<Image>().color);
-            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(30, 30), new Vector2(11, 29), o.GetComponent<Image>().color);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-22, 8), new Vector2(18, 12), tinta);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(-30, 16), new Vector2(11, 28), tinta);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(22, 20), new Vector2(18, 12), tinta);
+            CrearImagen("Brazo cactus", o, new Vector2(0.5f, 0.5f), new Vector2(30, 30), new Vector2(11, 29), tinta);
         }
-        obstaculos.Add(o); relojObstaculo = Random.Range(1.25f, 2.15f);
+        obstaculos.Add(new Obstaculo { rect = o, esAve = ave });
+        relojObstaculo = Random.Range(1.25f, 2.15f);
+    }
+
+    private static Sprite CrearSpriteAve(bool alasArriba)
+    {
+        const int ancho = 128;
+        const int alto = 80;
+        Color[] pixeles = new Color[ancho * alto];
+        Color negro = new Color(0.12f, 0.12f, 0.12f);
+
+        DibujarTriangulo(pixeles, ancho, alto, new Vector2(91, 33), new Vector2(123, 48), new Vector2(116, 22), negro);
+        DibujarElipse(pixeles, ancho, alto, new Vector2(72, 32), 32f, 18f, negro);
+        if (alasArriba)
+            DibujarTriangulo(pixeles, ancho, alto, new Vector2(51, 35), new Vector2(70, 76), new Vector2(91, 38), negro);
+        else
+            DibujarTriangulo(pixeles, ancho, alto, new Vector2(52, 35), new Vector2(78, 4), new Vector2(98, 36), negro);
+        DibujarElipse(pixeles, ancho, alto, new Vector2(45, 49), 15f, 14f, negro);
+        DibujarTriangulo(pixeles, ancho, alto, new Vector2(32, 52), new Vector2(10, 46), new Vector2(32, 42), negro);
+        DibujarTriangulo(pixeles, ancho, alto, new Vector2(61, 20), new Vector2(67, 8), new Vector2(73, 20), negro);
+        DibujarTriangulo(pixeles, ancho, alto, new Vector2(78, 20), new Vector2(84, 9), new Vector2(90, 20), negro);
+
+        Texture2D textura = new Texture2D(ancho, alto, TextureFormat.RGBA32, false);
+        textura.name = alasArriba ? "Ave alas arriba" : "Ave alas abajo";
+        textura.filterMode = FilterMode.Point;
+        textura.wrapMode = TextureWrapMode.Clamp;
+        textura.SetPixels(pixeles);
+        textura.Apply();
+        return Sprite.Create(textura, new Rect(0f, 0f, ancho, alto), new Vector2(0.5f, 0.5f), 100f);
+    }
+
+    private static void DibujarElipse(Color[] pixeles, int ancho, int alto, Vector2 centro, float radioX, float radioY, Color color)
+    {
+        for (int y = Mathf.Max(0, Mathf.FloorToInt(centro.y - radioY)); y <= Mathf.Min(alto - 1, Mathf.CeilToInt(centro.y + radioY)); y++)
+        {
+            for (int x = Mathf.Max(0, Mathf.FloorToInt(centro.x - radioX)); x <= Mathf.Min(ancho - 1, Mathf.CeilToInt(centro.x + radioX)); x++)
+            {
+                float dx = (x - centro.x) / radioX;
+                float dy = (y - centro.y) / radioY;
+                if (dx * dx + dy * dy <= 1f)
+                    pixeles[y * ancho + x] = color;
+            }
+        }
+    }
+
+    private static void DibujarTriangulo(Color[] pixeles, int ancho, int alto, Vector2 a, Vector2 b, Vector2 c, Color color)
+    {
+        int minX = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.x, Mathf.Min(b.x, c.x))));
+        int maxX = Mathf.Min(ancho - 1, Mathf.CeilToInt(Mathf.Max(a.x, Mathf.Max(b.x, c.x))));
+        int minY = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.y, Mathf.Min(b.y, c.y))));
+        int maxY = Mathf.Min(alto - 1, Mathf.CeilToInt(Mathf.Max(a.y, Mathf.Max(b.y, c.y))));
+
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                Vector2 punto = new Vector2(x, y);
+                float ab = (punto.x - b.x) * (a.y - b.y) - (a.x - b.x) * (punto.y - b.y);
+                float bc = (punto.x - c.x) * (b.y - c.y) - (b.x - c.x) * (punto.y - c.y);
+                float ca = (punto.x - a.x) * (c.y - a.y) - (c.x - a.x) * (punto.y - a.y);
+                if ((ab >= 0f && bc >= 0f && ca >= 0f) || (ab <= 0f && bc <= 0f && ca <= 0f))
+                    pixeles[y * ancho + x] = color;
+            }
+        }
     }
 
     private void Terminar()
@@ -487,24 +578,46 @@ public class JuegoDinoChrome : MonoBehaviour
         jugando = false;
         proximoGolpe = 0f;
         PlayerPrefs.Save();
+        MostrarPanelFinal("FIN DE PARTIDA", "ESPACIO o toca para volver a jugar");
+    }
+
+    private void Ganar()
+    {
+        if (!jugando) return;
+        jugando = false;
+        victoriaEnCurso = true;
+        proximoGolpe = 0f;
+        PlayerPrefs.Save();
+        MostrarPanelFinal("¡GANASTE!", "Volviendo al menú principal...");
+        StartCoroutine(VolverAlMenu());
+    }
+
+    private IEnumerator VolverAlMenu()
+    {
+        yield return new WaitForSecondsRealtime(2.2f);
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    private void MostrarPanelFinal(string titulo, string mensajeFinal)
+    {
         panelFinal = new GameObject("Fin de partida", typeof(RectTransform));
         RectTransform p = panelFinal.GetComponent<RectTransform>(); p.SetParent(dino.parent, false); p.anchorMin = p.anchorMax = new Vector2(0.5f, 0.5f); p.sizeDelta = new Vector2(760, 230);
-        Texto("FIN DE PARTIDA", p, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(700, 48), 32, new Color(0.32f, 0.34f, 0.35f), FontStyles.Bold);
+        Texto(titulo, p, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(700, 48), 32, new Color(0.32f, 0.34f, 0.35f), FontStyles.Bold);
         Texto("PUNTAJE: " + Mathf.FloorToInt(puntos).ToString("00000"), p, new Vector2(0.5f, 0.6f), Vector2.zero, new Vector2(700, 40), 24, new Color(0.38f, 0.4f, 0.41f), FontStyles.Bold);
         Texto(nuevoRecord ? "¡NUEVO RÉCORD!" : "RÉCORD: " + recorde.ToString("00000"), p, new Vector2(0.5f, 0.4f), Vector2.zero, new Vector2(700, 38), 22, new Color(0.38f, 0.4f, 0.41f), FontStyles.Normal);
-        Texto("ESPACIO o toca para volver a jugar", p, new Vector2(0.5f, 0.16f), Vector2.zero, new Vector2(720, 36), 18, new Color(0.45f, 0.47f, 0.48f), FontStyles.Normal);
+        Texto(mensajeFinal, p, new Vector2(0.5f, 0.16f), Vector2.zero, new Vector2(720, 36), 18, new Color(0.45f, 0.47f, 0.48f), FontStyles.Normal);
     }
 
     private void Reiniciar()
     {
-        foreach (RectTransform o in obstaculos) if (o != null) Destroy(o.gameObject);
+        foreach (Obstaculo o in obstaculos) if (o.rect != null) Destroy(o.rect.gameObject);
         obstaculos.Clear(); if (panelFinal != null) Destroy(panelFinal);
-        foreach (ObjetivoExtension objetivo in objetivos) if (objetivo.rect != null) Destroy(objetivo.rect.gameObject);
-        objetivos.Clear();
+        foreach (Coleccionable coleccionable in coleccionables) if (coleccionable.rect != null) Destroy(coleccionable.rect.gameObject);
+        coleccionables.Clear();
         puntos = 0; velocidadY = 0; relojObstaculo = 1.5f; dino.anchoredPosition = new Vector2(DinoX, SueloY); dino.sizeDelta = escalaDino; jugando = true;
-        relojObjetivo = 2.4f; relojSuelo = 0f; extensionesGolpeadas.Clear(); tiempoGolpe = 0f; tiempoAviso = 0f; proximoGolpe = 0f;
-        agachado = false; nuevoRecord = false;
-        progresoExtensiones.text = "EXTENSIONES  0/5"; puntuacion.text = "00000"; brazoGolpe.gameObject.SetActive(false);
+        relojColeccionable = 2.4f; relojSuelo = 0f; coleccionablesRecogidos = 0; tiempoGolpe = 0f; tiempoAviso = 0f; proximoGolpe = 0f;
+        agachado = false; nuevoRecord = false; victoriaEnCurso = false;
+        progresoColeccionables.text = "MONEDAS  0/" + ColeccionablesNecesarios; puntuacion.text = "00000"; brazoGolpe.gameObject.SetActive(false);
         MostrarAviso(Instrucciones, 5f);
     }
 

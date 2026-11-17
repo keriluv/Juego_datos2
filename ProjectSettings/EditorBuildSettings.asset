@@ -30,6 +30,9 @@ EditorBuildSettings:
     path: Assets/Scenes/pruebaLobby.unity
     guid: 6bfa50b9a83b75848b6eefa204edb035
   - enabled: 1
+    path: Assets/Scenes/TutorialGoogle.unity
+    guid: e22cad73852d6eb46af77388b793c3bf
+  - enabled: 1
     path: Assets/Scenes/JuegoDinoChrome.unity
     guid: 83f264d3b4e4f284fbc8399538da44a3
   - enabled: 1

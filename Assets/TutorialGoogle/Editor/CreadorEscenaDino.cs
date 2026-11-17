@@ -9,6 +9,7 @@ using TMPro;
 public static class CreadorEscenaDino
 {
     private const string Ruta = "Assets/Scenes/JuegoDinoChrome.unity";
+    private const string RutaMoneda = "Assets/LevelSnapchat/Sprites/Historia1/KenneyPlatformer/Sprites/Tiles/Default/coin_gold.png";
 
     [InitializeOnLoadMethod]
     private static void CrearAlImportar()
@@ -26,7 +27,9 @@ public static class CreadorEscenaDino
         GameObject camaraGo = new GameObject("Main Camera"); camaraGo.tag = "MainCamera";
         Camera camara = camaraGo.AddComponent<Camera>(); camara.clearFlags = CameraClearFlags.SolidColor; camara.backgroundColor = new Color(0.98f, 0.98f, 0.97f); camara.orthographic = true; camara.orthographicSize = 5;
         camaraGo.AddComponent<AudioListener>();
-        GameObject juego = new GameObject("Juego Dino Chrome"); juego.AddComponent<JuegoDinoChrome>();
+        GameObject juego = new GameObject("Juego Dino Chrome");
+        JuegoDinoChrome dino = juego.AddComponent<JuegoDinoChrome>();
+        dino.spriteColeccionable = AssetDatabase.LoadAssetAtPath<Sprite>(RutaMoneda);
         EditorSceneManager.SaveScene(escena, Ruta);
 
         EditorBuildSettingsScene[] escenas = EditorBuildSettings.scenes;

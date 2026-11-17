@@ -1,0 +1,9 @@
+newmtl Hull
+Kd 1 1 1
+map_Kd hull_diff.jpg
+newmtl Rigging
+Kd 1 1 1
+map_Kd rigging_diff.jpg
+newmtl Sails
+Kd 1 1 1
+map_Kd sails_diff.jpg

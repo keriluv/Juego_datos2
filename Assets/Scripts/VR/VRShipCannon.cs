@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -35,6 +36,11 @@ public class VRShipCannon : MonoBehaviour
     private Vector3 posicionLocal;
     private Quaternion rotacionLocal;
     private AudioSource audioFuente;
+    private InputAction gatilloIzquierdo;
+    private InputAction gatilloDerecho;
+    private bool izquierdoPresionado;
+    private bool derechoPresionado;
+    private bool accionesBuscadas;
 
     private void Awake()
     {
@@ -106,6 +112,11 @@ public class VRShipCannon : MonoBehaviour
                 return;
 
             transform.localRotation = Quaternion.Slerp(transform.localRotation, rotacionLocal, 6f * Time.deltaTime);
+            if (GatilloPresionado())
+            {
+                Vector3 proa = transform.parent != null ? transform.parent.forward : transform.forward;
+                DispararHacia(proa);
+            }
             return;
         }
 
@@ -124,6 +135,49 @@ public class VRShipCannon : MonoBehaviour
 
         transform.rotation = Quaternion.LookRotation(direccionMundo.normalized, Vector3.up);
         Disparar(null);
+    }
+
+    private bool GatilloPresionado()
+    {
+        if (!accionesBuscadas)
+            BuscarGatillos();
+
+        return Flanco(gatilloIzquierdo, ref izquierdoPresionado) || Flanco(gatilloDerecho, ref derechoPresionado);
+    }
+
+    private void BuscarGatillos()
+    {
+        accionesBuscadas = true;
+        InputActionAsset[] activos = Resources.FindObjectsOfTypeAll<InputActionAsset>();
+        for (int i = 0; i < activos.Length; i++)
+        {
+            if (activos[i] == null || activos[i].name != "XRI Default Input Actions")
+                continue;
+
+            gatilloIzquierdo = activos[i].FindAction("XRI Left Interaction/Activate Value", false);
+            gatilloDerecho = activos[i].FindAction("XRI Right Interaction/Activate Value", false);
+            Habilitar(gatilloIzquierdo);
+            Habilitar(gatilloDerecho);
+            return;
+        }
+    }
+
+    private static void Habilitar(InputAction accion)
+    {
+        if (accion == null)
+            return;
+        if (accion.actionMap != null && !accion.actionMap.enabled)
+            accion.actionMap.Enable();
+        if (!accion.enabled)
+            accion.Enable();
+    }
+
+    private static bool Flanco(InputAction accion, ref bool estabaPresionado)
+    {
+        bool presionado = accion != null && accion.ReadValue<float>() > 0.55f;
+        bool flanco = presionado && !estabaPresionado;
+        estabaPresionado = presionado;
+        return flanco;
     }
 
     private void AlAgarrar(SelectEnterEventArgs args)
@@ -155,7 +209,7 @@ public class VRShipCannon : MonoBehaviour
         proximoDisparo = Time.time + enfriamiento;
 
         GameObject bala = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        bala.name = "BalaCanon";
+        bala.name = "Cannonball_Prefab";
         bala.transform.position = boca.position;
         bala.transform.localScale = Vector3.one * 0.28f;
         bala.GetComponent<Renderer>().material = MaterialBarco.Crear(new Color(0.12f, 0.12f, 0.13f));

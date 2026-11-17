@@ -35,7 +35,7 @@ public class BarcoSalud : MonoBehaviour
 
     public void RecibirDanio(float cantidad, int equipoAtacante)
     {
-        if (EstaHundido || cantidad <= 0f || equipoAtacante == equipo)
+        if (EstaHundido || cantidad <= 0f)
             return;
 
         Vida = Mathf.Max(0f, Vida - cantidad);
@@ -72,6 +72,6 @@ public class BarcoSalud : MonoBehaviour
         }
 
         if (!esJugador)
-            gameObject.SetActive(false);
+            Destroy(gameObject);
     }
 }

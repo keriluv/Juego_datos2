@@ -2547,7 +2547,7 @@ public class DesafioEscape : DesafioSnap
         Rect carta = PlataformaUI.RectDe(mundo, historia);
         anchoJugador = jugadorRT.rect.width;
 
-        sueloMundo = carta.center.y + ySuelo;
+        sueloMundo = PlataformaUI.RectDe(mundo, plataformas[0].rt).yMax;
         lineaMuerteMundo = sueloMundo - 40f;
         xMinMundo = carta.xMin + 10f;
         xMaxMundo = Mathf.Max(xMinMundo, carta.xMax - anchoJugador - 10f);

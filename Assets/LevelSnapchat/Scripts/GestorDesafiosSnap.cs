@@ -454,6 +454,7 @@ public class GestorDesafiosSnap : MonoBehaviour
         MostrarFinal();
         terminado = true;
         ocupado = false;
+        StartCoroutine(VolverAlSelector());
     }
 
     public void IniciarEnHistoria(int indice)
@@ -538,6 +539,18 @@ public class GestorDesafiosSnap : MonoBehaviour
         MostrarFinal();
         terminado = true;
         ocupado = false;
+        StartCoroutine(VolverAlSelector());
+    }
+
+    private IEnumerator VolverAlSelector()
+    {
+        yield return new WaitForSecondsRealtime(2.2f);
+        if (online && !esAnfitrion) yield break;
+
+        if (MultijugadorJuego.Instancia != null)
+            MultijugadorJuego.Instancia.IrAEscena("LevelSelector");
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene("LevelSelector");
     }
 
     private void CrearDesafio(int indice)

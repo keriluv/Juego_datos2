@@ -588,14 +588,14 @@ public class JuegoDinoChrome : MonoBehaviour
         victoriaEnCurso = true;
         proximoGolpe = 0f;
         PlayerPrefs.Save();
-        MostrarPanelFinal("¡GANASTE!", "Volviendo al menú principal...");
-        StartCoroutine(VolverAlMenu());
+        MostrarPanelFinal("¡GANASTE!", "Volviendo al selector de niveles...");
+        StartCoroutine(VolverAlSelector());
     }
 
-    private IEnumerator VolverAlMenu()
+    private IEnumerator VolverAlSelector()
     {
         yield return new WaitForSecondsRealtime(2.2f);
-        SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("LevelSelector");
     }
 
     private void MostrarPanelFinal(string titulo, string mensajeFinal)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [System.Serializable]
@@ -48,6 +49,7 @@ public class InteraccionTutorial : MonoBehaviour
 
     private readonly HashSet<int> visitadas = new HashSet<int>();
     private bool panelAbierto;
+    private bool transicionIniciada;
     private float tiempoMensaje;
     private string mensajeBase = "";
     private Color colorFondoClaro = Color.white;
@@ -232,21 +234,8 @@ public class InteraccionTutorial : MonoBehaviour
             return;
         }
 
-        int indice = plataforma.indiceExtension;
-        if (visitadas.Contains(indice)) return;
-
-        visitadas.Add(indice);
-        ActualizarProgreso();
-
-        if (visitadas.Count >= 5)
-        {
-            mensajeBase = "¡Genial! Ya conoces las 5 extensiones.\nPulsa «Saltar tutorial» para seguir.";
-            Mensaje(mensajeBase);
-        }
-        else
-        {
-            Mensaje("¡Bien! " + plataforma.etiqueta + ".\nLlevas " + visitadas.Count + " de 5.");
-        }
+        RegistrarExtension(plataforma.indiceExtension,
+            "¡Bien! " + plataforma.etiqueta + ".\nLlevas " + (visitadas.Count + 1) + " de 5.");
     }
 
     private void Golpear(PlataformaUI plataforma)
@@ -268,18 +257,84 @@ public class InteraccionTutorial : MonoBehaviour
             return;
         }
 
-        visitadas.Add(indice);
-        ActualizarProgreso();
+        RegistrarExtension(indice,
+            "¡Golpeaste " + plataforma.etiqueta + "!\nLlevas " + (visitadas.Count + 1) + " de 5.");
+    }
 
+    private void RegistrarExtension(int indice, string mensajeProgreso)
+    {
+        if (!visitadas.Add(indice)) return;
+
+        ActualizarProgreso();
         if (visitadas.Count >= 5)
         {
-            mensajeBase = "¡Genial! Ya conoces las 5 extensiones.\nPulsa «Saltar tutorial» para seguir.";
+            mensajeBase = "¡Ganaste! Ya conoces las 5 extensiones.";
             Mensaje(mensajeBase);
+            if (!transicionIniciada) StartCoroutine(AnimacionVictoria());
+            return;
         }
-        else
+
+        Mensaje(mensajeProgreso);
+    }
+
+    private IEnumerator AnimacionVictoria()
+    {
+        transicionIniciada = true;
+        Canvas canvas = dialogo != null ? dialogo.GetComponentInParent<Canvas>() : null;
+        if (canvas == null)
         {
-            Mensaje("¡Golpeaste " + plataforma.etiqueta + "!\nLlevas " + visitadas.Count + " de 5.");
+            Debug.LogError("No se encontró el Canvas para mostrar la victoria del tutorial.", this);
+            yield return new WaitForSecondsRealtime(1.5f);
+            SceneManager.LoadScene("JuegoDinoChrome");
+            yield break;
         }
+
+        GameObject panel = new GameObject("AnimacionVictoria", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        panelRect.SetParent(canvas.transform, false);
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+        panelRect.SetAsLastSibling();
+
+        CanvasGroup grupo = panel.GetComponent<CanvasGroup>();
+        grupo.alpha = 0f;
+        grupo.blocksRaycasts = true;
+        Image fondo = panel.GetComponent<Image>();
+        fondo.color = new Color(0.055f, 0.09f, 0.18f, 0.88f);
+
+        GameObject mensaje = new GameObject("MensajeVictoria", typeof(RectTransform), typeof(TextMeshProUGUI));
+        RectTransform mensajeRect = mensaje.GetComponent<RectTransform>();
+        mensajeRect.SetParent(panel.transform, false);
+        mensajeRect.anchorMin = Vector2.zero;
+        mensajeRect.anchorMax = Vector2.one;
+        mensajeRect.offsetMin = new Vector2(70f, 70f);
+        mensajeRect.offsetMax = new Vector2(-70f, -70f);
+
+        TextMeshProUGUI texto = mensaje.GetComponent<TextMeshProUGUI>();
+        texto.font = dialogo != null ? dialogo.font : TMP_Settings.defaultFontAsset;
+        texto.text = "¡GANASTE!\n<size=55%>¡Siguiente nivel: Dino Chrome!</size>";
+        texto.fontSize = 68f;
+        texto.fontStyle = FontStyles.Bold;
+        texto.color = Color.white;
+        texto.alignment = TextAlignmentOptions.Center;
+        texto.raycastTarget = false;
+
+        float duracion = 0.65f;
+        float tiempo = 0f;
+        while (tiempo < duracion)
+        {
+            tiempo += Time.unscaledDeltaTime;
+            float progreso = Mathf.Clamp01(tiempo / duracion);
+            grupo.alpha = Mathf.SmoothStep(0f, 1f, progreso);
+            mensajeRect.localScale = Vector3.one * Mathf.Lerp(0.65f, 1.08f, progreso);
+            yield return null;
+        }
+
+        mensajeRect.localScale = Vector3.one;
+        yield return new WaitForSecondsRealtime(1.1f);
+        SceneManager.LoadScene("JuegoDinoChrome");
     }
 
     private IEnumerator PulsoGolpe(RectTransform objetivo)

@@ -61,10 +61,8 @@ public class DesafioSnapPerfecto : DesafioSnap
         fondo.color = new Color(0.06f, 0.03f, 0.09f, 0.52f);
         fondo.raycastTarget = true;
 
-        Button botonCaptura = gameObject.AddComponent<Button>();
-        botonCaptura.targetGraphic = fondo;
-        botonCaptura.transition = Selectable.Transition.None;
-        botonCaptura.onClick.AddListener(CapturarPorClick);
+        // No UI Button click path — Update + GolpePresionado is the single fire path.
+        // (Button + Update both fired → double snaps in solo and 2x per player online.)
 
         TextMeshProUGUI titulo = UtilidadesDesafio.CrearTexto("Titulo", raiz, Fuente,
             "SESIÓN DE FOTOS", 28f, Color.white);
@@ -334,22 +332,9 @@ public class DesafioSnapPerfecto : DesafioSnap
             }
         }
 
-        if (UtilidadesDesafio.GolpePresionado(false))
+        // One EnviarDisparo per press (was duplicated with Button.onClick).
+        if (UtilidadesDesafio.GolpePresionado(true))
             red.EnviarDisparo();
-    }
-
-    private void CapturarPorClick()
-    {
-        if (terminado || cooldown > 0f) return;
-
-        if (online && !esAnfitrion)
-        {
-            if (red != null) red.EnviarDisparo();
-            return;
-        }
-
-        bool dentro = Mathf.Abs(posicionVisor - objetivoX) <= tolerancia;
-        Evaluar(dentro);
     }
 
     private void Evaluar(bool dentro)

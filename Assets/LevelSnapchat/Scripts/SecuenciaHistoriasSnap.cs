@@ -57,6 +57,10 @@ public class SecuenciaHistoriasSnap : MonoBehaviour
     {
         if (historiaActivada || plataforma != plataformaBoton) return;
 
+        // Only the host starts the shared stories flow; clients follow via RedSnapchat.HistoriaActual.
+        if (RedSnapchat.HayRed && !RedSnapchat.EsAnfitrion)
+            return;
+
         historiaActivada = true;
         StartCoroutine(Secuencia());
     }

@@ -124,7 +124,26 @@ public class RedSnapchat : NetworkBehaviour
         if (IsOwner)
             Local = this;
 
+        SepararCapsulaPorSlot();
         DesactivarEventSystem();
+    }
+
+    /// <summary>
+    /// Spread stacked Capsule prefabs before they are hidden — avoids both players
+    /// appearing glued at the same origin on each client.
+    /// </summary>
+    private void SepararCapsulaPorSlot()
+    {
+        int slot = IndiceJugador(OwnerClientId);
+        if (slot < 0) slot = (int)(OwnerClientId % MaxJugadoresSnap);
+
+        transform.position += new Vector3(slot * 2.5f, 0f, slot * 0.5f);
+    }
+
+    public static int IndiceLocal()
+    {
+        if (!HayRed || NetworkManager.Singleton == null) return 0;
+        return IndiceJugador(NetworkManager.Singleton.LocalClientId);
     }
 
     public override void OnNetworkDespawn()
@@ -159,7 +178,8 @@ public class RedSnapchat : NetworkBehaviour
         if (IsServer || !IsOwner || !IsClient) return;
         if (Autoridad == null) return;
         if (SceneManager.GetActiveScene().name != "LevelSnapchat") return;
-        if (Autoridad.HistoriaActual < 1) return;
+        // Allow client input from story 0 onward (was < 1, so photo/escape clients never synced).
+        if (Autoridad.HistoriaActual < 0) return;
 
         float h = EntradaSnap.Horizontal();
         bool salto = EntradaSnap.Salto();
@@ -524,9 +544,20 @@ public class RedSnapchat : NetworkBehaviour
         }
     }
 
+    private ulong ultimoDisparoCliente;
+    private int ultimoDisparoFrame = -1;
+
     public void RecibirDisparoCliente(ulong clientId)
     {
+        // Host is clientId 0 and uses local GolpePresionado — ignore host RPC duplicates.
         if (clientId == 0) return;
+
+        // Coalesce double-fires from the same client in one frame.
+        if (ultimoDisparoFrame == Time.frameCount && ultimoDisparoCliente == clientId)
+            return;
+
+        ultimoDisparoFrame = Time.frameCount;
+        ultimoDisparoCliente = clientId;
         disparosPendientes++;
     }
 

@@ -193,7 +193,8 @@ public class GestorDesafiosSnap : MonoBehaviour
                 ProcesarHistoriaRemota();
         }
 
-        if (desafioActual == null)
+        // Online: never glue extra avatars to P1 — each slot must move independently.
+        if (desafioActual == null && !(online && RedSnapchat.CantidadJugadores > 1))
             SincronizarCopiasVisual();
     }
 
@@ -249,8 +250,11 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         if (extra != null)
         {
-            extra.enabled = false;
+            // Must stay enabled so Update applies remote entrada from RedSnapchat.
+            extra.enabled = true;
             extra.usarEntradaRemota = true;
+            extra.usarClick = false;
+            extra.usarGatillo = false;
 
             if (extra.sprite != null)
                 extra.sprite.color = ColorJugador(slot);
@@ -368,6 +372,13 @@ public class GestorDesafiosSnap : MonoBehaviour
     {
         ocupado = true;
 
+        // Must show Historias UI before zoom — otherwise layout is inactive and zoom goes to nothing.
+        SnapWebApp snapUi = FindAnyObjectByType<SnapWebApp>();
+        if (snapUi != null)
+            snapUi.MostrarSeccion(2);
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+
         if (historiaActual >= 0)
         {
             DestruirDesafio();
@@ -396,6 +407,18 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         if (indice == 0 && jugador != null)
             jugador.gameObject.SetActive(false);
+
+        if (historias == null || indice < 0 || indice >= historias.Length || historias[indice] == null)
+        {
+            ocupado = false;
+            yield break;
+        }
+
+        if (!historias[indice].gameObject.activeInHierarchy)
+        {
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+        }
 
         yield return ZoomAHistoria(historias[indice], escalaZoom, duracionZoom);
 
@@ -612,6 +635,15 @@ public class GestorDesafiosSnap : MonoBehaviour
     {
         if (ventana == null || historia == null || panelPrincipal == null)
             yield break;
+
+        if (!historia.gameObject.activeInHierarchy)
+        {
+            SnapWebApp snapUi = FindAnyObjectByType<SnapWebApp>();
+            if (snapUi != null)
+                snapUi.MostrarSeccion(2);
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+        }
 
         if (fondoHistoria3 != null)
             fondoHistoria3.gameObject.SetActive(historias != null &&

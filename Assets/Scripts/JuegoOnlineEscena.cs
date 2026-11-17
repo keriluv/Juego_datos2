@@ -63,7 +63,7 @@ public class JuegoOnlineEscena : MonoBehaviour
             return;
         }
 
-        if (escena.name == "LevelSnapchat")
+        if (escena.name == "LevelSnapchat" || escena.name == "EscenaTiktok")
         {
             HayPuntoAparicion = false;
             return;

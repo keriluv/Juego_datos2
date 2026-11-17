@@ -81,6 +81,29 @@ public class DesafioEscape : DesafioSnap
         public float giro;
     }
 
+    private class DinoEscape
+    {
+        public JugadorTutorial jugador;
+        public RectTransform rt;
+        public int slot;
+        public float invulnerable;
+        public float inicioX;
+        public System.Action<PlataformaUI> golpe;
+
+        public float vel;
+        public float salto;
+        public float gravedad;
+        public float altura;
+        public float espera;
+        public float limiteIzq;
+        public float limiteDer;
+        public bool limites;
+        public bool click;
+        public bool gatillo;
+        public bool ignorar;
+        public bool remoto;
+    }
+
     private class ImagenAmbiente
     {
         public RectTransform rt;
@@ -122,16 +145,12 @@ public class DesafioEscape : DesafioSnap
     private float subidaY;
     private float subidaVelocidad;
     private float lineaMuerteMundo;
-    private float inicioX;
-    private float inicioX2;
     private float alturaSueloMundo;
     private float sueloMundo;
     private float xMinMundo;
     private float xMaxMundo;
     private float anchoJugador;
     private float tiempo;
-    private float invulnerable;
-    private float invulnerable2;
     private float siguienteEscombro;
     private float velocidadJugador;
     private float fuerzaSalto;
@@ -154,33 +173,7 @@ public class DesafioEscape : DesafioSnap
     private Color colorAcento;
     private Color colorPeligro;
 
-    private float velOriginal;
-    private float saltoOriginal;
-    private float gravedadOriginal;
-    private float alturaOriginal;
-    private float esperaOriginal;
-    private float limiteIzqOriginal;
-    private float limiteDerOriginal;
-    private bool limitesOriginal;
-    private bool clickOriginal;
-    private bool gatilloOriginal;
-    private bool ignorarFocoDeTextoOriginal;
-
-    private float velOriginal2;
-    private float saltoOriginal2;
-    private float gravedadOriginal2;
-    private float alturaOriginal2;
-    private float esperaOriginal2;
-    private float limiteIzqOriginal2;
-    private float limiteDerOriginal2;
-    private bool limitesOriginal2;
-    private bool clickOriginal2;
-    private bool gatilloOriginal2;
-    private bool ignorarFocoDeTextoOriginal2;
-    private bool remotoOriginal;
-    private bool remotoOriginal2;
-    private System.Action<PlataformaUI> golpe1;
-    private System.Action<PlataformaUI> golpe2;
+    private readonly List<DinoEscape> dinos = new List<DinoEscape>();
 
     private static readonly Color Verde = new Color(0.2f, 0.85f, 0.45f, 1f);
     private static readonly Color Rojo = new Color(0.95f, 0.25f, 0.28f, 1f);
@@ -191,6 +184,7 @@ public class DesafioEscape : DesafioSnap
     {
         UtilidadesDesafio.ReiniciarEntrada();
         DesactivarPlataformasPrevias();
+        InicializarDinos();
         GuardarEstadoJugador();
 
         EventSystem sistemaEventos = EventSystem.current;
@@ -1146,11 +1140,11 @@ public class DesafioEscape : DesafioSnap
 
         tiempo += dt;
 
-        if (invulnerable > 0f)
-            invulnerable -= dt;
-
-        if (invulnerable2 > 0f)
-            invulnerable2 -= dt;
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            if (dinos[i].invulnerable > 0f)
+                dinos[i].invulnerable -= dt;
+        }
 
         ActualizarMarea(dt);
         ActualizarPlataformas(dt);
@@ -1243,11 +1237,13 @@ public class DesafioEscape : DesafioSnap
                 p.rt.gameObject.SetActive(plataformaVisible);
         }
 
-        if (jugadorRT != null)
-            jugadorRT.anchoredPosition = red.EscapeP1;
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape d = dinos[i];
 
-        if (jugador2RT != null)
-            jugador2RT.anchoredPosition = red.EscapeP2;
+            if (d.rt != null && d.jugador != null && d.jugador.gameObject.activeSelf)
+                d.rt.anchoredPosition = red.EscapeJugador(d.slot);
+        }
 
         ActualizarEscombrosRemotos();
         ActualizarAmbiente(dt);
@@ -1302,7 +1298,7 @@ public class DesafioEscape : DesafioSnap
         }
         else if (evento == 5)
         {
-            MostrarEstado("ESPERA A TU COMPAÑERO", Amarillo, 0.8f);
+            MostrarEstado("ESPERA A TUS COMPAÑEROS", Amarillo, 0.8f);
         }
         else if (evento == 6)
         {
@@ -1363,9 +1359,20 @@ public class DesafioEscape : DesafioSnap
     {
         if (red == null || !esAnfitrion) return;
 
-        red.FijarEscapeJugadores(
-            jugadorRT != null ? jugadorRT.anchoredPosition : Vector2.zero,
-            jugador2RT != null ? jugador2RT.anchoredPosition : Vector2.zero);
+        Vector2[] posiciones = new Vector2[RedSnapchat.MaxJugadoresSnap];
+
+        for (int i = 0; i < posiciones.Length; i++)
+            posiciones[i] = new Vector2(0f, 99999f);
+
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape d = dinos[i];
+
+            if (d.rt != null && d.slot >= 0 && d.slot < posiciones.Length)
+                posiciones[d.slot] = d.rt.anchoredPosition;
+        }
+
+        red.FijarEscapeJugadores(posiciones);
 
         red.FijarEscapeTiempo(tiempo);
         red.FijarEscapeEstado(subidaY, vidas, llavesRecogidas, salidaAbierta);
@@ -1461,10 +1468,18 @@ public class DesafioEscape : DesafioSnap
                 continue;
             }
 
-            bool encima = jugador != null && jugador.PlataformaActual == p.colision;
+            bool encima = false;
 
-            if (!encima && jugador2 != null)
-                encima = jugador2.PlataformaActual == p.colision;
+            for (int j = 0; j < dinos.Count; j++)
+            {
+                JugadorTutorial quien = dinos[j].jugador;
+
+                if (quien != null && quien.gameObject.activeSelf && quien.PlataformaActual == p.colision)
+                {
+                    encima = true;
+                    break;
+                }
+            }
 
             if (encima)
             {
@@ -1805,9 +1820,6 @@ public class DesafioEscape : DesafioSnap
     {
         if (llaves.Count == 0) return;
 
-        Rect jugadorRect = RectJugador();
-        Rect jugador2Rect = jugador2RT != null ? RectJugador(jugador2RT) : jugadorRect;
-
         for (int i = 0; i < llaves.Count; i++)
         {
             LlaveEscape l = llaves[i];
@@ -1817,7 +1829,7 @@ public class DesafioEscape : DesafioSnap
             l.rt.anchoredPosition = new Vector2(l.rt.anchoredPosition.x, y);
 
             Rect r = new Rect(l.rt.anchoredPosition.x - 20f, y - 20f, 40f, 40f);
-            if (!r.Overlaps(jugadorRect) && !r.Overlaps(jugador2Rect)) continue;
+            if (!TocaAlgunJugador(r)) continue;
 
             l.recogida = true;
             l.rt.gameObject.SetActive(false);
@@ -1853,23 +1865,30 @@ public class DesafioEscape : DesafioSnap
 
     private bool ComprobarDano()
     {
-        if (ComprobarDanoJugador(jugador, jugadorRT, false)) return true;
-        if (jugador2 != null && RedSnapchat.HayCliente &&
-            ComprobarDanoJugador(jugador2, jugador2RT, true)) return true;
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape dino = dinos[i];
+
+            if (dino.jugador == null || !dino.jugador.gameObject.activeSelf)
+                continue;
+
+            if (ComprobarDanoJugador(dino, i))
+                return true;
+        }
 
         return false;
     }
 
-    private bool ComprobarDanoJugador(JugadorTutorial quien, RectTransform rt, bool esP2)
+    private bool ComprobarDanoJugador(DinoEscape dino, int indice)
     {
-        if (quien == null || rt == null) return false;
-        if (esP2 ? invulnerable2 > 0f : invulnerable > 0f) return false;
+        if (dino == null || dino.jugador == null || dino.rt == null) return false;
+        if (dino.invulnerable > 0f) return false;
 
-        Rect jugadorRect = RectJugador(rt);
+        Rect jugadorRect = RectJugador(dino.rt);
 
         if (usaMarea && jugadorRect.yMin < subidaY)
         {
-            RecibirDano(nivel == 2 ? "TE ALCANZO EL GLASEADO" : "TE ALCANZO LA MAREA", esP2);
+            RecibirDano(nivel == 2 ? "TE ALCANZO EL GLASEADO" : "TE ALCANZO LA MAREA", indice);
             return true;
         }
 
@@ -1886,7 +1905,7 @@ public class DesafioEscape : DesafioSnap
 
             if (!r.Overlaps(jugadorRect)) continue;
 
-            RecibirDano("TE ATRAPARON", esP2);
+            RecibirDano("TE ATRAPARON", indice);
             return true;
         }
 
@@ -1905,13 +1924,13 @@ public class DesafioEscape : DesafioSnap
 
             Destroy(e.rt.gameObject);
             escombros.RemoveAt(i);
-            RecibirDano(nivel == 2 ? "TE CAYO UN REGALO" : "TE GOLPEO UN ESCOMBRO", esP2);
+            RecibirDano(nivel == 2 ? "TE CAYO UN REGALO" : "TE GOLPEO UN ESCOMBRO", indice);
             return true;
         }
 
-        if (rt.anchoredPosition.y < lineaMuerteMundo)
+        if (dino.rt.anchoredPosition.y < lineaMuerteMundo)
         {
-            RecibirDano("CAISTE AL VACIO", esP2);
+            RecibirDano("CAISTE AL VACIO", indice);
             return true;
         }
 
@@ -1920,22 +1939,37 @@ public class DesafioEscape : DesafioSnap
 
     private void ComprobarSalida()
     {
-        if (!salidaAbierta || salida == null || jugadorRT == null) return;
+        if (!salidaAbierta || salida == null) return;
 
         Rect r = PlataformaUI.RectDe(raiz, salida);
+        int activos = 0;
+        int dentro = 0;
 
-        if (!r.Overlaps(RectJugador(jugadorRT)))
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape dino = dinos[i];
+
+            if (dino.jugador == null || !dino.jugador.gameObject.activeSelf)
+                continue;
+
+            activos++;
+
+            if (r.Overlaps(RectJugador(dino.rt)))
+                dentro++;
+        }
+
+        if (activos == 0 || dentro == 0)
         {
             avisandoEspera = false;
             return;
         }
 
-        if (jugador2RT != null && RedSnapchat.HayCliente && !r.Overlaps(RectJugador(jugador2RT)))
+        if (dentro < activos)
         {
             if (!avisandoEspera)
             {
                 avisandoEspera = true;
-                MostrarEstado("ESPERA A TU COMPAÑERO", Amarillo, 1.2f);
+                MostrarEstado("ESPERA A TUS COMPAÑEROS", Amarillo, 1.2f);
 
                 if (online && esAnfitrion && red != null)
                     red.FijarEscapeEvento(5);
@@ -1948,18 +1982,18 @@ public class DesafioEscape : DesafioSnap
         Ganar();
     }
 
-    private void RecibirDano(string motivo, bool esP2 = false)
+    private void RecibirDano(string motivo, int indice = 0)
     {
         if (!activo || reiniciando) return;
-        if (esP2 ? invulnerable2 > 0f : invulnerable > 0f) return;
+        if (dinos.Count == 0) return;
+        if (indice < 0 || indice >= dinos.Count) indice = 0;
+
+        DinoEscape dino = dinos[indice];
+        if (dino == null || dino.invulnerable > 0f) return;
 
         vidas--;
         ActualizarCorazones();
-
-        if (esP2)
-            invulnerable2 = 1.4f;
-        else
-            invulnerable = 1.4f;
+        dino.invulnerable = 1.4f;
 
         if (destello != null)
             destello.color = new Color(0.95f, 0.15f, 0.2f, 0.34f);
@@ -1977,10 +2011,10 @@ public class DesafioEscape : DesafioSnap
             return;
         }
 
-        StartCoroutine(Reaparecer(0.35f, esP2));
+        StartCoroutine(Reaparecer(0.35f, indice));
     }
 
-    private IEnumerator Reaparecer(float espera, bool esP2)
+    private IEnumerator Reaparecer(float espera, int indice)
     {
         yield return new WaitForSecondsRealtime(espera);
         if (!activo || reiniciando) yield break;
@@ -1988,15 +2022,14 @@ public class DesafioEscape : DesafioSnap
         subidaY = subidaInicial;
         ActualizarMareaVisual();
 
-        JugadorTutorial quien = esP2 ? jugador2 : jugador;
+        if (indice < 0 || indice >= dinos.Count) yield break;
 
-        if (quien != null)
-            quien.ColocarEn(new Vector2(esP2 ? inicioX2 : inicioX, sueloMundo));
+        DinoEscape dino = dinos[indice];
 
-        if (esP2)
-            invulnerable2 = 1.2f;
-        else
-            invulnerable = 1.2f;
+        if (dino.jugador != null)
+            dino.jugador.ColocarEn(new Vector2(dino.inicioX, sueloMundo));
+
+        dino.invulnerable = 1.2f;
     }
 
     private IEnumerator ReiniciarNivel()
@@ -2014,8 +2047,10 @@ public class DesafioEscape : DesafioSnap
 
         subidaY = subidaInicial;
         ActualizarMareaVisual();
-        invulnerable = 1.6f;
-        invulnerable2 = 1.6f;
+
+        for (int i = 0; i < dinos.Count; i++)
+            dinos[i].invulnerable = 1.6f;
+
         tiempo = 0f;
         siguienteEscombro = 0.7f;
         avisandoEspera = false;
@@ -2055,11 +2090,13 @@ public class DesafioEscape : DesafioSnap
         ActualizarProgreso();
         LimpiarEscombros();
 
-        if (jugador != null)
-            jugador.ColocarEn(new Vector2(inicioX, sueloMundo));
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape dino = dinos[i];
 
-        if (jugador2 != null)
-            jugador2.ColocarEn(new Vector2(inicioX2, sueloMundo));
+            if (dino.jugador != null)
+                dino.jugador.ColocarEn(new Vector2(dino.inicioX, sueloMundo));
+        }
 
         reiniciando = false;
         activo = true;
@@ -2077,11 +2114,11 @@ public class DesafioEscape : DesafioSnap
         if (online && esAnfitrion && red != null)
             red.FijarEscapeEvento(6);
 
-        if (jugador != null)
-            jugador.enabled = false;
-
-        if (jugador2 != null)
-            jugador2.enabled = false;
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            if (dinos[i].jugador != null)
+                dinos[i].jugador.enabled = false;
+        }
 
         StartCoroutine(Final());
     }
@@ -2187,17 +2224,44 @@ public class DesafioEscape : DesafioSnap
 
     private Vector2 CentroJugadorMasCercano(Vector2 desde)
     {
-        Vector2 centro1 = CentroJugador();
+        bool encontrado = false;
+        Vector2 mejor = desde;
+        float mejorDistancia = float.PositiveInfinity;
 
-        if (jugador2RT == null || !RedSnapchat.HayCliente)
-            return centro1;
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape dino = dinos[i];
 
-        Vector2 centro2 = RectJugador(jugador2RT).center;
+            if (dino.jugador == null || !dino.jugador.gameObject.activeSelf || dino.rt == null)
+                continue;
 
-        float d1 = (centro1 - desde).sqrMagnitude;
-        float d2 = (centro2 - desde).sqrMagnitude;
+            Vector2 centro = RectJugador(dino.rt).center;
+            float distancia = (centro - desde).sqrMagnitude;
 
-        return d2 < d1 ? centro2 : centro1;
+            if (distancia >= mejorDistancia) continue;
+
+            mejor = centro;
+            mejorDistancia = distancia;
+            encontrado = true;
+        }
+
+        return encontrado ? mejor : desde;
+    }
+
+    private bool TocaAlgunJugador(Rect rect)
+    {
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape dino = dinos[i];
+
+            if (dino.jugador == null || !dino.jugador.gameObject.activeSelf || dino.rt == null)
+                continue;
+
+            if (rect.Overlaps(RectJugador(dino.rt)))
+                return true;
+        }
+
+        return false;
     }
 
     private void ActualizarMareaVisual()
@@ -2248,37 +2312,53 @@ public class DesafioEscape : DesafioSnap
         estadosPrevios.Clear();
     }
 
+    private void InicializarDinos()
+    {
+        dinos.Clear();
+
+        if (jugadores != null && jugadores.Length > 0)
+        {
+            for (int i = 0; i < jugadores.Length; i++)
+            {
+                JugadorTutorial j = jugadores[i];
+                if (j == null) continue;
+
+                RectTransform rt = jugadoresRT != null &&
+                    i < jugadoresRT.Length && jugadoresRT[i] != null
+                    ? jugadoresRT[i]
+                    : (RectTransform)j.transform;
+
+                dinos.Add(new DinoEscape { jugador = j, rt = rt, slot = i });
+            }
+        }
+        else if (jugador != null)
+        {
+            dinos.Add(new DinoEscape { jugador = jugador, rt = jugadorRT });
+        }
+    }
+
     private void GuardarEstadoJugador()
     {
-        if (jugador == null) return;
+        for (int i = 0; i < dinos.Count; i++)
+        {
+            DinoEscape dino = dinos[i];
+            JugadorTutorial j = dino.jugador;
 
-        velOriginal = jugador.velocidad;
-        saltoOriginal = jugador.fuerzaSalto;
-        gravedadOriginal = jugador.gravedad;
-        alturaOriginal = jugador.alturaSuelo;
-        esperaOriginal = jugador.esperaEntreGolpes;
-        limitesOriginal = jugador.usarLimitesPersonalizados;
-        limiteIzqOriginal = jugador.limiteIzquierdo;
-        limiteDerOriginal = jugador.limiteDerecho;
-        clickOriginal = jugador.usarClick;
-        gatilloOriginal = jugador.usarGatillo;
-        ignorarFocoDeTextoOriginal = jugador.ignorarFocoDeTexto;
-        remotoOriginal = jugador.usarEntradaRemota;
+            if (j == null) continue;
 
-        if (jugador2 == null) return;
-
-        velOriginal2 = jugador2.velocidad;
-        saltoOriginal2 = jugador2.fuerzaSalto;
-        gravedadOriginal2 = jugador2.gravedad;
-        alturaOriginal2 = jugador2.alturaSuelo;
-        esperaOriginal2 = jugador2.esperaEntreGolpes;
-        limitesOriginal2 = jugador2.usarLimitesPersonalizados;
-        limiteIzqOriginal2 = jugador2.limiteIzquierdo;
-        limiteDerOriginal2 = jugador2.limiteDerecho;
-        clickOriginal2 = jugador2.usarClick;
-        gatilloOriginal2 = jugador2.usarGatillo;
-        ignorarFocoDeTextoOriginal2 = jugador2.ignorarFocoDeTexto;
-        remotoOriginal2 = jugador2.usarEntradaRemota;
+            dino.vel = j.velocidad;
+            dino.salto = j.fuerzaSalto;
+            dino.gravedad = j.gravedad;
+            dino.altura = j.alturaSuelo;
+            dino.espera = j.esperaEntreGolpes;
+            dino.limites = j.usarLimitesPersonalizados;
+            dino.limiteIzq = j.limiteIzquierdo;
+            dino.limiteDer = j.limiteDerecho;
+            dino.click = j.usarClick;
+            dino.gatillo = j.usarGatillo;
+            dino.ignorar = j.ignorarFocoDeTexto;
+            dino.remoto = j.usarEntradaRemota;
+        }
     }
 
     private void PrepararJugador()
@@ -2288,53 +2368,53 @@ public class DesafioEscape : DesafioSnap
         Rect carta = PlataformaUI.RectDe(mundo, historia);
         anchoJugador = jugadorRT.rect.width;
 
-        inicioX = carta.xMin + 30f;
-        inicioX2 = carta.xMax - anchoJugador - 30f;
         sueloMundo = carta.center.y + ySuelo;
         lineaMuerteMundo = sueloMundo - 40f;
         xMinMundo = carta.xMin + 10f;
         xMaxMundo = Mathf.Max(xMinMundo, carta.xMax - anchoJugador - 10f);
 
-        ConfigurarDino(jugador, inicioX, carta, false);
-        ConfigurarDino(jugador2, inicioX2, carta, true);
-
+        int cantidad = dinos.Count;
+        float margen = 30f;
+        float anchoUtil = Mathf.Max(0f, carta.width - anchoJugador - margen * 2f);
         bool cliente = online && !esAnfitrion;
 
-        jugador.usarEntradaRemota = cliente;
-        jugador.enabled = !cliente;
+        for (int i = 0; i < cantidad; i++)
+        {
+            DinoEscape dino = dinos[i];
+            if (dino.jugador == null) continue;
 
-        golpe1 = _ => AlGolpear(jugador);
-        jugador.alGolpear += golpe1;
+            float t = cantidad > 1 ? i / (float)(cantidad - 1) : 0f;
+            dino.inicioX = carta.xMin + margen + anchoUtil * t;
 
-        if (jugador2 == null) return;
+            ConfigurarDino(dino, dino.inicioX, carta);
 
-        jugador2.usarEntradaRemota = online && esAnfitrion;
-        jugador2.enabled = !cliente;
+            bool esLocal = i == 0;
+            dino.jugador.usarEntradaRemota = esLocal ? cliente : (online && esAnfitrion);
+            dino.jugador.enabled = !cliente;
 
-        golpe2 = _ => AlGolpear(jugador2);
-        jugador2.alGolpear += golpe2;
+            dino.golpe = _ => AlGolpear(dino.jugador);
+            dino.jugador.alGolpear += dino.golpe;
+        }
     }
 
-    private void ConfigurarDino(JugadorTutorial dino, float x, Rect carta, bool esP2)
+    private void ConfigurarDino(DinoEscape dino, float x, Rect carta)
     {
-        if (dino == null) return;
+        JugadorTutorial j = dino.jugador;
+        if (j == null) return;
 
-        dino.usarLimitesPersonalizados = true;
-        dino.limiteIzquierdo = xMinMundo;
-        dino.limiteDerecho = xMaxMundo;
-        dino.alturaSuelo = carta.yMin - 200f;
-        dino.usarClick = true;
-        dino.usarGatillo = true;
-        dino.ignorarFocoDeTexto = true;
-        dino.esperaEntreGolpes = 0.4f;
-        dino.velocidad = velocidadJugador;
-        dino.fuerzaSalto = fuerzaSalto;
-        dino.gravedad = 2300f;
+        j.usarLimitesPersonalizados = true;
+        j.limiteIzquierdo = xMinMundo;
+        j.limiteDerecho = xMaxMundo;
+        j.alturaSuelo = carta.yMin - 200f;
+        j.usarClick = true;
+        j.usarGatillo = true;
+        j.ignorarFocoDeTexto = true;
+        j.esperaEntreGolpes = 0.4f;
+        j.velocidad = velocidadJugador;
+        j.fuerzaSalto = fuerzaSalto;
+        j.gravedad = 2300f;
 
-        dino.ColocarEn(new Vector2(x, sueloMundo));
-
-        if (!esP2)
-            dino.enabled = true;
+        j.ColocarEn(new Vector2(x, sueloMundo));
     }
 
     private void OnDestroy()
@@ -2344,43 +2424,29 @@ public class DesafioEscape : DesafioSnap
         if (rutinaEstado != null)
             StopCoroutine(rutinaEstado);
 
-        if (jugador != null)
+        for (int i = 0; i < dinos.Count; i++)
         {
-            if (golpe1 != null)
-                jugador.alGolpear -= golpe1;
+            DinoEscape dino = dinos[i];
+            JugadorTutorial j = dino.jugador;
 
-            jugador.enabled = false;
-            jugador.usarClick = clickOriginal;
-            jugador.usarGatillo = gatilloOriginal;
-            jugador.ignorarFocoDeTexto = ignorarFocoDeTextoOriginal;
-            jugador.esperaEntreGolpes = esperaOriginal;
-            jugador.velocidad = velOriginal;
-            jugador.fuerzaSalto = saltoOriginal;
-            jugador.gravedad = gravedadOriginal;
-            jugador.alturaSuelo = alturaOriginal;
-            jugador.usarLimitesPersonalizados = limitesOriginal;
-            jugador.limiteIzquierdo = limiteIzqOriginal;
-            jugador.limiteDerecho = limiteDerOriginal;
-            jugador.usarEntradaRemota = remotoOriginal;
+            if (j == null) continue;
+
+            if (dino.golpe != null)
+                j.alGolpear -= dino.golpe;
+
+            j.enabled = false;
+            j.usarClick = dino.click;
+            j.usarGatillo = dino.gatillo;
+            j.ignorarFocoDeTexto = dino.ignorar;
+            j.esperaEntreGolpes = dino.espera;
+            j.velocidad = dino.vel;
+            j.fuerzaSalto = dino.salto;
+            j.gravedad = dino.gravedad;
+            j.alturaSuelo = dino.altura;
+            j.usarLimitesPersonalizados = dino.limites;
+            j.limiteIzquierdo = dino.limiteIzq;
+            j.limiteDerecho = dino.limiteDer;
+            j.usarEntradaRemota = dino.remoto;
         }
-
-        if (jugador2 == null) return;
-
-        if (golpe2 != null)
-            jugador2.alGolpear -= golpe2;
-
-        jugador2.enabled = false;
-        jugador2.usarClick = clickOriginal2;
-        jugador2.usarGatillo = gatilloOriginal2;
-        jugador2.ignorarFocoDeTexto = ignorarFocoDeTextoOriginal2;
-        jugador2.esperaEntreGolpes = esperaOriginal2;
-        jugador2.velocidad = velOriginal2;
-        jugador2.fuerzaSalto = saltoOriginal2;
-        jugador2.gravedad = gravedadOriginal2;
-        jugador2.alturaSuelo = alturaOriginal2;
-        jugador2.usarLimitesPersonalizados = limitesOriginal2;
-        jugador2.limiteIzquierdo = limiteIzqOriginal2;
-        jugador2.limiteDerecho = limiteDerOriginal2;
-        jugador2.usarEntradaRemota = remotoOriginal2;
     }
 }

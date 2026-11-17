@@ -38,8 +38,8 @@ public class GestorDesafiosSnap : MonoBehaviour
     private Vector2 tamanoJugadorBase = new Vector2(72f, 96f);
 
     private RedSnapchat red;
-    private JugadorTutorial jugador2;
-    private RectTransform jugador2RT;
+    private readonly JugadorTutorial[] jugadoresExtra = new JugadorTutorial[RedSnapchat.MaxJugadoresSnap - 1];
+    private readonly RectTransform[] jugadoresExtraRT = new RectTransform[RedSnapchat.MaxJugadoresSnap - 1];
     private bool online;
     private bool esAnfitrion;
     private int ultimaHistoriaRemota = -1;
@@ -184,14 +184,17 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         if (online)
         {
+            if (desafioActual == null)
+                AsegurarCopias();
+
             if (esAnfitrion)
-                red.RegistrarJugadores(jugador, jugador2);
+                red.RegistrarJugadores(JugadoresActuales());
             else
                 ProcesarHistoriaRemota();
         }
 
         if (desafioActual == null)
-            SincronizarJugador2Visual();
+            SincronizarCopiasVisual();
     }
 
     private void ConfigurarRed()
@@ -199,46 +202,144 @@ public class GestorDesafiosSnap : MonoBehaviour
         online = true;
         esAnfitrion = RedSnapchat.EsAnfitrion;
 
-        CrearJugador2();
-        red.RegistrarJugadores(jugador, jugador2);
+        AsegurarCopias();
+        red.RegistrarJugadores(JugadoresActuales());
 
         if (esAnfitrion)
             red.FijarHistoria(-1);
     }
 
-    private void CrearJugador2()
+    private void AsegurarCopias()
     {
-        if (jugador == null || jugador2 != null) return;
+        if (jugador == null) return;
 
-        GameObject copia = Instantiate(jugador.gameObject, jugador.transform.parent);
-        copia.name = "JugadorSnap2";
+        int cantidad = RedSnapchat.HayRed ? RedSnapchat.CantidadJugadores : 1;
+        cantidad = Mathf.Clamp(cantidad, 1, RedSnapchat.MaxJugadoresSnap);
 
-        jugador2 = copia.GetComponent<JugadorTutorial>();
-        jugador2RT = (RectTransform)copia.transform;
+        for (int slot = 1; slot < RedSnapchat.MaxJugadoresSnap; slot++)
+        {
+            int indice = slot - 1;
+            bool debeExistir = slot < cantidad;
 
-        if (jugador2 != null && jugador2.sprite != null)
-            jugador2.sprite.color = new Color(0.42f, 0.74f, 1f, 1f);
+            if (debeExistir && jugadoresExtra[indice] == null)
+                CrearJugadorExtra(slot);
 
-        jugador2.enabled = false;
-        jugador2.usarEntradaRemota = true;
-        jugador2RT.anchoredPosition = ((RectTransform)jugador.transform).anchoredPosition
-            + new Vector2(84f, 0f);
+            if (jugadoresExtra[indice] != null &&
+                jugadoresExtra[indice].gameObject.activeSelf != debeExistir)
+                jugadoresExtra[indice].gameObject.SetActive(debeExistir);
+        }
     }
 
-    private void SincronizarJugador2Visual()
+    private void CrearJugadorExtra(int slot)
     {
-        if (jugador == null || jugador2RT == null) return;
+        if (jugador == null || slot <= 0 || slot >= RedSnapchat.MaxJugadoresSnap)
+            return;
+
+        int indice = slot - 1;
+        if (jugadoresExtra[indice] != null) return;
+
+        GameObject copia = Instantiate(jugador.gameObject, jugador.transform.parent);
+        copia.name = "JugadorSnap" + (slot + 1);
+
+        JugadorTutorial extra = copia.GetComponent<JugadorTutorial>();
+        RectTransform rt = (RectTransform)copia.transform;
+
+        jugadoresExtra[indice] = extra;
+        jugadoresExtraRT[indice] = rt;
+
+        if (extra != null)
+        {
+            extra.enabled = false;
+            extra.usarEntradaRemota = true;
+
+            if (extra.sprite != null)
+                extra.sprite.color = ColorJugador(slot);
+        }
+
+        rt.anchoredPosition = ((RectTransform)jugador.transform).anchoredPosition
+            + OffsetJugador(slot);
+    }
+
+    private void SincronizarCopiasVisual()
+    {
+        if (jugador == null) return;
 
         RectTransform rt = (RectTransform)jugador.transform;
-
         bool activo = jugador.gameObject.activeSelf;
-        if (jugador2.gameObject.activeSelf != activo)
-            jugador2.gameObject.SetActive(activo);
+        int cantidad = RedSnapchat.HayRed ? RedSnapchat.CantidadJugadores : 1;
 
-        if (!activo) return;
+        for (int slot = 1; slot < RedSnapchat.MaxJugadoresSnap; slot++)
+        {
+            JugadorTutorial extra = JugadorSlot(slot);
+            RectTransform extraRT = RTJugadorSlot(slot);
 
-        jugador2RT.sizeDelta = rt.sizeDelta;
-        jugador2RT.anchoredPosition = rt.anchoredPosition + new Vector2(84f, 0f);
+            if (extra == null || extraRT == null) continue;
+
+            bool debeEstarActivo = activo && slot < cantidad;
+
+            if (extra.gameObject.activeSelf != debeEstarActivo)
+                extra.gameObject.SetActive(debeEstarActivo);
+
+            if (!debeEstarActivo) continue;
+
+            extraRT.sizeDelta = rt.sizeDelta;
+            extraRT.anchoredPosition = rt.anchoredPosition + OffsetJugador(slot);
+        }
+    }
+
+    private JugadorTutorial JugadorSlot(int slot)
+    {
+        if (slot == 0) return jugador;
+        if (slot <= 0 || slot >= RedSnapchat.MaxJugadoresSnap) return null;
+
+        return jugadoresExtra[slot - 1];
+    }
+
+    private RectTransform RTJugadorSlot(int slot)
+    {
+        JugadorTutorial j = JugadorSlot(slot);
+        return j != null ? (RectTransform)j.transform : null;
+    }
+
+    private JugadorTutorial[] JugadoresActuales()
+    {
+        JugadorTutorial[] lista = new JugadorTutorial[RedSnapchat.MaxJugadoresSnap];
+        lista[0] = jugador;
+
+        for (int slot = 1; slot < RedSnapchat.MaxJugadoresSnap; slot++)
+        {
+            JugadorTutorial extra = JugadorSlot(slot);
+
+            if (extra != null && extra.gameObject.activeSelf)
+                lista[slot] = extra;
+        }
+
+        return lista;
+    }
+
+    private RectTransform[] RTsJugadoresActuales()
+    {
+        JugadorTutorial[] jugadores = JugadoresActuales();
+        RectTransform[] rts = new RectTransform[jugadores.Length];
+
+        for (int i = 0; i < jugadores.Length; i++)
+            rts[i] = jugadores[i] != null ? (RectTransform)jugadores[i].transform : null;
+
+        return rts;
+    }
+
+    private static Color ColorJugador(int slot)
+    {
+        if (slot == 1) return new Color(0.42f, 0.74f, 1f, 1f);
+        if (slot == 2) return new Color(0.42f, 1f, 0.58f, 1f);
+        return new Color(1f, 0.72f, 0.35f, 1f);
+    }
+
+    private static Vector2 OffsetJugador(int slot)
+    {
+        if (slot == 1) return new Vector2(84f, 0f);
+        if (slot == 2) return new Vector2(-84f, 0f);
+        return new Vector2(168f, 0f);
     }
 
     private void ProcesarHistoriaRemota()
@@ -460,6 +561,14 @@ public class GestorDesafiosSnap : MonoBehaviour
 
         desafio.Completado = () => StartCoroutine(CompletarDesafio(indice));
 
+        JugadorTutorial[] jugadoresContexto = JugadoresActuales();
+        RectTransform[] jugadoresRTContexto = new RectTransform[jugadoresContexto.Length];
+
+        for (int i = 0; i < jugadoresContexto.Length; i++)
+            jugadoresRTContexto[i] = jugadoresContexto[i] != null
+                ? (RectTransform)jugadoresContexto[i].transform
+                : null;
+
         ContextoDesafio contexto = new ContextoDesafio
         {
             snap = snap,
@@ -468,8 +577,10 @@ public class GestorDesafiosSnap : MonoBehaviour
             mundo = mundo,
             jugador = jugador,
             jugadorRT = jugador != null ? (RectTransform)jugador.transform : null,
-            jugador2 = jugador2,
-            jugador2RT = jugador2RT,
+            jugador2 = JugadorSlot(1),
+            jugador2RT = RTJugadorSlot(1),
+            jugadores = jugadoresContexto,
+            jugadoresRT = jugadoresRTContexto,
             vineta = vineta,
             online = online,
             esAnfitrion = esAnfitrion,
@@ -518,10 +629,15 @@ public class GestorDesafiosSnap : MonoBehaviour
         Vector3 escalaFinal = new Vector3(escala, escala, 1f);
         Vector2 posicionFinal = objetivo - centro * escala;
 
-        RectTransform jugadorRT = jugador != null ? (RectTransform)jugador.transform : null;
-        Vector2 tamanoJugadorInicial = jugadorRT != null ? jugadorRT.rect.size : tamanoJugadorBase;
+        RectTransform[] jugadoresRTZoom = RTsJugadoresActuales();
+        Vector2[] tamanosIniciales = new Vector2[jugadoresRTZoom.Length];
+
+        for (int i = 0; i < jugadoresRTZoom.Length; i++)
+            tamanosIniciales[i] = jugadoresRTZoom[i] != null
+                ? jugadoresRTZoom[i].rect.size
+                : tamanoJugadorBase;
+
         Vector2 tamanoJugadorFinal = tamanoJugadorBase * escalaJugadorHistoria;
-        Vector2 tamanoJugador2Inicial = jugador2RT != null ? jugador2RT.rect.size : tamanoJugadorBase;
 
         float t = 0f;
 
@@ -534,11 +650,12 @@ public class GestorDesafiosSnap : MonoBehaviour
             ventana.localScale = Vector3.LerpUnclamped(escalaInicial, escalaFinal, suave);
             ventana.anchoredPosition = Vector2.LerpUnclamped(posicionInicial, posicionFinal, suave);
 
-            if (jugadorRT != null)
-                jugadorRT.sizeDelta = Vector2.LerpUnclamped(tamanoJugadorInicial, tamanoJugadorFinal, suave);
-
-            if (jugador2RT != null)
-                jugador2RT.sizeDelta = Vector2.LerpUnclamped(tamanoJugador2Inicial, tamanoJugadorFinal, suave);
+            for (int i = 0; i < jugadoresRTZoom.Length; i++)
+            {
+                if (jugadoresRTZoom[i] != null)
+                    jugadoresRTZoom[i].sizeDelta = Vector2.LerpUnclamped(
+                        tamanosIniciales[i], tamanoJugadorFinal, suave);
+            }
 
             yield return null;
         }
@@ -546,11 +663,11 @@ public class GestorDesafiosSnap : MonoBehaviour
         ventana.localScale = escalaFinal;
         ventana.anchoredPosition = posicionFinal;
 
-        if (jugadorRT != null)
-            jugadorRT.sizeDelta = tamanoJugadorFinal;
-
-        if (jugador2RT != null)
-            jugador2RT.sizeDelta = tamanoJugadorFinal;
+        for (int i = 0; i < jugadoresRTZoom.Length; i++)
+        {
+            if (jugadoresRTZoom[i] != null)
+                jugadoresRTZoom[i].sizeDelta = tamanoJugadorFinal;
+        }
     }
 
     private IEnumerator ZoomSalir(float duracion)
@@ -563,9 +680,13 @@ public class GestorDesafiosSnap : MonoBehaviour
         Vector3 escalaFinal = Vector3.one;
         Vector2 posicionFinal = Vector2.zero;
 
-        RectTransform jugadorRT = jugador != null ? (RectTransform)jugador.transform : null;
-        Vector2 tamanoJugadorInicial = jugadorRT != null ? jugadorRT.rect.size : tamanoJugadorBase;
-        Vector2 tamanoJugador2Inicial = jugador2RT != null ? jugador2RT.rect.size : tamanoJugadorBase;
+        RectTransform[] jugadoresRTZoom = RTsJugadoresActuales();
+        Vector2[] tamanosIniciales = new Vector2[jugadoresRTZoom.Length];
+
+        for (int i = 0; i < jugadoresRTZoom.Length; i++)
+            tamanosIniciales[i] = jugadoresRTZoom[i] != null
+                ? jugadoresRTZoom[i].rect.size
+                : tamanoJugadorBase;
 
         float t = 0f;
 
@@ -578,11 +699,12 @@ public class GestorDesafiosSnap : MonoBehaviour
             ventana.localScale = Vector3.LerpUnclamped(escalaInicial, escalaFinal, suave);
             ventana.anchoredPosition = Vector2.LerpUnclamped(posicionInicial, posicionFinal, suave);
 
-            if (jugadorRT != null)
-                jugadorRT.sizeDelta = Vector2.LerpUnclamped(tamanoJugadorInicial, tamanoJugadorBase, suave);
-
-            if (jugador2RT != null)
-                jugador2RT.sizeDelta = Vector2.LerpUnclamped(tamanoJugador2Inicial, tamanoJugadorBase, suave);
+            for (int i = 0; i < jugadoresRTZoom.Length; i++)
+            {
+                if (jugadoresRTZoom[i] != null)
+                    jugadoresRTZoom[i].sizeDelta = Vector2.LerpUnclamped(
+                        tamanosIniciales[i], tamanoJugadorBase, suave);
+            }
 
             yield return null;
         }
@@ -590,11 +712,11 @@ public class GestorDesafiosSnap : MonoBehaviour
         ventana.localScale = Vector3.one;
         ventana.anchoredPosition = Vector2.zero;
 
-        if (jugadorRT != null)
-            jugadorRT.sizeDelta = tamanoJugadorBase;
-
-        if (jugador2RT != null)
-            jugador2RT.sizeDelta = tamanoJugadorBase;
+        for (int i = 0; i < jugadoresRTZoom.Length; i++)
+        {
+            if (jugadoresRTZoom[i] != null)
+                jugadoresRTZoom[i].sizeDelta = tamanoJugadorBase;
+        }
 
         if (fondoHistoria3 != null)
             fondoHistoria3.gameObject.SetActive(false);
@@ -623,12 +745,26 @@ public class GestorDesafiosSnap : MonoBehaviour
         Vector2 local = mundo.InverseTransformPoint(punto);
         rt.anchoredPosition = new Vector2(local.x - rt.rect.width * 0.5f, local.y);
 
-        if (jugador2 == null || jugador2RT == null) return;
+        int cantidad = RedSnapchat.HayRed ? RedSnapchat.CantidadJugadores : 1;
 
-        jugador2.gameObject.SetActive(true);
-        jugador2.enabled = false;
-        jugador2RT.sizeDelta = rt.sizeDelta;
-        jugador2RT.anchoredPosition = rt.anchoredPosition + new Vector2(84f, 0f);
+        for (int slot = 1; slot < RedSnapchat.MaxJugadoresSnap; slot++)
+        {
+            JugadorTutorial extra = JugadorSlot(slot);
+            RectTransform extraRT = RTJugadorSlot(slot);
+
+            if (extra == null || extraRT == null) continue;
+
+            bool debeEstarActivo = slot < cantidad;
+
+            if (extra.gameObject.activeSelf != debeEstarActivo)
+                extra.gameObject.SetActive(debeEstarActivo);
+
+            if (!debeEstarActivo) continue;
+
+            extra.enabled = false;
+            extraRT.sizeDelta = rt.sizeDelta;
+            extraRT.anchoredPosition = rt.anchoredPosition + OffsetJugador(slot);
+        }
     }
 
     private void PrepararHalloween()

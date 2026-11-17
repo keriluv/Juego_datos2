@@ -1,4 +1,5 @@
 using TMPro;
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class DesafioSnap : MonoBehaviour
@@ -13,6 +14,8 @@ public abstract class DesafioSnap : MonoBehaviour
     protected RectTransform jugadorRT;
     protected JugadorTutorial jugador2;
     protected RectTransform jugador2RT;
+    protected JugadorTutorial[] jugadores;
+    protected RectTransform[] jugadoresRT;
     protected VinetaHalloween vineta;
     protected bool online;
     protected bool esAnfitrion;
@@ -33,10 +36,30 @@ public abstract class DesafioSnap : MonoBehaviour
         jugadorRT = contexto.jugadorRT;
         jugador2 = contexto.jugador2;
         jugador2RT = contexto.jugador2RT;
+        jugadores = contexto.jugadores;
+        jugadoresRT = contexto.jugadoresRT;
         vineta = contexto.vineta;
         online = contexto.online;
         esAnfitrion = contexto.esAnfitrion;
         red = contexto.red;
+
+        if (jugadores == null)
+        {
+            List<JugadorTutorial> lista = new List<JugadorTutorial>();
+
+            if (jugador != null) lista.Add(jugador);
+            if (jugador2 != null) lista.Add(jugador2);
+
+            jugadores = lista.ToArray();
+        }
+
+        if (jugadoresRT == null || jugadoresRT.Length != jugadores.Length)
+        {
+            jugadoresRT = new RectTransform[jugadores.Length];
+
+            for (int i = 0; i < jugadores.Length; i++)
+                jugadoresRT[i] = jugadores[i] != null ? (RectTransform)jugadores[i].transform : null;
+        }
 
         Construir();
     }

@@ -25,6 +25,21 @@ public class RedSnapchat : NetworkBehaviour
         HayRed && NetworkManager.Singleton.IsServer &&
         NetworkManager.Singleton.ConnectedClientsIds.Count > 1;
 
+    public static int CantidadJugadores
+    {
+        get
+        {
+            if (!HayRed) return 1;
+
+            return Mathf.Clamp(
+                NetworkManager.Singleton.ConnectedClientsIds.Count,
+                1,
+                MaxJugadoresSnap);
+        }
+    }
+
+    public const int MaxJugadoresSnap = 4;
+
     private NetworkVariable<int> historia = new NetworkVariable<int>(-1);
 
     private NetworkVariable<float> fotoVisor = new NetworkVariable<float>(0f);
@@ -41,6 +56,8 @@ public class RedSnapchat : NetworkBehaviour
     private NetworkVariable<bool> escapeSalida = new NetworkVariable<bool>(false);
     private NetworkVariable<Vector2> escapeP1 = new NetworkVariable<Vector2>(Vector2.zero);
     private NetworkVariable<Vector2> escapeP2 = new NetworkVariable<Vector2>(Vector2.zero);
+    private NetworkVariable<Vector2> escapeP3 = new NetworkVariable<Vector2>(new Vector2(0f, 99999f));
+    private NetworkVariable<Vector2> escapeP4 = new NetworkVariable<Vector2>(new Vector2(0f, 99999f));
     private NetworkVariable<float> escapeTiempo = new NetworkVariable<float>(0f);
     private NetworkVariable<Vector2> escapePeligro0 = new NetworkVariable<Vector2>(new Vector2(0f, 99999f));
     private NetworkVariable<Vector2> escapePeligro1 = new NetworkVariable<Vector2>(new Vector2(0f, 99999f));
@@ -53,12 +70,11 @@ public class RedSnapchat : NetworkBehaviour
 
     public NetworkList<Vector3> escapeEscombros = new NetworkList<Vector3>();
 
-    private JugadorTutorial jugador1;
-    private JugadorTutorial jugador2;
-    private float entradaH;
-    private bool entradaSaltoPend;
-    private bool entradaGolpePend;
-    private bool entradaAgachadoPend;
+    private readonly JugadorTutorial[] jugadoresRed = new JugadorTutorial[MaxJugadoresSnap];
+    private readonly float[] entradaH = new float[MaxJugadoresSnap];
+    private readonly bool[] entradaSaltoPend = new bool[MaxJugadoresSnap];
+    private readonly bool[] entradaGolpePend = new bool[MaxJugadoresSnap];
+    private readonly bool[] entradaAgachadoPend = new bool[MaxJugadoresSnap];
     private int disparosPendientes;
     private float siguienteEnvio;
     private bool capsulaOculta;
@@ -90,6 +106,14 @@ public class RedSnapchat : NetworkBehaviour
         if (indice == 0) return escapePeligro0.Value;
         if (indice == 1) return escapePeligro1.Value;
         return escapePeligro2.Value;
+    }
+
+    public Vector2 EscapeJugador(int indice)
+    {
+        if (indice == 0) return escapeP1.Value;
+        if (indice == 1) return escapeP2.Value;
+        if (indice == 2) return escapeP3.Value;
+        return escapeP4.Value;
     }
 
     public override void OnNetworkSpawn()
@@ -267,11 +291,28 @@ public class RedSnapchat : NetworkBehaviour
             golpesJugador[i].enabled = true;
     }
 
+    public void RegistrarJugador(int indice, JugadorTutorial jugador)
+    {
+        if (indice < 0 || indice >= MaxJugadoresSnap) return;
+
+        jugadoresRed[indice] = jugador;
+
+        if (indice > 0)
+            AplicarEntradaRemota(indice);
+    }
+
     public void RegistrarJugadores(JugadorTutorial p1, JugadorTutorial p2)
     {
-        jugador1 = p1;
-        jugador2 = p2;
-        AplicarEntradaRemota();
+        RegistrarJugador(0, p1);
+        RegistrarJugador(1, p2);
+    }
+
+    public void RegistrarJugadores(JugadorTutorial[] lista)
+    {
+        if (lista == null) return;
+
+        for (int i = 0; i < MaxJugadoresSnap; i++)
+            RegistrarJugador(i, i < lista.Length ? lista[i] : null);
     }
 
     public void FijarHistoria(int indice)
@@ -308,13 +349,27 @@ public class RedSnapchat : NetworkBehaviour
 
     public void FijarEscapeJugadores(Vector2 p1, Vector2 p2)
     {
-        if (!IsServer) return;
+        FijarEscapeJugadores(new[] { p1, p2 });
+    }
 
-        if ((escapeP1.Value - p1).sqrMagnitude > 0.25f)
-            escapeP1.Value = p1;
+    public void FijarEscapeJugadores(Vector2[] posiciones)
+    {
+        if (!IsServer || posiciones == null) return;
 
-        if ((escapeP2.Value - p2).sqrMagnitude > 0.25f)
-            escapeP2.Value = p2;
+        FijarPosicionJugador(escapeP1, posiciones, 0);
+        FijarPosicionJugador(escapeP2, posiciones, 1);
+        FijarPosicionJugador(escapeP3, posiciones, 2);
+        FijarPosicionJugador(escapeP4, posiciones, 3);
+    }
+
+    private void FijarPosicionJugador(NetworkVariable<Vector2> variable, Vector2[] posiciones, int indice)
+    {
+        Vector2 posicion = indice < posiciones.Length
+            ? posiciones[indice]
+            : new Vector2(0f, 99999f);
+
+        if ((variable.Value - posicion).sqrMagnitude > 0.25f)
+            variable.Value = posicion;
     }
 
     public void FijarEscapeTiempo(float tiempo)
@@ -405,37 +460,67 @@ public class RedSnapchat : NetworkBehaviour
 
     public void RecibirEntradaCliente(ulong clientId, float h, bool salto, bool golpe, bool agachado)
     {
-        if (clientId == 0) return;
+        if (!IsServer) return;
 
-        entradaH = h;
+        int indice = IndiceJugador(clientId);
+        if (indice <= 0 || indice >= MaxJugadoresSnap) return;
+
+        entradaH[indice] = h;
 
         if (salto)
-            entradaSaltoPend = true;
+            entradaSaltoPend[indice] = true;
 
         if (golpe)
-            entradaGolpePend = true;
+            entradaGolpePend[indice] = true;
 
-        entradaAgachadoPend = agachado;
-        AplicarEntradaRemota();
+        entradaAgachadoPend[indice] = agachado;
+        AplicarEntradaRemota(indice);
+    }
+
+    private static int IndiceJugador(ulong clientId)
+    {
+        if (NetworkManager.Singleton == null) return -1;
+
+        System.Collections.Generic.IReadOnlyList<ulong> ids =
+            NetworkManager.Singleton.ConnectedClientsIds;
+
+        int indice = 0;
+
+        for (int i = 0; i < ids.Count; i++)
+        {
+            if (ids[i] < clientId)
+                indice++;
+        }
+
+        return indice;
     }
 
     private void AplicarEntradaRemota()
     {
-        if (jugador2 == null) return;
+        for (int i = 1; i < MaxJugadoresSnap; i++)
+            AplicarEntradaRemota(i);
+    }
 
-        jugador2.entradaHorizontal = entradaH;
-        jugador2.entradaAgachado = entradaAgachadoPend;
+    private void AplicarEntradaRemota(int indice)
+    {
+        if (indice <= 0 || indice >= MaxJugadoresSnap) return;
 
-        if (entradaSaltoPend)
+        JugadorTutorial jugador = jugadoresRed[indice];
+        if (jugador == null) return;
+
+        jugador.entradaHorizontal = entradaH[indice];
+        jugador.entradaAgachado = entradaAgachadoPend[indice];
+
+        if (entradaSaltoPend[indice])
         {
-            jugador2.entradaSalto = true;
-            entradaSaltoPend = false;
+            jugador.entradaSalto = true;
+            entradaSaltoPend[indice] = false;
         }
 
-        if (entradaGolpePend)
+        if (entradaGolpePend[indice])
         {
-            jugador2.entradaGolpe = true;
-            entradaGolpePend = false;
+            jugador.entradaGolpe = true;
+            entradaGolpePend[indice] = false;
         }
     }
 

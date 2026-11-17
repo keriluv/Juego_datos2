@@ -56,6 +56,12 @@ public class SecuenciaTiktokDorado : MonoBehaviour
         if (panelFinal != null) panelFinal.SetActive(false);
     }
 
+    // En multijugador la capsula de la escena esta oculta: usamos la del jugador local.
+    public void EstablecerJugador(Transform nuevo)
+    {
+        if (nuevo != null) jugador = nuevo;
+    }
+
     // Lo llama el GestorMinijuegos
     public void Iniciar()
     {

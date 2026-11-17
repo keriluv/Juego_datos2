@@ -14,7 +14,7 @@ public class ObjetoColeccionable : MonoBehaviour
     public float velocidadFlotar = 2f;
 
     // Otros scripts (por ejemplo el de los enemigos) pueden suscribirse a esto
-    public static event Action OnRecogido;
+    public static event System.Action OnRecogido;
 
     private Vector3 escalaFinal;
     private Vector3 posicionBase;

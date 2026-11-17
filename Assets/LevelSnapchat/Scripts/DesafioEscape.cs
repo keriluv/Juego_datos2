@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 public class DesafioEscape : DesafioSnap
 {
+    private const int GolpesNecesariosPinata = 5;
     private const float VelocidadPatrullaFantasmas = 90f;
     private const float VelocidadCazaFantasmas = 78f;
     private const float SeparacionMinimaFantasmas = 96f;
@@ -126,6 +127,10 @@ public class DesafioEscape : DesafioSnap
 
     private RectTransform capaJuego;
     private RectTransform salida;
+    private RectTransform pinata;
+    private Image cuerpoPinata;
+    private readonly List<Image> franjasPinata = new List<Image>();
+    private readonly List<RectTransform> dulcesPinata = new List<RectTransform>();
     private Image marcoSalida;
     private Image brilloSalida;
     private TextMeshProUGUI textoSalida;
@@ -159,6 +164,7 @@ public class DesafioEscape : DesafioSnap
     private int vidasIniciales;
     private int totalLlaves;
     private int llavesRecogidas;
+    private bool pinataRota;
     private bool activo;
     private bool salidaAbierta;
     private bool reiniciando;
@@ -223,6 +229,8 @@ public class DesafioEscape : DesafioSnap
         CrearPeligrosNivel();
         CrearLlavesNivel();
         CrearSalida();
+        if (nivel == 2)
+            CrearPinata();
         CrearDestello();
 
         PrepararJugador();
@@ -232,6 +240,7 @@ public class DesafioEscape : DesafioSnap
         ActualizarCorazones();
         ActualizarSalida();
         ActualizarProgreso();
+        ActualizarVisualPinata();
 
         activo = true;
 
@@ -277,23 +286,24 @@ public class DesafioEscape : DesafioSnap
                 vidasIniciales = 2;
                 velocidadJugador = 540f;
                 fuerzaSalto = 1320f;
-                usaMarea = true;
-                subidaVelocidad = 44f;
-                totalLlaves = 3;
+                usaMarea = false;
+                subidaVelocidad = 0f;
+                totalLlaves = GolpesNecesariosPinata;
                 colorPeligro = new Color(1f, 0.36f, 0.64f, 0.68f);
                 colorFondo = new Color(0.14f, 0.04f, 0.18f, 0.93f);
                 colorPlataforma = Color.white;
                 colorAcento = new Color(1f, 0.82f, 0.28f, 1f);
                 alfaVelo = 1f;
-                tituloNivel = "HBD: MISION PASTEL";
-                subtituloNivel = "Junta las 3 velas y llega al pastel";
+                tituloNivel = "¡ROMPE LA PIÑATA!";
+                subtituloNivel = "Salta y golpéala; después llega al pastel";
                 break;
         }
 
         usaEscombros = nivel >= 2;
         vidas = vidasIniciales;
         llavesRecogidas = 0;
-        salidaAbierta = totalLlaves == 0;
+        pinataRota = false;
+        salidaAbierta = nivel != 2 && totalLlaves == 0;
     }
 
     private void CrearFondo()
@@ -366,6 +376,142 @@ public class DesafioEscape : DesafioSnap
 
         CrearGloboDecorativo(spriteGlobosCumpleanos, -150f, 150f, new Vector2(105f, 145f));
         CrearGloboDecorativo(spriteGloboMorado, 158f, 145f, new Vector2(70f, 95f));
+    }
+
+    private void CrearPinata()
+    {
+        pinata = UtilidadesDesafio.CrearRect("Pinata", capaJuego);
+        pinata.anchorMin = new Vector2(0.5f, 0.5f);
+        pinata.anchorMax = new Vector2(0.5f, 0.5f);
+        pinata.pivot = new Vector2(0.5f, 0.5f);
+        pinata.sizeDelta = new Vector2(170f, 190f);
+
+        CrearFormaPinata("Cuerda", pinata, new Vector2(0f, 82f), new Vector2(4f, 26f),
+            new Color(0.85f, 0.72f, 0.48f, 1f), 0f);
+        CrearFormaPinata("Cola", pinata, new Vector2(-61f, -18f), new Vector2(9f, 36f),
+            new Color(0.2f, 0.76f, 1f, 1f), -38f);
+        CrearFormaPinata("PataI", pinata, new Vector2(-34f, -48f), new Vector2(10f, 34f),
+            new Color(0.28f, 0.78f, 1f, 1f), 8f);
+        CrearFormaPinata("PataD", pinata, new Vector2(28f, -48f), new Vector2(10f, 34f),
+            new Color(1f, 0.35f, 0.58f, 1f), -8f);
+
+        cuerpoPinata = CrearFormaPinata("Cuerpo", pinata, new Vector2(-4f, -5f),
+            new Vector2(104f, 68f), new Color(1f, 0.72f, 0.18f, 1f), 0f);
+
+        Color[] colores =
+        {
+            new Color(1f, 0.28f, 0.55f, 1f),
+            new Color(0.22f, 0.72f, 1f, 1f),
+            new Color(0.43f, 0.88f, 0.38f, 1f),
+            new Color(0.7f, 0.42f, 1f, 1f)
+        };
+
+        for (int i = 0; i < colores.Length; i++)
+        {
+            Image franja = CrearFormaPinata("Franja_" + i, cuerpoPinata.transform,
+                new Vector2(0f, 22f - i * 14f), new Vector2(96f, 8f), colores[i], 0f);
+            franjasPinata.Add(franja);
+        }
+
+        CrearFormaPinata("Cabeza", pinata, new Vector2(48f, 19f), new Vector2(43f, 39f),
+            new Color(1f, 0.48f, 0.53f, 1f), 12f);
+        CrearFormaPinata("OrejaI", pinata, new Vector2(34f, 46f), new Vector2(10f, 28f),
+            new Color(0.3f, 0.74f, 1f, 1f), -25f);
+        CrearFormaPinata("OrejaD", pinata, new Vector2(57f, 48f), new Vector2(10f, 28f),
+            new Color(0.46f, 0.86f, 0.4f, 1f), 18f);
+        CrearFormaPinata("Hocico", pinata, new Vector2(64f, 11f), new Vector2(18f, 15f),
+            new Color(1f, 0.77f, 0.58f, 1f), 0f);
+        CrearFormaPinata("Ojo", pinata, new Vector2(54f, 27f), new Vector2(5f, 5f),
+            new Color(0.12f, 0.08f, 0.16f, 1f), 0f);
+    }
+
+    private Image CrearFormaPinata(string nombre, Transform padre, Vector2 posicion,
+        Vector2 tamano, Color color, float rotacion)
+    {
+        Image forma = UtilidadesDesafio.CrearPanel(nombre, padre, SpriteRedondeado, color, false);
+        UtilidadesDesafio.Colocar(forma.rectTransform, new Vector2(0.5f, 0.5f), posicion, tamano);
+        forma.rectTransform.localRotation = Quaternion.Euler(0f, 0f, rotacion);
+        return forma;
+    }
+
+    private void ActualizarVisualPinata()
+    {
+        if (pinata == null) return;
+
+        if (salidaAbierta)
+        {
+            pinata.gameObject.SetActive(false);
+            if (!pinataRota)
+            {
+                pinataRota = true;
+                CrearEstallidoPinata();
+            }
+            return;
+        }
+
+        pinataRota = false;
+        pinata.gameObject.SetActive(true);
+        float balanceo = Mathf.Sin(tiempo * 1.35f) * 11f;
+        pinata.anchoredPosition = new Vector2(
+            -105f + Mathf.Sin(tiempo * 0.9f) * 55f,
+            yTope + 60f + Mathf.Sin(tiempo * 1.8f) * 7f);
+        pinata.localRotation = Quaternion.Euler(0f, 0f, balanceo);
+
+        float dano = totalLlaves > 0 ? llavesRecogidas / (float)totalLlaves : 0f;
+        if (cuerpoPinata != null)
+            cuerpoPinata.color = Color.Lerp(new Color(1f, 0.72f, 0.18f, 1f),
+                new Color(0.8f, 0.36f, 0.2f, 1f), dano * 0.65f);
+
+        for (int i = 0; i < franjasPinata.Count; i++)
+        {
+            if (franjasPinata[i] != null)
+            {
+                Color color = franjasPinata[i].color;
+                color.a = i < llavesRecogidas ? 0.38f : 1f;
+                franjasPinata[i].color = color;
+            }
+        }
+    }
+
+    private void CrearEstallidoPinata()
+    {
+        Vector2 centro = pinata != null ? pinata.anchoredPosition : new Vector2(-105f, yTope + 60f);
+        Vector2[] direcciones =
+        {
+            new Vector2(-1f, 0.2f), new Vector2(-0.7f, 0.8f),
+            new Vector2(-0.2f, 1f), new Vector2(0.35f, 0.9f),
+            new Vector2(0.85f, 0.55f), new Vector2(1f, -0.15f),
+            new Vector2(0.5f, -0.8f), new Vector2(-0.5f, -0.75f)
+        };
+        Color[] colores =
+        {
+            new Color(1f, 0.32f, 0.56f, 1f), new Color(0.26f, 0.72f, 1f, 1f),
+            new Color(1f, 0.82f, 0.2f, 1f), new Color(0.45f, 0.88f, 0.4f, 1f)
+        };
+
+        for (int i = 0; i < direcciones.Length; i++)
+        {
+            Image dulce = UtilidadesDesafio.CrearPanel("DulcePinata_" + i, capaJuego,
+                TemasEscape.Caramelo(), colores[i % colores.Length], false);
+            dulce.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            dulce.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            dulce.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            dulce.rectTransform.sizeDelta = new Vector2(24f, 18f);
+            dulce.rectTransform.anchoredPosition = centro + direcciones[i] * 62f;
+            dulce.rectTransform.localRotation = Quaternion.Euler(0f, 0f, i * 41f);
+            dulcesPinata.Add(dulce.rectTransform);
+        }
+    }
+
+    private void LimpiarEstallidoPinata()
+    {
+        for (int i = 0; i < dulcesPinata.Count; i++)
+        {
+            if (dulcesPinata[i] != null)
+                Destroy(dulcesPinata[i].gameObject);
+        }
+
+        dulcesPinata.Clear();
     }
 
     private void CrearGloboDecorativo(Sprite sprite, float x, float y, Vector2 tamano)
@@ -580,9 +726,7 @@ public class DesafioEscape : DesafioSnap
         UtilidadesDesafio.Colocar(textoProgreso.rectTransform, new Vector2(1f, 1f),
             new Vector2(-102f, -262f), new Vector2(200f, 24f));
 
-        string textoAyudaNivel = nivel == 2
-            ? "A/D mover   Espacio saltar   Click / Gatillo reventar globos"
-            : "A/D mover   Espacio saltar   Click / Gatillo golpear";
+        string textoAyudaNivel = "A/D mover   Espacio saltar   Click / Gatillo golpear";
         textoAyuda = UtilidadesDesafio.CrearTexto("Ayuda", raiz, Fuente,
             textoAyudaNivel, 10f, Gris);
         UtilidadesDesafio.Colocar(textoAyuda.rectTransform, new Vector2(0.5f, 1f),
@@ -617,7 +761,10 @@ public class DesafioEscape : DesafioSnap
                 break;
         }
 
-        CrearPlataforma(0f, yTope, 200f, new Color(0.6f, 1f, 0.72f, 1f), false, 0f, 0f, false);
+        if (nivel == 2)
+            CrearPlataforma(130f, yTope, 150f, new Color(0.6f, 1f, 0.72f, 1f), false, 0f, 0f, false);
+        else
+            CrearPlataforma(0f, yTope, 200f, new Color(0.6f, 1f, 0.72f, 1f), false, 0f, 0f, false);
     }
 
     private void CrearPlataforma(float x, float y, float ancho, Color color, bool movil,
@@ -902,7 +1049,7 @@ public class DesafioEscape : DesafioSnap
 
     private void CrearLlavesNivel()
     {
-        if (totalLlaves <= 0) return;
+        if (totalLlaves <= 0 || nivel == 2) return;
 
         float paso = (yTope - ySuelo) / 3f;
 
@@ -1017,7 +1164,7 @@ public class DesafioEscape : DesafioSnap
         salida.anchorMax = new Vector2(0.5f, 0.5f);
         salida.pivot = new Vector2(0.5f, 0f);
         salida.sizeDelta = nivel == 2 ? new Vector2(124f, 172f) : new Vector2(90f, 92f);
-        salida.anchoredPosition = new Vector2(0f, yTope);
+        salida.anchoredPosition = new Vector2(nivel == 2 ? 130f : 0f, yTope);
 
         Sprite luz = TemasEscape.ObtenerSuave(nivel, "luz");
 
@@ -1083,7 +1230,7 @@ public class DesafioEscape : DesafioSnap
         marcoSalida.color = color;
         textoSalida.color = salidaAbierta ? Verde : Gris;
         textoSalida.text = nivel == 2
-            ? (salidaAbierta ? "HBD!" : "VELAS")
+            ? (salidaAbierta ? "HBD!" : "PIÑATA")
             : (salidaAbierta ? "SALIDA" : "BLOQUEADA");
 
         if (brilloSalida != null)
@@ -1096,12 +1243,19 @@ public class DesafioEscape : DesafioSnap
     {
         if (textoProgreso == null) return;
 
+        if (nivel == 2)
+        {
+            textoProgreso.text = salidaAbierta
+                ? "PIÑATA ROTA"
+                : "GOLPES " + llavesRecogidas + "/" + totalLlaves;
+            textoProgreso.color = salidaAbierta ? Verde : Amarillo;
+            return;
+        }
+
         if (totalLlaves > 0)
         {
-            string etiqueta = nivel == 1 ? "DULCES " : nivel == 2 ? "VELAS " : "SNAPS ";
-            textoProgreso.text = salidaAbierta
-                ? (nivel == 2 ? "PASTEL LISTO" : "SALIDA ABIERTA")
-                : etiqueta + llavesRecogidas + "/" + totalLlaves;
+            string etiqueta = nivel == 1 ? "DULCES " : "SNAPS ";
+            textoProgreso.text = salidaAbierta ? "SALIDA ABIERTA" : etiqueta + llavesRecogidas + "/" + totalLlaves;
             textoProgreso.color = salidaAbierta ? Verde : Amarillo;
         }
         else
@@ -1152,6 +1306,7 @@ public class DesafioEscape : DesafioSnap
         ActualizarEscombros(dt);
         ActualizarLlaves();
         ActualizarAmbiente(dt);
+        ActualizarVisualPinata();
 
         if (brilloSalida != null)
         {
@@ -1284,12 +1439,12 @@ public class DesafioEscape : DesafioSnap
         {
             UtilidadesDesafio.Sonido("sfx_snap", 0.6f);
             UtilidadesDesafio.Sacudir(raiz, 4f, 0.12f);
-            string etiqueta = nivel == 1 ? "DULCE " : nivel == 2 ? "VELA " : "SNAP ";
+            string etiqueta = nivel == 1 ? "DULCE " : nivel == 2 ? "GOLPE " : "SNAP ";
             MostrarEstado(etiqueta + llavesRecogidas + "/" + totalLlaves, Amarillo, 0.8f);
         }
         else if (evento == 3)
         {
-            MostrarEstado(nivel == 2 ? "PASTEL LISTO" : "SALIDA ABIERTA", Verde, 1.2f);
+            MostrarEstado(nivel == 2 ? "¡PIÑATA ROTA!" : "SALIDA ABIERTA", Verde, 1.2f);
             UtilidadesDesafio.Sonido("sfx_ronda", 0.7f);
         }
         else if (evento == 4)
@@ -1856,7 +2011,8 @@ public class DesafioEscape : DesafioSnap
         salidaAbierta = true;
         ActualizarSalida();
         ActualizarProgreso();
-        MostrarEstado(nivel == 2 ? "PASTEL LISTO" : "SALIDA ABIERTA", Verde, 1.2f);
+        ActualizarVisualPinata();
+        MostrarEstado(nivel == 2 ? "¡PIÑATA ROTA!" : "SALIDA ABIERTA", Verde, 1.2f);
         UtilidadesDesafio.Sonido("sfx_ronda", 0.7f);
 
         if (online && esAnfitrion && red != null)
@@ -2085,7 +2241,10 @@ public class DesafioEscape : DesafioSnap
         }
 
         llavesRecogidas = 0;
-        salidaAbierta = totalLlaves == 0;
+        salidaAbierta = nivel != 2 && totalLlaves == 0;
+        LimpiarEstallidoPinata();
+        pinataRota = false;
+        ActualizarVisualPinata();
         ActualizarSalida();
         ActualizarProgreso();
         LimpiarEscombros();
@@ -2188,6 +2347,26 @@ public class DesafioEscape : DesafioSnap
             Destroy(e.rt.gameObject);
             escombros.RemoveAt(i);
             golpeo = true;
+        }
+
+        if (nivel == 2 && !salidaAbierta && pinata != null && pinata.gameObject.activeSelf)
+        {
+            Rect rectPinata = RectJugador(pinata);
+            if (Mathf.Abs(rectPinata.center.x - centro.x) <= 150f &&
+                Mathf.Abs(rectPinata.center.y - centro.y) <= 160f)
+            {
+                llavesRecogidas = Mathf.Min(llavesRecogidas + 1, totalLlaves);
+                golpeo = true;
+                ActualizarProgreso();
+                ActualizarVisualPinata();
+                MostrarEstado("GOLPE " + llavesRecogidas + "/" + totalLlaves, Amarillo, 0.8f);
+
+                if (online && esAnfitrion && red != null)
+                    red.FijarEscapeEvento(2);
+
+                if (llavesRecogidas >= totalLlaves)
+                    AbrirSalida();
+            }
         }
 
         if (!golpeo) return;

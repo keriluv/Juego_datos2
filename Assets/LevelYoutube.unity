@@ -1632,7 +1632,7 @@ MonoBehaviour:
   zoomIn: 5
   player: {fileID: 0}
   zoomInTime: 2
-  camera: {fileID: 1515484257}
+  customCamera: {fileID: 1515484257}
 --- !u!65 &148243857
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10960,8 +10960,52 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 614010773}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 614010772}
   m_SourcePrefab: {fileID: 100100000, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+--- !u!1 &614010771 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+  m_PrefabInstance: {fileID: 614010770}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &614010772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 614010771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50604, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoyoReaparicion
+--- !u!65 &614010773
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 614010771}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &615855380 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8391222552659086748, guid: 2f3078667b8bf2e469aa76ce7d82b515, type: 3}
@@ -11926,8 +11970,52 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 757970146}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 757970145}
   m_SourcePrefab: {fileID: 100100000, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+--- !u!1 &757970144 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+  m_PrefabInstance: {fileID: 757970143}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &757970145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 757970144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50604, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoyoReaparicion
+--- !u!65 &757970146
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 757970144}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &758785798
 GameObject:
   m_ObjectHideFlags: 0
@@ -14152,8 +14240,52 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 932595746}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 932595745}
   m_SourcePrefab: {fileID: 100100000, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+--- !u!1 &932595744 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+  m_PrefabInstance: {fileID: 932595743}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &932595745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932595744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50604, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoyoReaparicion
+--- !u!65 &932595746
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932595744}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &935972778 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8380157826906577798, guid: 2f3078667b8bf2e469aa76ce7d82b515, type: 3}
@@ -21843,8 +21975,52 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1245056744}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1245056743}
   m_SourcePrefab: {fileID: 100100000, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+--- !u!1 &1245056742 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+  m_PrefabInstance: {fileID: 1245056741}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1245056743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1245056742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50604, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoyoReaparicion
+--- !u!65 &1245056744
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1245056742}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1248662834 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -9048406036892605257, guid: 2f3078667b8bf2e469aa76ce7d82b515, type: 3}
@@ -25605,8 +25781,52 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1641903561}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1641903560}
   m_SourcePrefab: {fileID: 100100000, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+--- !u!1 &1641903559 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+  m_PrefabInstance: {fileID: 1641903558}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1641903560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1641903559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50604, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoyoReaparicion
+--- !u!65 &1641903561
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1641903559}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1643403136 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 401122468259050895, guid: 2f3078667b8bf2e469aa76ce7d82b515, type: 3}
@@ -32664,8 +32884,52 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1788342020}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1788342019}
   m_SourcePrefab: {fileID: 100100000, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+--- !u!1 &1788342018 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 38ef95e4938a98b4e967e217db53db9a, type: 3}
+  m_PrefabInstance: {fileID: 1788342017}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1788342019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1788342018}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50604, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoyoReaparicion
+--- !u!65 &1788342020
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1788342018}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1788997483 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3559817854460706613, guid: 2f3078667b8bf2e469aa76ce7d82b515, type: 3}
@@ -33695,8 +33959,52 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1918476966}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1918476965}
   m_SourcePrefab: {fileID: 100100000, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+--- !u!1 &1918476964 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c48957424ca33964ba3b6becd851d76b, type: 3}
+  m_PrefabInstance: {fileID: 1918476963}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1918476965
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1918476964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50604, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoyoReaparicion
+--- !u!65 &1918476966
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1918476964}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1920740477 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6763858364670572316, guid: 2f3078667b8bf2e469aa76ce7d82b515, type: 3}

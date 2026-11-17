@@ -84,7 +84,7 @@ public class PauseManager : MonoBehaviour
 
     private void AlCargarEscena(Scene escena, LoadSceneMode modo)
     {
-        // Never leave pause stuck when entering menu/lobby, and never keep timeScale at 0.
+        // Never leave pause stuck when entering menu/lobby/UI levels.
         if (isPaused || !EscenaPermitePausa(escena.name))
         {
             if (isPaused)
@@ -93,11 +93,11 @@ public class PauseManager : MonoBehaviour
                 SetActivo(pauseScreen, false);
             }
             Time.timeScale = 1f;
-            Cursor.visible = !EscenaPermitePausa(escena.name);
-            Cursor.lockState = EscenaPermitePausa(escena.name)
-                ? CursorLockMode.Locked
-                : CursorLockMode.None;
         }
+
+        // Always restore the right cursor for this scene (UI levels must not stay locked
+        // after leaving LevelSelector boat / 3D pause).
+        AplicarCursorParaEscena(escena.name, forzarDespausado: true);
 
         AsegurarEventSystem();
     }
@@ -126,6 +126,39 @@ public class PauseManager : MonoBehaviour
         if (nombreEscena == "MainMenu") return false;
         if (nombreEscena == "pruebaLobby") return false;
         return true;
+    }
+
+    /// <summary>
+    /// Phone/UI minigames need a free visible cursor so Button/EventSystem clicks work.
+    /// </summary>
+    public static bool EscenaUsaCursorLibre(string nombreEscena)
+    {
+        if (string.IsNullOrEmpty(nombreEscena)) return true;
+        if (nombreEscena == "MainMenu") return true;
+        if (nombreEscena == "pruebaLobby") return true;
+        if (nombreEscena == "LevelSnapchat") return true;
+        if (nombreEscena == "EscenaTiktok") return true;
+        if (nombreEscena == "MapaNiveles3D") return true;
+        if (nombreEscena == "TutorialGoogle") return true;
+        return false;
+    }
+
+    private void AplicarCursorParaEscena(string nombreEscena, bool forzarDespausado)
+    {
+        bool libre = EscenaUsaCursorLibre(nombreEscena) || (!forzarDespausado && isPaused);
+        if (forzarDespausado)
+            libre = EscenaUsaCursorLibre(nombreEscena);
+
+        if (libre)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+        else
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
     }
 
     private bool DebeAlternarPausa()
@@ -170,8 +203,18 @@ public class PauseManager : MonoBehaviour
         SetActivo(pauseScreen, isPaused);
 
         Time.timeScale = isPaused ? 0f : 1f;
-        Cursor.visible = isPaused;
-        Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
+
+        string escena = SceneManager.GetActiveScene().name;
+        if (isPaused || EscenaUsaCursorLibre(escena))
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+        else
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
 
         if (isPaused)
             AsegurarEventSystem();

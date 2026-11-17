@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Threading.Tasks;
+using Unity.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using Unity.Services.Authentication;
@@ -15,7 +16,14 @@ public class MultijugadorJuego : MonoBehaviour
 
     [Header("Configuración")]
     [Tooltip("Niveles reales que el anfitrión puede cargar en red.")]
-    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat", "EscenaTiktok", "pruebaLobby", "LevelYoutubev3" };
+    public string[] escenasDisponibles =
+    {
+        "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat",
+        "EscenaTiktok", "pruebaLobby", "LevelYoutubev3", "TutorialGoogle"
+    };
+
+    private const string MsgPedirEscena = "MJ_PedirEscena";
+    private bool mensajesRedRegistrados;
 
     public int indiceEscena;
     public int maxJugadores = 4;
@@ -177,6 +185,7 @@ public class MultijugadorJuego : MonoBehaviour
 
         if (red != null)
         {
+            RegistrarMensajesRed();
             Debug.Log("[RED] Ya existe: " + red.name);
             return;
         }
@@ -184,14 +193,8 @@ public class MultijugadorJuego : MonoBehaviour
         if (NetworkManager.Singleton != null)
         {
             red = NetworkManager.Singleton;
+            RegistrarMensajesRed();
             Debug.Log("[RED] Recuperada desde Singleton");
-            return;
-        }
-        if (red != null) return;
-
-        if (NetworkManager.Singleton != null)
-        {
-            red = NetworkManager.Singleton;
             return;
         }
 
@@ -226,7 +229,49 @@ public class MultijugadorJuego : MonoBehaviour
         red.NetworkConfig.ConnectionApproval = false;
 
         Debug.Log("[Multijugador] NETWORKMANAGER_CONFIGURADO");
+        RegistrarMensajesRed();
         AlCrearRed?.Invoke(red);
+    }
+
+    private void RegistrarMensajesRed()
+    {
+        if (red == null || red.CustomMessagingManager == null) return;
+        if (mensajesRedRegistrados) return;
+
+        red.CustomMessagingManager.RegisterNamedMessageHandler(MsgPedirEscena, AlPedirEscenaRemota);
+        mensajesRedRegistrados = true;
+    }
+
+    private void AlPedirEscenaRemota(ulong remitente, FastBufferReader lector)
+    {
+        if (red == null || !red.IsServer) return;
+
+        lector.ReadValueSafe(out FixedString64Bytes escenaFija);
+        string escena = escenaFija.ToString();
+        if (string.IsNullOrEmpty(escena)) return;
+
+        Debug.Log("[Multijugador] Cliente " + remitente + " pide escena " + escena);
+        CargarSiguienteEscena(escena);
+    }
+
+    private void PedirEscenaAlHost(string escena)
+    {
+        if (red == null || red.CustomMessagingManager == null)
+        {
+            mensajeEstado = "No hay red lista para pedir la escena.";
+            return;
+        }
+
+        RegistrarMensajesRed();
+        FixedString64Bytes escenaFija = escena;
+        int bytes = FastBufferWriter.GetWriteSize(escenaFija);
+        using FastBufferWriter writer = new FastBufferWriter(bytes, Allocator.Temp);
+        writer.WriteValueSafe(escenaFija);
+        red.CustomMessagingManager.SendNamedMessage(
+            MsgPedirEscena,
+            NetworkManager.ServerClientId,
+            writer);
+        mensajeEstado = "Pidiendo al anfitrión cargar " + escena + "...";
     }
 
     public async void CrearPartida()
@@ -403,16 +448,30 @@ public class MultijugadorJuego : MonoBehaviour
         if (SceneManager.GetActiveScene().name != "MainMenu")
             SceneManager.LoadScene("MainMenu");
     }
+    /// <summary>
+    /// Loads a scene for everyone: host uses NGO SceneManager; clients ask the host.
+    /// Offline falls back to local SceneManager.
+    /// </summary>
     public void IrAEscena(string escena)
     {
+        if (string.IsNullOrEmpty(escena)) return;
+
+        if (red == null && NetworkManager.Singleton != null)
+        {
+            red = NetworkManager.Singleton;
+            RegistrarMensajesRed();
+        }
+
         if (red != null && red.IsListening)
         {
-            if (red.IsServer) CargarSiguienteEscena(escena);   // el host carga para todos
-            else mensajeEstado = "Solo el anfitrión cambia de escena.";
+            if (red.IsServer)
+                CargarSiguienteEscena(escena);
+            else
+                PedirEscenaAlHost(escena);
         }
         else
         {
-            SceneManager.LoadScene(escena);                     // modo sin red
+            SceneManager.LoadScene(escena);
         }
     }
 

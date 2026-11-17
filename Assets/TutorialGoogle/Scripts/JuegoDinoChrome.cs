@@ -595,7 +595,10 @@ public class JuegoDinoChrome : MonoBehaviour
     private IEnumerator VolverAlSelector()
     {
         yield return new WaitForSecondsRealtime(2.2f);
-        SceneManager.LoadScene("LevelSelector");
+        if (MultijugadorJuego.Instancia != null)
+            MultijugadorJuego.Instancia.IrAEscena("LevelSelector");
+        else
+            SceneManager.LoadScene("LevelSelector");
     }
 
     private void MostrarPanelFinal(string titulo, string mensajeFinal)

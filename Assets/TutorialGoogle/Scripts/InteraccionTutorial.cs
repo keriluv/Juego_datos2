@@ -285,7 +285,7 @@ public class InteraccionTutorial : MonoBehaviour
         {
             Debug.LogError("No se encontró el Canvas para mostrar la victoria del tutorial.", this);
             yield return new WaitForSecondsRealtime(1.5f);
-            SceneManager.LoadScene("JuegoDinoChrome");
+            IrALevelSelector();
             yield break;
         }
 
@@ -314,7 +314,7 @@ public class InteraccionTutorial : MonoBehaviour
 
         TextMeshProUGUI texto = mensaje.GetComponent<TextMeshProUGUI>();
         texto.font = dialogo != null ? dialogo.font : TMP_Settings.defaultFontAsset;
-        texto.text = "¡GANASTE!\n<size=55%>¡Siguiente nivel: Dino Chrome!</size>";
+        texto.text = "¡GANASTE!\n<size=55%>Volviendo a Level Selector...</size>";
         texto.fontSize = 68f;
         texto.fontStyle = FontStyles.Bold;
         texto.color = Color.white;
@@ -334,7 +334,17 @@ public class InteraccionTutorial : MonoBehaviour
 
         mensajeRect.localScale = Vector3.one;
         yield return new WaitForSecondsRealtime(1.1f);
-        SceneManager.LoadScene("JuegoDinoChrome");
+        IrALevelSelector();
+    }
+
+    private void IrALevelSelector()
+    {
+        GameProgressionManager.Asegurar().RegisterLevelCompleted("TutorialGoogle");
+
+        if (MultijugadorJuego.Instancia != null)
+            MultijugadorJuego.Instancia.IrAEscena("LevelSelector");
+        else
+            SceneManager.LoadScene("LevelSelector");
     }
 
     private IEnumerator PulsoGolpe(RectTransform objetivo)

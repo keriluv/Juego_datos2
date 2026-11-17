@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Button))]
 public class BotonSaltarTutorial : MonoBehaviour
 {
-    public string escena = "MainMenu";
+    public string escena = "LevelSelector";
 
     private void Awake()
     {
@@ -15,7 +15,11 @@ public class BotonSaltarTutorial : MonoBehaviour
 
     private void IrAlMenu()
     {
-        if (!string.IsNullOrEmpty(escena))
+        if (string.IsNullOrEmpty(escena)) return;
+
+        if (MultijugadorJuego.Instancia != null)
+            MultijugadorJuego.Instancia.IrAEscena(escena);
+        else
             SceneManager.LoadScene(escena);
     }
 }

@@ -45,7 +45,10 @@ public class ProyectilCanon : MonoBehaviour
             return;
 
         BarcoSalud barco = choque.collider.GetComponentInParent<BarcoSalud>();
-        if (barco != null)
+        ShipHealth vida = choque.collider.GetComponentInParent<ShipHealth>();
+        if (vida != null)
+            vida.TakeDamage(dano);
+        else if (barco != null)
             barco.RecibirDanio(dano, equipoDueno);
 
         yaImpacto = true;

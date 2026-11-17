@@ -24,11 +24,19 @@ public class VRGameManager : MonoBehaviour
 
     [Header("Oleadas")]
     [SerializeField] private string escenaAlSalir = "MainMenu";
-    [SerializeField] private int enemigosIniciales = 2;
+    [Tooltip("Cuántos barcos enemigos salen a la vez, en abanico frente a la proa.")]
+    [SerializeField] private int barcosPorOleada = 10;
+    [Tooltip("Distancia a la que un enemigo activa la salida de la flota aliada.")]
+    [SerializeField] private float radioDespliegue = 82f;
+    [Tooltip("Barcos aliados que salen del costado al cruzar ese radio.")]
+    [SerializeField] private int barcosAliados = 5;
+    [Tooltip("Velocidad con la que los aliados salen de la base y entran al frente.")]
+    [SerializeField] private float velocidadDespliegue = 7.5f;
     [SerializeField] private float vidaJugador = 140f;
     [SerializeField] private float vidaBaseEnemigo = 80f;
 
     private readonly List<BarcoSalud> enemigosVivos = new List<BarcoSalud>();
+    private readonly List<BarcoSalud> aliadosVivos = new List<BarcoSalud>();
     private BarcoSalud barcoJugador;
     private Text textoCubierta;
     private Image rellenoVida;
@@ -36,8 +44,11 @@ public class VRGameManager : MonoBehaviour
     private GameObject efectoAgua;
     private IslandSpawner islas;
     private VRNavalCombat naval;
+    private VRAssuranceAgent agente;
     private int oleada = 1;
+    private int aliadosDestruidos;
     private bool terminada;
+    private bool aliadosDesplegados;
 
     private void Start()
     {
@@ -57,7 +68,9 @@ public class VRGameManager : MonoBehaviour
         Paso("entorno", AgruparEntorno);
 
         StartCoroutine(ArranqueXR.IniciarSiHayCasco());
+        agente = gameObject.AddComponent<VRAssuranceAgent>();
         StartCoroutine(LanzarOleada());
+        StartCoroutine(VigilarProximidad());
         Debug.Log("EscenaVR: batalla lista. Entorno, BarcoJugador y oleada ya están en la jerarquía.");
     }
 
@@ -195,6 +208,8 @@ public class VRGameManager : MonoBehaviour
 
         barcoJugador = raiz.AddComponent<BarcoSalud>();
         barcoJugador.Configurar(vidaJugador, 0, true);
+        ShipHealth vida = raiz.AddComponent<ShipHealth>();
+        vida.Configurar(barcoJugador);
         barcoJugador.AlRecibirDanio += (_, __) =>
         {
             HapticsUtility.SendHapticImpulse(0.85f, 0.18f, HapticsUtility.Controller.Both);
@@ -205,14 +220,15 @@ public class VRGameManager : MonoBehaviour
         GameObject cubierta = new GameObject("Cubierta");
         cubierta.transform.SetParent(raiz.transform, false);
         cubierta.transform.localPosition = cubiertaLocal;
+        Vector3 vista = VistaEnCubierta(raiz.transform, cubierta.transform, out Vector3 puestoPirata);
         if (modeloPirata != null)
-            ColocarPirata(cubierta.transform);
+            ColocarPirata(cubierta.transform, puestoPirata);
 
         GameObject origen = GameObject.Find("XR Origin (VR)");
         if (origen != null)
         {
             origen.transform.SetParent(cubierta.transform, false);
-            origen.transform.localPosition = Vector3.zero;
+            origen.transform.localPosition = vista;
             origen.transform.localRotation = Quaternion.identity;
         }
 
@@ -242,9 +258,9 @@ public class VRGameManager : MonoBehaviour
 
         while (!terminada)
         {
-            int cantidad = Mathf.Min(enemigosIniciales + oleada - 1, 5);
+            int cantidad = Mathf.Max(1, barcosPorOleada);
             for (int i = 0; i < cantidad; i++)
-                CrearEnemigo(i);
+                CrearEnemigo(i, cantidad);
 
             RefrescarTabla();
             while (enemigosVivos.Count > 0 && !terminada)
@@ -265,38 +281,169 @@ public class VRGameManager : MonoBehaviour
         }
     }
 
-    private void CrearEnemigo(int indice)
+    private void CrearEnemigo(int indice, int total)
     {
+        AsegurarModeloHolandes();
+
         GameObject raiz = new GameObject("Enemigo oleada " + oleada);
-        if (islas != null)
-            raiz.transform.position = islas.PuntoDeAtaque(indice + oleada * 3);
+        Vector3 proa = barcoJugador.transform.forward;
+        proa.y = 0f;
+        if (proa.sqrMagnitude < 0.01f)
+            proa = Vector3.forward;
+        proa.Normalize();
+        float arco = 86f;
+        float angulo = total <= 1 ? 0f : Mathf.Lerp(-arco * 0.5f, arco * 0.5f, indice / (total - 1f));
+        Vector3 direccion = Quaternion.AngleAxis(angulo, Vector3.up) * proa;
+        float distancia = 125f + Mathf.Abs(angulo) * 0.15f + (oleada - 1) * 18f;
+        raiz.transform.position = barcoJugador.transform.position + direccion * distancia;
+        raiz.transform.rotation = Quaternion.LookRotation(-proa, Vector3.up);
+
         ColocarCasco(raiz.transform, 8.5f, new Color(0.28f, 0.1f, 0.1f));
+        Transform cascoVisual = raiz.transform.Find("Casco");
+        if (cascoVisual != null)
+        {
+            cascoVisual.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            cascoVisual.name = "dutch-ship-medium";
+            PintarUrp(cascoVisual.gameObject);
+        }
 
         BoxCollider caja = raiz.AddComponent<BoxCollider>();
-        caja.size = new Vector3(3.2f, 1.4f, 8f);
-        caja.center = new Vector3(0f, 0.7f, 0f);
+        caja.size = new Vector3(3.2f, 2.2f, 8.5f);
+        caja.center = new Vector3(0f, 1.1f, 0f);
 
         BarcoSalud salud = raiz.AddComponent<BarcoSalud>();
-        salud.Configurar(vidaBaseEnemigo + (oleada - 1) * 18f, 1, false);
+        salud.Configurar(100f, 1, false);
+        ShipHealth vida = raiz.AddComponent<ShipHealth>();
+        vida.Configurar(salud);
         salud.AlHundirse += AlHundirEnemigo;
-        salud.AlRecibirDanio += (_, __) => Instanciar(efectoFuego, raiz.transform.position + Vector3.up);
+        salud.AlRecibirDanio += (_, __) => Instanciar(efectoFuego, raiz.transform.position + Vector3.up * 2f);
         enemigosVivos.Add(salud);
 
-        VRShipCannon canon = ConstruirCanon(raiz.transform, new Vector3(0f, 1.25f, 3.4f), false);
+        VRShipCannon canon = ConstruirCanon(raiz.transform, new Vector3(0f, 1.6f, 3.2f), false);
         canon.Configurar(salud, false, 16f, sonidoDisparo, sonidoImpacto, efectoFuego, efectoAgua);
 
-        if (naval != null)
-            naval.VestirEnemigo(raiz.transform, indice);
-
-        float angulo = islas != null ? islas.AnguloDeIsla(indice + oleada * 3) : indice * 1.7f + oleada;
         EnemyShipAI ia = raiz.AddComponent<EnemyShipAI>();
-        ia.Configurar(barcoJugador.transform, canon, angulo, oleada);
+        ia.Configurar(barcoJugador.transform, canon, 0f, oleada);
+    }
+
+    private void AsegurarModeloHolandes()
+    {
+        if (modeloBarco != null && modeloBarco.name.IndexOf("dutch", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            return;
+
+#if UNITY_EDITOR
+        GameObject dutch = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/recurso de pirata/dutch-ship-medium/dutch-ship-medium.obj");
+        if (dutch != null)
+            modeloBarco = dutch;
+#endif
     }
 
     private void AlHundirEnemigo(BarcoSalud barco)
     {
         enemigosVivos.Remove(barco);
         RefrescarTabla();
+    }
+
+    private IEnumerator VigilarProximidad()
+    {
+        float proximoInforme = 0f;
+        while (!terminada)
+        {
+            if (!aliadosDesplegados && barcoJugador != null)
+            {
+                float cerca = DistanciaDelEnemigoMasCercano();
+                if (cerca > 0.5f && cerca <= radioDespliegue)
+                    DesplegarAliados(cerca);
+            }
+
+            if (Time.time >= proximoInforme)
+            {
+                proximoInforme = Time.time + 3f;
+                if (agente != null)
+                    agente.Informe(enemigosVivos.Count, aliadosVivos.Count, aliadosDestruidos, barcoJugador);
+            }
+
+            yield return new WaitForSeconds(0.4f);
+        }
+    }
+
+    private float DistanciaDelEnemigoMasCercano()
+    {
+        float mejor = float.MaxValue;
+        Vector3 origen = barcoJugador.transform.position;
+        for (int i = enemigosVivos.Count - 1; i >= 0; i--)
+        {
+            BarcoSalud enemigo = enemigosVivos[i];
+            if (enemigo == null || enemigo.EstaHundido)
+                continue;
+            float distancia = Vector3.Distance(origen, enemigo.transform.position);
+            if (distancia < mejor)
+                mejor = distancia;
+        }
+
+        return mejor == float.MaxValue ? 0f : mejor;
+    }
+
+    private void DesplegarAliados(float distancia)
+    {
+        aliadosDesplegados = true;
+        int total = Mathf.Max(1, barcosAliados);
+        for (int i = 0; i < total; i++)
+            CrearAliado(i, total);
+
+        if (agente != null)
+            agente.RegistrarDespliegue(distancia, total);
+    }
+
+    private void CrearAliado(int indice, int total)
+    {
+        AsegurarModeloHolandes();
+        GameObject raiz = new GameObject("Aliado " + (indice + 1));
+        Vector3 proa = barcoJugador.transform.forward;
+        proa.y = 0f;
+        if (proa.sqrMagnitude < 0.01f)
+            proa = Vector3.forward;
+        proa.Normalize();
+        Vector3 costado = Vector3.Cross(Vector3.up, proa);
+        float fila = indice - (total - 1) * 0.5f;
+        raiz.transform.position = barcoJugador.transform.position - proa * 18f + costado * (34f + fila * 14f);
+        raiz.transform.rotation = Quaternion.LookRotation(proa, Vector3.up);
+
+        ColocarCasco(raiz.transform, 8f, new Color(0.12f, 0.22f, 0.38f));
+        Transform cascoVisual = raiz.transform.Find("Casco");
+        if (cascoVisual != null)
+        {
+            cascoVisual.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            cascoVisual.name = "dutch-ship-medium";
+            PintarUrp(cascoVisual.gameObject);
+        }
+
+        BoxCollider caja = raiz.AddComponent<BoxCollider>();
+        caja.size = new Vector3(3.2f, 2.2f, 8.5f);
+        caja.center = new Vector3(0f, 1.1f, 0f);
+
+        BarcoSalud salud = raiz.AddComponent<BarcoSalud>();
+        salud.Configurar(100f, 0, false);
+        ShipHealth vida = raiz.AddComponent<ShipHealth>();
+        vida.Configurar(salud);
+        salud.AlHundirse += AlHundirAliado;
+        salud.AlRecibirDanio += (_, __) => Instanciar(efectoFuego, raiz.transform.position + Vector3.up * 2f);
+        aliadosVivos.Add(salud);
+
+        VRShipCannon canon = ConstruirCanon(raiz.transform, new Vector3(0f, 1.6f, 3.2f), false);
+        canon.Configurar(salud, false, 16f, sonidoDisparo, sonidoImpacto, efectoFuego, efectoAgua);
+
+        Vector3 reunion = barcoJugador.transform.position + proa * 36f + costado * (fila * 12f);
+        EnemyShipAI ia = raiz.AddComponent<EnemyShipAI>();
+        ia.ConfigurarAliado(barcoJugador.transform, canon, reunion, velocidadDespliegue);
+    }
+
+    private void AlHundirAliado(BarcoSalud barco)
+    {
+        aliadosVivos.Remove(barco);
+        aliadosDestruidos++;
+        if (agente != null && barcoJugador != null)
+            agente.Informe(enemigosVivos.Count, aliadosVivos.Count, aliadosDestruidos, barcoJugador);
     }
 
     private VRShipCannon ConstruirCanon(Transform barco, Vector3 local, bool delJugador)
@@ -380,14 +527,15 @@ public class VRGameManager : MonoBehaviour
         canonDerecha = raiz.InverseTransformPoint(new Vector3(superficie.center.x + margen, altura, superficie.center.z + avance));
     }
 
-    private void ColocarPirata(Transform cubierta)
+    private void ColocarPirata(Transform cubierta, Vector3 puesto)
     {
         GameObject pirata = Instantiate(modeloPirata, cubierta);
-        pirata.name = "Pirata";
+        pirata.name = "Pirate_Full";
+        pirata.SetActive(true);
         foreach (Camera camara in pirata.GetComponentsInChildren<Camera>(true))
-            camara.gameObject.SetActive(false);
+            camara.enabled = false;
         foreach (AudioListener oido in pirata.GetComponentsInChildren<AudioListener>(true))
-            Destroy(oido);
+            oido.enabled = false;
         foreach (Light luz in pirata.GetComponentsInChildren<Light>(true))
             luz.enabled = false;
         Animator animador = pirata.GetComponentInChildren<Animator>();
@@ -404,8 +552,118 @@ public class VRGameManager : MonoBehaviour
             pirata.transform.localScale *= 1.7f / cuerpo.size.y;
         cuerpo = Encapsular(piezas);
         Vector3 pies = cubierta.InverseTransformPoint(new Vector3(cuerpo.center.x, cuerpo.min.y, cuerpo.center.z));
-        pirata.transform.localPosition += new Vector3(0.8f - pies.x, -pies.y, 0.2f - pies.z);
+        pirata.transform.localPosition += new Vector3(puesto.x - pies.x, -pies.y, puesto.z - pies.z);
         pirata.transform.localRotation = Quaternion.identity;
+        StartCoroutine(ReposoPirata(pirata.transform));
+    }
+
+    private IEnumerator ReposoPirata(Transform pirata)
+    {
+        Transform pecho = BuscarHueso(pirata, "spine_02");
+        Transform cabeza = BuscarHueso(pirata, "head");
+        Transform brazoIzq = BuscarHueso(pirata, "upperarm_l");
+        Transform brazoDer = BuscarHueso(pirata, "upperarm_r");
+        Quaternion basePecho = Rotacion(pecho);
+        Quaternion baseCabeza = Rotacion(cabeza);
+        PoseTierraAVista(pirata, cabeza, brazoIzq, brazoDer);
+        Quaternion baseBrazoIzq = Rotacion(brazoIzq);
+        Quaternion baseBrazoDer = Rotacion(brazoDer);
+        float tiempo = 0f;
+
+        while (pirata != null)
+        {
+            tiempo += Time.deltaTime;
+            float respirar = Mathf.Sin(tiempo * 1.4f);
+            float balanceo = Mathf.Sin(tiempo * 0.55f);
+            Girar(pecho, basePecho, Vector3.right, respirar * 2.5f);
+            Girar(cabeza, baseCabeza, Vector3.up, Mathf.Sin(tiempo * 0.32f) * 6f);
+            Girar(brazoIzq, baseBrazoIzq, Vector3.right, balanceo * 1.5f);
+            Girar(brazoDer, baseBrazoDer, Vector3.right, -balanceo * 1.5f);
+            yield return null;
+        }
+    }
+
+    private static Vector3 VistaEnCubierta(Transform barco, Transform cubierta, out Vector3 puestoPirata)
+    {
+        Renderer palo = RendererDe(barco, "StylShip_MastMid");
+        Renderer tabla = RendererDe(barco, "StylShip_FloorMid");
+        Renderer paloProa = RendererDe(barco, "StylShip_MastFront");
+        Renderer pisoProa = RendererDe(barco, "StylShip_FloorFront");
+        if (palo == null || tabla == null || paloProa == null || pisoProa == null)
+        {
+            puestoPirata = new Vector3(0.3f, 0.28f, 3.53f);
+            return new Vector3(0.45f, 0f, -0.8f);
+        }
+
+        Vector3 centroPalo = palo.bounds.center;
+        Vector3 vista = cubierta.InverseTransformPoint(new Vector3(centroPalo.x + 0.45f, cubierta.position.y, tabla.bounds.min.z + 0.08f));
+        vista.y = 0f;
+        Vector3 centroProa = paloProa.bounds.center;
+        puestoPirata = cubierta.InverseTransformPoint(new Vector3(centroProa.x + 0.3f, pisoProa.bounds.max.y - 0.06f, centroProa.z + 0.72f));
+        return vista;
+    }
+
+    private static Renderer RendererDe(Transform barco, string nombre)
+    {
+        Transform pieza = BuscarHueso(barco, nombre);
+        return pieza != null ? pieza.GetComponent<Renderer>() : null;
+    }
+
+    private static void PoseTierraAVista(Transform pirata, Transform cabeza, Transform brazoIzq, Transform brazoDer)
+    {
+        Transform antebrazoIzq = BuscarHueso(pirata, "lowerarm_l");
+        Transform antebrazoDer = BuscarHueso(pirata, "lowerarm_r");
+        Transform manoIzq = BuscarHueso(pirata, "hand_l");
+        Transform manoDer = BuscarHueso(pirata, "hand_r");
+        if (cabeza == null || brazoIzq == null || brazoDer == null || antebrazoIzq == null || antebrazoDer == null || manoIzq == null || manoDer == null)
+            return;
+
+        Vector3 senal = pirata.TransformDirection(new Vector3(0.3f, 0.35f, 0.9f).normalized);
+        Apuntar(brazoDer, antebrazoDer.position, senal);
+        Apuntar(antebrazoDer, manoDer.position, senal);
+
+        float largoBrazo = Vector3.Distance(brazoIzq.position, antebrazoIzq.position);
+        float largoAntebrazo = Vector3.Distance(antebrazoIzq.position, manoIzq.position);
+        Vector3 visera = cabeza.position + pirata.forward * 0.16f + pirata.up * 0.12f - pirata.right * 0.04f;
+        Vector3 hombro = brazoIzq.position;
+        Vector3 eje = (visera - hombro).normalized;
+        float distancia = Mathf.Min(Vector3.Distance(hombro, visera), (largoBrazo + largoAntebrazo) * 0.999f);
+        Vector3 polo = Vector3.ProjectOnPlane(-pirata.right - pirata.up * 0.3f, eje).normalized;
+        float coseno = (largoBrazo * largoBrazo + distancia * distancia - largoAntebrazo * largoAntebrazo) / (2f * largoBrazo * distancia);
+        float angulo = Mathf.Acos(Mathf.Clamp(coseno, -1f, 1f));
+        Vector3 codo = hombro + (eje * Mathf.Cos(angulo) + polo * Mathf.Sin(angulo)) * largoBrazo;
+        Apuntar(brazoIzq, antebrazoIzq.position, codo - hombro);
+        Apuntar(antebrazoIzq, manoIzq.position, visera - antebrazoIzq.position);
+    }
+
+    private static void Apuntar(Transform hueso, Vector3 hijo, Vector3 direccion)
+    {
+        hueso.rotation = Quaternion.FromToRotation(hijo - hueso.position, direccion) * hueso.rotation;
+    }
+
+    private static Quaternion Rotacion(Transform hueso)
+    {
+        return hueso != null ? hueso.localRotation : Quaternion.identity;
+    }
+
+    private static void Girar(Transform hueso, Quaternion baseRot, Vector3 ejeMundo, float grados)
+    {
+        if (hueso == null)
+            return;
+
+        Vector3 eje = hueso.parent != null ? hueso.parent.InverseTransformDirection(ejeMundo) : ejeMundo;
+        hueso.localRotation = Quaternion.AngleAxis(grados, eje) * baseRot;
+    }
+
+    private static Transform BuscarHueso(Transform raiz, string nombre)
+    {
+        foreach (Transform hueso in raiz.GetComponentsInChildren<Transform>(true))
+        {
+            if (hueso.name == nombre)
+                return hueso;
+        }
+
+        return null;
     }
 
     private static Bounds Encapsular(Renderer[] piezas)

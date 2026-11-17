@@ -36,11 +36,7 @@ My project (6)/
 Assets/UserChoices.choices*
 ProjectSettings/VirtualProjectsConfig.json
 
-BuildLobby/
-BuildMultijugador/
-Assets/_Recovery/
-Assets/_Recovery.meta
-
+# Copias de recuperacion de Unity y builds locales. No son assets del juego.
 BuildLobby/
 BuildMultijugador/
 Assets/_Recovery/

@@ -184,7 +184,7 @@ public class CanonPirata : MonoBehaviour
         proyectil.Lanzar(boca.forward * fuerza + Vector3.up * 2.5f, equipo, dueno, dano, efectoExplosion, sonidoImpacto);
 
         if (sonidoDisparo != null)
-            audioFuente.PlayOneShot(sonidoDisparo);
+            audioFuente.PlayOneShot(sonidoDisparo, AjustesJuego.FactorEfectos());
     }
 
     private GameObject CrearBalaBasica()

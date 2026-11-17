@@ -45,7 +45,6 @@ public class MapaNavegacion3D : MonoBehaviour
         public TextMesh costo;
     }
 
-    private const string PrefijoProgreso = "completado_";
     private readonly Dictionary<int, NivelConfig> configuracion = new Dictionary<int, NivelConfig>();
     private readonly Dictionary<int, Isla> islas = new Dictionary<int, Isla>();
     private readonly Dictionary<Collider, int> islaPorCollider = new Dictionary<Collider, int>();
@@ -62,6 +61,10 @@ public class MapaNavegacion3D : MonoBehaviour
     private Font fuente;
     private int idActual;
     private int idHover = -1;
+    private int idSeleccionado = -1;
+    private int idFocoMando = -1;
+    private float cooldownMando;
+    private readonly HashSet<int> nodosRuta = new HashSet<int>();
     private float yawPrimeraPersona;
     private float pitchPrimeraPersona;
     private float velocidadVertical;
@@ -88,6 +91,25 @@ public class MapaNavegacion3D : MonoBehaviour
         RefrescarProgreso();
         ActualizarBotonesModo();
         MostrarInfo("Sigue las carreteras y selecciona un marcador disponible para entrar.");
+    }
+
+    private void OnEnable()
+    {
+        GameProgressionManager.OnProgressionChanged += AlCambiarProgreso;
+    }
+
+    private void OnDisable()
+    {
+        GameProgressionManager.OnProgressionChanged -= AlCambiarProgreso;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void AlCambiarProgreso()
+    {
+        progresoListo = false;
+        LimpiarRuta();
+        RefrescarProgreso();
     }
 
     private void DesactivarInterfazAnterior()
@@ -121,15 +143,71 @@ public class MapaNavegacion3D : MonoBehaviour
         }
 
         ActualizarHover();
+        ActualizarEntradaMando();
         if (Input.GetMouseButtonDown(0) && !capturoRatonEsteFrame &&
             (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()) && idHover >= 0)
             AlSeleccionarIsla(idHover);
     }
 
-    private void OnDisable()
+    private void ActualizarEntradaMando()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        if (PauseManager.IsPaused) return;
+        if (ControlesJuego.Mando == null) return;
+
+        if (idFocoMando < 0) idFocoMando = idActual;
+
+        cooldownMando -= Time.unscaledDeltaTime;
+        Vector2 nav = ControlesJuego.LeerNavegacionUI();
+
+        if (cooldownMando <= 0f && nav.magnitude > 0.55f)
+        {
+            int siguiente = VecinoEnDireccion(idFocoMando, nav.normalized);
+            if (siguiente >= 0)
+            {
+                idFocoMando = siguiente;
+                idHover = siguiente;
+                cooldownMando = 0.22f;
+                if (configuracion.ContainsKey(idFocoMando))
+                {
+                    NivelConfig nivel = configuracion[idFocoMando];
+                    MostrarInfo(NombreVisible(nivel) + "  |  seleccionado con mando\n" + Descripcion(nivel));
+                }
+            }
+        }
+
+        if (ControlesJuego.QuiereConfirmarUI() && idFocoMando >= 0)
+            AlSeleccionarIsla(idFocoMando);
+
+        if (ControlesJuego.QuiereCancelar() && modo == Modo.Ruta)
+        {
+            CambiarModo(Modo.Navegar);
+            MostrarInfo("Ruta cancelada.");
+        }
+    }
+
+    private int VecinoEnDireccion(int desde, Vector2 dir)
+    {
+        if (!islas.ContainsKey(desde)) return -1;
+        Vector3 origen = islas[desde].raiz.position;
+        int mejor = -1;
+        float mejorPuntaje = 0.35f;
+
+        foreach (var par in islas)
+        {
+            if (par.Key == desde) continue;
+            Vector3 delta = par.Value.raiz.position - origen;
+            delta.y = 0f;
+            if (delta.sqrMagnitude < 0.01f) continue;
+            Vector2 plano = new Vector2(delta.x, delta.z).normalized;
+            float alineacion = Vector2.Dot(plano, dir);
+            if (alineacion > mejorPuntaje)
+            {
+                mejorPuntaje = alineacion;
+                mejor = par.Key;
+            }
+        }
+
+        return mejor;
     }
 
     private void CargarGrafoDeEscena()
@@ -547,11 +625,15 @@ public class MapaNavegacion3D : MonoBehaviour
         {
             case "MainMenu": return "M";
             case "LevelSelector": return "LS";
-            case "Tutorial": return "T";
+            case "TutorialGoogle": return "TG";
             case "LevelYoutube": return "YT";
-            case "TikTok": return "TT";
-            case "Instagram": return "IG";
-            case "WhatsApp": return "WA";
+            case "LevelYoutubev2": return "Y2";
+            case "LevelYoutubev3": return "Y3";
+            case "LevelSnapchat": return "SC";
+            case "EscenaTiktok": return "TT";
+            case "EscenaVR": return "VR";
+            case "JuegoDinoChrome": return "DN";
+            case "pruebaLobby": return "LB";
             default: return "N";
         }
     }
@@ -594,13 +676,13 @@ public class MapaNavegacion3D : MonoBehaviour
         Material acento = MaterialNeon(color);
         Material claro = NuevoMaterial(Color.white, 0.05f, 0.35f);
         string nombre = nivel.nombre;
-        if (nombre == "LevelYoutube")
+        if (nombre == "LevelYoutube" || nombre == "LevelYoutubev2" || nombre == "LevelYoutubev3")
         {
             CrearPrimitiva(PrimitiveType.Cube, "PantallaVideo", padre, new Vector3(0f, 0.62f, 0f),
                 new Vector3(0.88f, 0.56f, 0.12f), acento, false);
             CrearMallaTriangulo(padre, new Vector3(0f, 0.62f, -0.09f), 0.28f, claro);
         }
-        else if (nombre == "TikTok")
+        else if (nombre == "EscenaTiktok")
         {
             CrearPrimitiva(PrimitiveType.Cylinder, "DiscoMusica", padre, new Vector3(0f, 0.54f, 0f),
                 new Vector3(0.46f, 0.10f, 0.46f), acento, false);
@@ -609,20 +691,21 @@ public class MapaNavegacion3D : MonoBehaviour
             CrearPrimitiva(PrimitiveType.Sphere, "NotaMusical", padre, new Vector3(0.14f, 1.22f, 0f),
                 new Vector3(0.24f, 0.20f, 0.20f), acento, false);
         }
-        else if (nombre == "Instagram")
+        else if (nombre == "LevelSnapchat")
         {
             CrearPrimitiva(PrimitiveType.Cube, "CamaraSocial", padre, new Vector3(0f, 0.67f, 0f),
                 new Vector3(0.72f, 0.56f, 0.22f), acento, false);
             CrearPrimitiva(PrimitiveType.Cylinder, "Lente", padre, new Vector3(0f, 0.67f, -0.14f),
                 new Vector3(0.22f, 0.035f, 0.22f), claro, false);
         }
-        else if (nombre == "WhatsApp")
+        else if (nombre == "EscenaVR")
         {
-            CrearPrimitiva(PrimitiveType.Sphere, "Mensaje", padre, new Vector3(0f, 0.68f, 0f),
-                new Vector3(0.74f, 0.58f, 0.28f), acento, false);
-            for (int i = -1; i <= 1; i++)
-                CrearPrimitiva(PrimitiveType.Sphere, "PuntoMensaje", padre,
-                    new Vector3(i * 0.16f, 0.68f, -0.25f), new Vector3(0.065f, 0.065f, 0.04f), claro, false);
+            CrearPrimitiva(PrimitiveType.Cube, "VisorVR", padre, new Vector3(0f, 0.70f, 0f),
+                new Vector3(0.80f, 0.36f, 0.40f), acento, false);
+            CrearPrimitiva(PrimitiveType.Sphere, "LenteIzq", padre, new Vector3(-0.18f, 0.70f, -0.22f),
+                new Vector3(0.22f, 0.22f, 0.10f), claro, false);
+            CrearPrimitiva(PrimitiveType.Sphere, "LenteDer", padre, new Vector3(0.18f, 0.70f, -0.22f),
+                new Vector3(0.22f, 0.22f, 0.10f), claro, false);
         }
         else
         {
@@ -815,13 +898,24 @@ public class MapaNavegacion3D : MonoBehaviour
         return 0;
     }
 
+    private bool CumpleRequisitosNodo(NivelConfig nivel)
+    {
+        if (nivel.requisitosProgreso == null || nivel.requisitosProgreso.Length == 0)
+            return false;
+        return GameProgressionManager.Asegurar().CumpleTodos(nivel.requisitosProgreso);
+    }
+
     private void RefrescarProgreso()
     {
         if (progresoListo) return;
         foreach (NivelConfig nivel in configuracion.Values)
-            grafo.Obtener(nivel.id).desbloqueado = nivel.inicial;
+            grafo.Obtener(nivel.id).desbloqueado = nivel.inicial || CumpleRequisitosNodo(nivel);
+
         foreach (NivelConfig nivel in configuracion.Values)
-            if (nivel.inicial || EstaCompletado(nivel)) grafo.CompletarNivel(nivel.id);
+        {
+            if (nivel.inicial || EstaCompletado(nivel) || CumpleRequisitosNodo(nivel))
+                grafo.CompletarNivel(nivel.id);
+        }
 
         foreach (NivelConfig nivel in configuracion.Values)
         {
@@ -897,7 +991,12 @@ public class MapaNavegacion3D : MonoBehaviour
         { MostrarInfo(NombreVisible(nivel) + " estara disponible proximamente."); return; }
         if (!Application.CanStreamedLevelBeLoaded(nivel.escena))
         { MostrarInfo("No se encuentra la escena " + nivel.escena + " en la lista de escenas."); return; }
-        SceneManager.LoadScene(nivel.escena);
+
+        idSeleccionado = id;
+        if (MultijugadorJuego.Instancia != null)
+            MultijugadorJuego.Instancia.IrAEscena(nivel.escena);
+        else
+            SceneManager.LoadScene(nivel.escena);
     }
 
     private void CambiarModo(Modo nuevo)
@@ -913,13 +1012,36 @@ public class MapaNavegacion3D : MonoBehaviour
     private void MostrarRuta(int destino)
     {
         LimpiarRuta();
+        idSeleccionado = destino;
         float costo;
         List<int> ruta = grafo.CaminoMasCorto(idActual, destino, out costo);
-        if (ruta.Count == 0) { MostrarInfo("No hay ruta disponible hacia " + NombreVisible(configuracion[destino]) + "."); return; }
+        if (ruta.Count == 0)
+        {
+            MostrarInfo("No hay ruta disponible hacia " + NombreVisible(configuracion[destino]) + " (revisa nodos bloqueados).");
+            return;
+        }
+
+        nodosRuta.Clear();
+        foreach (int id in ruta) nodosRuta.Add(id);
+
         for (int i = 0; i < ruta.Count - 1; i++) ResaltarPuente(ruta[i], ruta[i + 1]);
+        ResaltarNodosRuta();
+
         var nombres = new List<string>();
         foreach (int id in ruta) nombres.Add(NombreVisible(configuracion[id]));
         MostrarInfo("Ruta mas corta: " + string.Join("  >  ", nombres) + "\nCosto total: " + costo.ToString("0.#"));
+    }
+
+    private void ResaltarNodosRuta()
+    {
+        foreach (var par in islas)
+        {
+            if (!nodosRuta.Contains(par.Key)) continue;
+            if (par.Value.aro != null)
+                PintarRenderer(par.Value.aro, colorRuta);
+            if (par.Value.plataforma != null)
+                PintarRenderer(par.Value.plataforma, Color.Lerp(par.Value.colorBase, colorRuta, 0.55f));
+        }
     }
 
     private void MostrarRecorrido(bool anchura)
@@ -947,6 +1069,9 @@ public class MapaNavegacion3D : MonoBehaviour
 
     private void LimpiarRuta()
     {
+        nodosRuta.Clear();
+        RefrescarProgreso();
+
         foreach (Puente puente in puentes)
         {
             RestablecerPuente(puente);
@@ -963,9 +1088,9 @@ public class MapaNavegacion3D : MonoBehaviour
 
     private void ReiniciarProgreso()
     {
+        GameProgressionManager.Asegurar().ReiniciarTodo();
         foreach (NivelConfig nivel in configuracion.Values)
-            PlayerPrefs.DeleteKey(PrefijoProgreso + Clave(nivel));
-        PlayerPrefs.Save();
+            ProgresoNiveles.Reiniciar(Clave(nivel));
         foreach (Puente puente in puentes) RestablecerPuente(puente);
         progresoListo = false;
         RefrescarProgreso();
@@ -989,13 +1114,14 @@ public class MapaNavegacion3D : MonoBehaviour
 
     private void Completar(NivelConfig nivel)
     {
-        PlayerPrefs.SetInt(PrefijoProgreso + Clave(nivel), 1);
-        PlayerPrefs.Save();
+        GameProgressionManager.Asegurar().RegisterLevelCompleted(Clave(nivel));
+        progresoListo = false;
+        RefrescarProgreso();
     }
 
     private bool EstaCompletado(NivelConfig nivel)
     {
-        return PlayerPrefs.GetInt(PrefijoProgreso + Clave(nivel), 0) == 1;
+        return GameProgressionManager.Asegurar().IsLevelCompleted(Clave(nivel));
     }
 
     private string Clave(NivelConfig nivel)
@@ -1010,10 +1136,21 @@ public class MapaNavegacion3D : MonoBehaviour
 
     private string NombreVisible(NivelConfig nivel)
     {
-        if (nivel.nombre == "MainMenu") return "Inicio";
-        if (nivel.nombre == "LevelSelector") return "LevelSelector";
-        if (nivel.nombre == "LevelYoutube") return "YouTube";
-        return nivel.nombre;
+        switch (nivel.nombre)
+        {
+            case "MainMenu": return "Inicio";
+            case "LevelSelector": return "Hub";
+            case "TutorialGoogle": return "Tutorial";
+            case "LevelYoutube": return "YouTube";
+            case "LevelYoutubev2": return "YouTube 2";
+            case "LevelYoutubev3": return "YouTube 3";
+            case "LevelSnapchat": return "Snapchat";
+            case "EscenaTiktok": return "TikTok";
+            case "EscenaVR": return "VR";
+            case "JuegoDinoChrome": return "Dino";
+            case "pruebaLobby": return "Lobby";
+            default: return nivel.nombre;
+        }
     }
 
     private string Descripcion(NivelConfig nivel)
@@ -1022,11 +1159,15 @@ public class MapaNavegacion3D : MonoBehaviour
         {
             case "MainMenu": return "El punto de partida de tu aventura digital.";
             case "LevelSelector": return "El corazon de la ciudad neon: elige tu siguiente mundo.";
-            case "Tutorial": return "Aprende las reglas y controles del juego.";
+            case "TutorialGoogle": return "Aprende las reglas y controles del juego.";
             case "LevelYoutube": return "Un mundo de videos, creadores y desafios.";
-            case "TikTok": return "Zona de tendencias y videos cortos.";
-            case "Instagram": return "Un mundo de imagenes, historias y conexiones.";
-            case "WhatsApp": return "Zona de mensajes y retos compartidos.";
+            case "LevelYoutubev2": return "Segunda zona YouTube: rompe la grieta Minecraft.";
+            case "LevelYoutubev3": return "Zona final YouTube: recoge las llaves.";
+            case "LevelSnapchat": return "Desafios rapidos estilo Snapchat.";
+            case "EscenaTiktok": return "Zona de tendencias y videos cortos.";
+            case "EscenaVR": return "Experiencia en realidad virtual.";
+            case "JuegoDinoChrome": return "Minijuego del dinosaurio.";
+            case "pruebaLobby": return "Lobby multijugador para crear o unirte a una partida.";
             default: return "Un nuevo mundo conectado a la red.";
         }
     }
@@ -1038,11 +1179,15 @@ public class MapaNavegacion3D : MonoBehaviour
         {
             case "MainMenu": return new Color(1f, 0.68f, 0.24f);
             case "LevelSelector": return new Color(0.18f, 0.74f, 0.90f);
-            case "Tutorial": return new Color(0.68f, 0.55f, 0.94f);
+            case "TutorialGoogle": return new Color(0.68f, 0.55f, 0.94f);
             case "LevelYoutube": return new Color(0.94f, 0.20f, 0.18f);
-            case "TikTok": return new Color(0.16f, 0.83f, 0.83f);
-            case "Instagram": return new Color(0.90f, 0.30f, 0.58f);
-            case "WhatsApp": return new Color(0.18f, 0.78f, 0.40f);
+            case "LevelYoutubev2": return new Color(0.95f, 0.35f, 0.20f);
+            case "LevelYoutubev3": return new Color(0.85f, 0.15f, 0.35f);
+            case "LevelSnapchat": return new Color(1f, 0.90f, 0.15f);
+            case "EscenaTiktok": return new Color(0.16f, 0.83f, 0.83f);
+            case "EscenaVR": return new Color(0.45f, 0.35f, 0.95f);
+            case "JuegoDinoChrome": return new Color(0.55f, 0.55f, 0.58f);
+            case "pruebaLobby": return new Color(0.25f, 0.85f, 0.55f);
             default: return new Color(0.28f, 0.75f, 0.83f);
         }
     }

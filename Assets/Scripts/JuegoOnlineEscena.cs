@@ -23,17 +23,6 @@ public class JuegoOnlineEscena : MonoBehaviour
         instancia = objeto.AddComponent<JuegoOnlineEscena>();
     }
 
-    private void Update()
-    {
-        if (MultijugadorJuego.Instancia != null)
-        {
-            Debug.Log(
-                "[ESCENA] Singleton=" + (NetworkManager.Singleton != null) +
-                " | Red=" + (MultijugadorJuego.Instancia.Red != null)
-            );
-        }
-    }
-
     private void OnEnable()
     {
         SceneManager.sceneLoaded += AlCargarEscena;
@@ -51,6 +40,14 @@ public class JuegoOnlineEscena : MonoBehaviour
         redActual = nuevaRed;
 
         Debug.Log("[Online] RED RECIBIDA: " + (redActual != null));
+
+        // Creating a room while already inside pruebaLobby does not reload the
+        // scene, so force a prepare pass as soon as the NetworkManager exists.
+        if (SceneManager.GetActiveScene().name == "pruebaLobby")
+        {
+            StopAllCoroutines();
+            StartCoroutine(EsperarRed());
+        }
     }
 
     private void AlCargarEscena(Scene escena, LoadSceneMode modo)
@@ -153,15 +150,21 @@ public class JuegoOnlineEscena : MonoBehaviour
         if (camara != null && !EsJugadorDeRed(camara.transform))
         {
             string escena = SceneManager.GetActiveScene().name;
-            if (escena == "pruebaLobby" || escena == "LevelYoutubev2")
+            if (escena == "pruebaLobby")
             {
-
+                // Cinematic lobby cam uses nearClip=10; keep a fixed frame, but
+                // clamp near clip so a standing player at spawn is not shaved away.
+                if (camara.nearClipPlane > 1f)
+                    camara.nearClipPlane = 0.3f;
+            }
+            else if (escena == "LevelYoutubev2")
+            {
             }
             else if (escena == "LevelYoutube")
             {
                 camara.GetComponent<FollowPlayer>().enabled = true;
             }
-            else if (escena == "LevelSelector")
+            else if (escena == "LevelSelector" || escena == "LevelYoutubev3")
             {
                 camara.GetComponent<BoatCamera>().enabled = true;
             }
@@ -211,11 +214,18 @@ public class JuegoOnlineEscena : MonoBehaviour
 
                 local.RefrescarCamara();
 
-                Debug.Log(
-                    "[Online] LOCAL_COLOCADO owner=" + local.OwnerClientId +
-                    " pos=" + local.transform.position +
-                    " camara=" + (Camera.main != null ? Camera.main.name : "ninguna"));
+                // Re-apply a few times: NetworkTransform / NetworkRigidbody can
+                // overwrite a single position write right after spawn.
+                for (int i = 0; i < 8; i++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    yield return null;
 
+                    if (HayPuntoAparicion)
+                        local.ColocarEnAparicion(PuntoAparicion, local.OwnerClientId);
+                }
+
+                Debug.Log("[Online] LOCAL_COLOCADO owner=" + local.OwnerClientId + " pos=" + local.transform.position);
                 yield break;
             }
 

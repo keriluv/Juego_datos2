@@ -19,11 +19,11 @@ GameObject:
   - component: {fileID: 8688667599253519690}
   - component: {fileID: -3596088580305927383}
   - component: {fileID: 4252643517170484408}
-  - component: {fileID: -1984183481028999538}
   - component: {fileID: 8631874819368800385}
   - component: {fileID: -7214123584022104471}
-  - component: {fileID: 7059012002168764363}
   - component: {fileID: -7300000000000000123}
+  - component: {fileID: -7400000000000000001}
+  - component: {fileID: -7400000000000000002}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Player
@@ -40,7 +40,7 @@ Transform:
   m_GameObject: {fileID: 6146368101489438540}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: -2.02, y: 1.74424, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -159,7 +159,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2282983756
+  GlobalObjectIdHash: 3068861768
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -306,23 +306,6 @@ MonoBehaviour:
   cooldown: 2
   showHit: 1
   animator: {fileID: 0}
---- !u!114 &-1984183481028999538
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6146368101489438540}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkRigidbody
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkRigidbodyBaseExpanded: 0
-  UseRigidBodyForMotion: 1
-  AutoUpdateKinematicState: 1
-  AutoSetKinematicOnDespawn: 1
 --- !u!114 &8631874819368800385
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -371,7 +354,7 @@ MonoBehaviour:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
---- !u!114 &7059012002168764363
+--- !u!114 &-7300000000000000123
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -380,9 +363,41 @@ MonoBehaviour:
   m_GameObject: {fileID: 6146368101489438540}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 502e7541e4dbcf444a8d01241b55a898, type: 3}
+  m_Script: {fileID: 11500000, guid: e361ab843d85baf296dcb49b81c968d8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: '::'
+  m_EditorClassIdentifier: Assembly-CSharp::RedTiktok
+  ShowTopMostFoldoutHeaderGroup: 1
+  velocidadHorizontal: 400
+  gravedadPersonalizada: 2000
+  alturaSalto: 200
+--- !u!114 &-7400000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReaparicionJugador
+  ShowTopMostFoldoutHeaderGroup: 1
+  umbralY: -25
+  cooldown: 1.25
+--- !u!114 &-7400000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f64789a0b1c2d3e4f50602, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RelayTransicionMinecraft
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &7145590744847819147
 GameObject:
   m_ObjectHideFlags: 0
@@ -918,18 +933,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d560cc9c408b2424c8bf637e8a35156f, type: 3}
   m_PrefabInstance: {fileID: 9033176295212416049}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-7300000000000000123
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6146368101489438540}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e361ab843d85baf296dcb49b81c968d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RedTiktok
-  velocidadHorizontal: 400
-  gravedadPersonalizada: 2000
-  alturaSalto: 200

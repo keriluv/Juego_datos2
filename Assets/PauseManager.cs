@@ -1,110 +1,259 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class PauseManager : MonoBehaviour
 {
-    private bool isPaused = false;
+    public static PauseManager Instancia { get; private set; }
+    public static bool IsPaused => Instancia != null && Instancia.isPaused;
+
+    private bool isPaused;
     private PauseButton selectedPauseButton;
+
     [SerializeField] private GameObject pauseScreen;
     [SerializeField] private GameObject xboxMenu;
     [SerializeField] private GameObject configMenu;
     [SerializeField] private GameObject mapMenu;
     [SerializeField] private GameObject invMenu;
     [SerializeField] private GameObject exitMenu;
-
     [SerializeField] private GameObject map;
-
+    [SerializeField] private GameObject inv;
     [SerializeField] private GameObject hover;
+
     private RectTransform target;
+    private bool usandoFallback;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AsegurarInstancia()
+    {
+        if (Instancia != null) return;
+        // Scene-placed PauseManager (LevelSelector) wins when present.
+        PauseManager existente = Object.FindAnyObjectByType<PauseManager>();
+        if (existente != null) return;
+
+        GameObject go = new GameObject("PauseManagerRuntime");
+        go.AddComponent<PauseManager>();
+    }
 
     private void Awake()
     {
-        DontDestroyOnLoad(this);
-    }
-    void Start()
-    {
-        pauseScreen.SetActive(false);
-        map.SetActive(false);
-    }
-    void Update()
-    {
-        if (target != null)
+        if (Instancia != null && Instancia != this)
         {
-            RectTransform hoverRect = hover.GetComponent<RectTransform>();
-
-            Vector3 offset = new Vector3(0f, -40f, 0f);
-
-            Vector3 targetPosition = target.position + offset;
-
-            hoverRect.position = Vector3.Lerp(
-                hoverRect.position,
-                targetPosition,
-                Time.unscaledDeltaTime * 10f
-            );
+            // Prefer the LevelSelector-authored pause UI over the runtime fallback.
+            if (Instancia.usandoFallback && pauseScreen != null)
+            {
+                Destroy(Instancia.gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+                return;
+            }
         }
-        if (Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame)
+
+        Instancia = this;
+        DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += AlCargarEscena;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= AlCargarEscena;
+        if (Instancia == this) Instancia = null;
+        if (isPaused)
         {
-            Debug.Log("se persiono p");
-            isPaused = !isPaused;
-
-            pauseScreen.SetActive(isPaused);
-
-            Time.timeScale = isPaused ? 0f : 1f;
-            Cursor.visible = isPaused;
-            Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
-
+            Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
+    }
+
+    private void Start()
+    {
+        if (pauseScreen == null)
+            CrearFallbackPause();
+
+        SetActivo(pauseScreen, false);
+        SetActivo(map, false);
+        SetActivo(inv, false);
+        AsegurarEventSystem();
+    }
+
+    private void AlCargarEscena(Scene escena, LoadSceneMode modo)
+    {
+        // Never leave pause stuck when entering menu/lobby, and never keep timeScale at 0.
+        if (isPaused || !EscenaPermitePausa(escena.name))
+        {
+            if (isPaused)
+            {
+                isPaused = false;
+                SetActivo(pauseScreen, false);
+            }
+            Time.timeScale = 1f;
+            Cursor.visible = !EscenaPermitePausa(escena.name);
+            Cursor.lockState = EscenaPermitePausa(escena.name)
+                ? CursorLockMode.Locked
+                : CursorLockMode.None;
+        }
+
+        AsegurarEventSystem();
+    }
+
+    private void Update()
+    {
+        ActualizarHover();
+
+        if (DebeAlternarPausa())
+            pause();
+
+        if (!isPaused) return;
+
+        if (ControlesJuego.QuiereCancelar())
+            CambiarxboxMenu();
+        else if (ControlesJuego.QuiereInventario())
+            CambiarinvMenu();
+    }
+
+    /// <summary>
+    /// Pause is gameplay-only. Main Menu and multiplayer lobby must ignore Escape/Start.
+    /// </summary>
+    public static bool EscenaPermitePausa(string nombreEscena)
+    {
+        if (string.IsNullOrEmpty(nombreEscena)) return false;
+        if (nombreEscena == "MainMenu") return false;
+        if (nombreEscena == "pruebaLobby") return false;
+        return true;
+    }
+
+    private bool DebeAlternarPausa()
+    {
+        if (!EscenaPermitePausa(SceneManager.GetActiveScene().name))
+            return false;
+
+        return ControlesJuego.QuierePausar();
+    }
+
+    private void ActualizarHover()
+    {
+        if (target == null || hover == null) return;
+
+        RectTransform hoverRect = hover.GetComponent<RectTransform>();
+        if (hoverRect == null) return;
+
+        Vector3 destino = target.position + new Vector3(0f, -40f, 0f);
+        hoverRect.position = Vector3.Lerp(
+            hoverRect.position,
+            destino,
+            Time.unscaledDeltaTime * 10f);
+    }
+
+    public void pause()
+    {
+        if (!EscenaPermitePausa(SceneManager.GetActiveScene().name))
+        {
+            if (isPaused)
+            {
+                isPaused = false;
+                SetActivo(pauseScreen, false);
+                Time.timeScale = 1f;
+            }
+            return;
+        }
+
+        if (pauseScreen == null)
+            CrearFallbackPause();
+
+        isPaused = !isPaused;
+        SetActivo(pauseScreen, isPaused);
+
+        Time.timeScale = isPaused ? 0f : 1f;
+        Cursor.visible = isPaused;
+        Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
+
+        if (isPaused)
+            AsegurarEventSystem();
     }
 
     public void CambiarxboxMenu()
     {
-        xboxMenu.SetActive(true);
-        configMenu.SetActive(false );
-        mapMenu.SetActive(false);
-        exitMenu.SetActive(false);
-        invMenu.SetActive(false);
-        map.SetActive(false);
+        if (usandoFallback) return;
+        SetActivo(xboxMenu, true);
+        SetActivo(configMenu, false);
+        SetActivo(mapMenu, false);
+        SetActivo(exitMenu, false);
+        SetActivo(invMenu, false);
+        SetActivo(map, false);
+        SetActivo(inv, false);
     }
 
     public void CambiarconfigMenu()
     {
-        configMenu.SetActive(true);
-        xboxMenu.SetActive(false) ;
-        mapMenu.SetActive(false);
-        exitMenu.SetActive(false);
-        invMenu.SetActive(false);
-        map.SetActive(false);
+        if (usandoFallback) return;
+        SetActivo(configMenu, true);
+        SetActivo(xboxMenu, false);
+        SetActivo(mapMenu, false);
+        SetActivo(exitMenu, false);
+        SetActivo(invMenu, false);
+        SetActivo(map, false);
+        SetActivo(inv, false);
     }
 
     public void CambiarmapMenu()
     {
-        map.SetActive(true);
-        mapMenu.SetActive(true);
-        exitMenu.SetActive(false);
-        invMenu.SetActive(false);
-        configMenu.SetActive(false ) ;
-        xboxMenu.SetActive(false);
+        if (usandoFallback) return;
+        SetActivo(map, true);
+        SetActivo(mapMenu, true);
+        SetActivo(exitMenu, false);
+        SetActivo(invMenu, false);
+        SetActivo(configMenu, false);
+        SetActivo(xboxMenu, false);
+        SetActivo(inv, false);
     }
 
     public void CambiarinvMenu()
     {
-        invMenu.SetActive(true);
-        configMenu.SetActive(false );
-        exitMenu.SetActive(false );
-        mapMenu.SetActive(false );
-        xboxMenu.SetActive (false);
-        map.SetActive(false);
+        if (usandoFallback) return;
+        SetActivo(invMenu, true);
+        SetActivo(configMenu, false);
+        SetActivo(exitMenu, false);
+        SetActivo(mapMenu, false);
+        SetActivo(xboxMenu, false);
+        SetActivo(map, false);
+        SetActivo(inv, true);
     }
 
     public void CambiarexitMenu()
     {
-        exitMenu.SetActive (true);
-        xboxMenu.SetActive(false);
-        mapMenu.SetActive(false);
-        configMenu.SetActive(false );
-        invMenu.SetActive(false );
-        map.SetActive(false);
+        if (usandoFallback) return;
+        SetActivo(exitMenu, true);
+        SetActivo(xboxMenu, false);
+        SetActivo(mapMenu, false);
+        SetActivo(configMenu, false);
+        SetActivo(invMenu, false);
+        SetActivo(map, false);
+        SetActivo(inv, false);
+    }
+
+    public void ExitServer()
+    {
+        if (isPaused) pause();
+        if (MultijugadorJuego.Instancia != null)
+            MultijugadorJuego.Instancia.SalirDePartida();
+    }
+
+    public void goToSelector()
+    {
+        if (isPaused) pause();
+        if (MultijugadorJuego.Instancia != null)
+            MultijugadorJuego.Instancia.IrAEscena("LevelSelector");
+    }
+
+    public void CerrarJuego()
+    {
+        Application.Quit();
     }
 
     public void SelectedButton(RectTransform valor)
@@ -115,14 +264,11 @@ public class PauseManager : MonoBehaviour
 
         Button btn = valor.GetComponent<Button>();
         if (btn != null)
-        {
             btn.Select();
-        }
+
         PauseButton button = valor.GetComponent<PauseButton>();
         if (button != null)
-        {
             changeSprite(button);
-        }
     }
 
     public void changeSprite(PauseButton button)
@@ -130,12 +276,85 @@ public class PauseManager : MonoBehaviour
         if (button == null) return;
 
         if (selectedPauseButton != null)
-        {
             selectedPauseButton.SetSelected(false);
-        }
 
         selectedPauseButton = button;
         selectedPauseButton.SetSelected(true);
     }
 
+    private static void SetActivo(GameObject go, bool activo)
+    {
+        if (go != null) go.SetActive(activo);
+    }
+
+    private void AsegurarEventSystem()
+    {
+        if (EventSystem.current != null) return;
+
+        GameObject es = new GameObject("EventSystem");
+        es.AddComponent<EventSystem>();
+        es.AddComponent<InputSystemUIInputModule>();
+    }
+
+    private void CrearFallbackPause()
+    {
+        usandoFallback = true;
+
+        GameObject canvasGo = new GameObject("PauseFallbackCanvas");
+        canvasGo.transform.SetParent(transform, false);
+
+        Canvas canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 9000;
+        canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        canvasGo.AddComponent<GraphicRaycaster>();
+
+        GameObject panel = new GameObject("PauseScreen");
+        panel.transform.SetParent(canvasGo.transform, false);
+        Image fondo = panel.AddComponent<Image>();
+        fondo.color = new Color(0f, 0f, 0f, 0.72f);
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+
+        CrearBotonFallback(panel.transform, "Continuar", new Vector2(0f, 40f), () => { if (isPaused) pause(); });
+        CrearBotonFallback(panel.transform, "Level Selector", new Vector2(0f, -20f), goToSelector);
+        CrearBotonFallback(panel.transform, "Salir partida", new Vector2(0f, -80f), ExitServer);
+
+        pauseScreen = panel;
+        panel.SetActive(false);
+    }
+
+    private void CrearBotonFallback(Transform padre, string texto, Vector2 pos, UnityEngine.Events.UnityAction accion)
+    {
+        GameObject go = new GameObject(texto);
+        go.transform.SetParent(padre, false);
+
+        RectTransform rect = go.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(280f, 48f);
+        rect.anchoredPosition = pos;
+
+        Image img = go.AddComponent<Image>();
+        img.color = new Color(0.18f, 0.18f, 0.22f, 0.95f);
+
+        Button btn = go.AddComponent<Button>();
+        btn.onClick.AddListener(accion);
+
+        GameObject labelGo = new GameObject("Text");
+        labelGo.transform.SetParent(go.transform, false);
+        Text label = labelGo.AddComponent<Text>();
+        label.text = texto;
+        label.alignment = TextAnchor.MiddleCenter;
+        label.color = Color.white;
+        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        label.fontSize = 22;
+
+        RectTransform labelRect = label.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+    }
 }

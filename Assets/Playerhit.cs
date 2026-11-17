@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+
 public class PlayerHit : NetworkBehaviour
 {
     [SerializeField] private GameObject hit;
@@ -44,7 +45,6 @@ public class PlayerHit : NetworkBehaviour
 
     private void AlCambiarHitRed(bool anterior, bool actual)
     {
-    
         if (ControlaEsteCliente) return;
         AplicarAnimacion(actual);
     }
@@ -64,11 +64,18 @@ public class PlayerHit : NetworkBehaviour
             networkHit.Value = golpeando;
     }
 
+    private bool QuiereGolpear()
+    {
+        // Xbox RT edge via ControlesJuego — A (buttonSouth) never attacks.
+        return ControlesJuego.QuiereGolpear();
+    }
+
     void FixedUpdate()
     {
         if (!ControlaEsteCliente) return;
+        if (PauseManager.IsPaused) return;
 
-        if (Input.GetKey(KeyCode.Mouse0) && !hitEnabled)
+        if (QuiereGolpear() && !hitEnabled)
         {
             hitEnabled = true;
             EstablecerGolpe(true);
@@ -79,7 +86,7 @@ public class PlayerHit : NetworkBehaviour
         {
             time += Time.fixedDeltaTime;
 
-            if (time >= showHit && ((hit != null && hit.activeSelf) || networkHit.Value))
+            if (time >= showHit && ((hit != null && hit.activeSelf) || (IsSpawned && networkHit.Value)))
             {
                 EstablecerGolpe(false);
             }

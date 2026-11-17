@@ -101,7 +101,7 @@ public static class UtilidadesDesafio
 
         AudioClip clip = Resources.Load<AudioClip>(nombre);
         if (clip != null)
-            audioFuente.PlayOneShot(clip, Mathf.Clamp01(volumen));
+            audioFuente.PlayOneShot(clip, Mathf.Clamp01(volumen) * AjustesJuego.FactorEfectos());
     }
 
     public static void Sacudir(RectTransform objetivo, float intensidad = 14f, float duracion = 0.25f)

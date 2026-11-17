@@ -66,7 +66,7 @@ public class ProyectilCanon : MonoBehaviour
         }
 
         if (sonidoImpacto != null)
-            AudioSource.PlayClipAtPoint(sonidoImpacto, punto, 0.8f);
+            AudioSource.PlayClipAtPoint(sonidoImpacto, punto, 0.8f * AjustesJuego.FactorEfectos());
 
         Destroy(gameObject);
     }

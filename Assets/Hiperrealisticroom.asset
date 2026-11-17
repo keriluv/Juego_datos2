@@ -21,10 +21,10 @@ MonoBehaviour:
     m_Value: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.2
+    m_Value: 0.26
   scatter:
     m_OverrideState: 1
-    m_Value: 0.7
+    m_Value: 0.907
   clamp:
     m_OverrideState: 0
     m_Value: 64677
@@ -139,10 +139,10 @@ MonoBehaviour:
   active: 0
   temperature:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 19
   tint:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 17
 --- !u!114 &-1197321155828639181
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -403,15 +403,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5485954d14dfb9a4c8ead8edb0ded5b1, type: 3}
   m_Name: LiftGammaGain
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.LiftGammaGain
-  active: 0
+  active: 1
   lift:
-    m_OverrideState: 1
-    m_Value: {x: 1, y: 1, z: 1, w: 0}
+    m_OverrideState: 0
+    m_Value: {x: 1, y: 0.8767284, z: 0.8235474, w: 0}
   gamma:
-    m_OverrideState: 1
-    m_Value: {x: 1, y: 1, z: 1, w: 0}
+    m_OverrideState: 0
+    m_Value: {x: 1, y: 0.87506515, z: 0.89476806, w: 0}
   gain:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: {x: 1, y: 1, z: 1, w: 0}
 --- !u!114 &580815230363591046
 MonoBehaviour:
@@ -428,13 +428,13 @@ MonoBehaviour:
   active: 1
   shadows:
     m_OverrideState: 1
-    m_Value: {x: 0.8646656, y: 0.89059716, z: 1, w: -0.027522866}
+    m_Value: {x: 0.9191834, y: 0.9127245, z: 1, w: 0.073485464}
   midtones:
     m_OverrideState: 1
-    m_Value: {x: 1, y: 0.9213897, z: 0.8950264, w: 0.091743104}
+    m_Value: {x: 1, y: 0.8860528, z: 0.9482216, w: -0.5104269}
   highlights:
     m_OverrideState: 1
-    m_Value: {x: 1, y: 0.9989047, z: 0.9318021, w: -0.15137556}
+    m_Value: {x: 0.8828693, y: 1, z: 0.8819623, w: 0}
   shadowsStart:
     m_OverrideState: 0
     m_Value: 0
@@ -584,10 +584,10 @@ MonoBehaviour:
     m_Value: 10
   colorFilter:
     m_OverrideState: 1
-    m_Value: {r: 0.933033, g: 0.933033, b: 0.933033, a: 1}
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
   hueShift:
     m_OverrideState: 0
     m_Value: 35
   saturation:
     m_OverrideState: 1
-    m_Value: 5
+    m_Value: 37

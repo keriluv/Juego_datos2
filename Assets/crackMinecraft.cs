@@ -6,28 +6,48 @@ public class crackMinecraft : StruckObject
     [SerializeField] private GameObject explosion;
     [SerializeField] private ObjectivesManager om;
     [SerializeField] private GameObject crack;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    private bool yaDisparado;
+
     private void Start()
     {
-        explosion.SetActive(false);
-        crack.SetActive(false);
+        if (explosion != null) explosion.SetActive(false);
+        if (crack != null) crack.SetActive(false);
     }
 
     public override void OnHit()
     {
-        om.UpdateObjective();
+        if (yaDisparado) return;
+        yaDisparado = true;
 
-        StartCoroutine(animationEffect());
+        if (om != null)
+            om.UpdateObjective();
+
+        GameProgressionManager prog = GameProgressionManager.Asegurar();
+        prog.RegisterObjectiveCompleted("CrackBroken_LevelYoutubev2");
+        prog.RegisterLevelCompleted("LevelYoutubev2");
+
+        StartCoroutine(AnimacionYTransicion());
     }
 
-    private IEnumerator animationEffect()
+    private IEnumerator AnimacionYTransicion()
     {
-        explosion.SetActive(true);
-        yield return new WaitForSeconds(0.5f);
-        explosion.SetActive(false);
+        if (explosion != null)
+        {
+            explosion.SetActive(true);
+            yield return new WaitForSeconds(0.5f);
+            explosion.SetActive(false);
+        }
 
-        crack.SetActive(true);
-        Debug.Log("Ir a video minecraft");
+        if (crack != null)
+            crack.SetActive(true);
+
+        bool enRed = Unity.Netcode.NetworkManager.Singleton != null
+            && Unity.Netcode.NetworkManager.Singleton.IsListening;
+
+        if (enRed && RelayTransicionMinecraft.Local != null)
+            RelayTransicionMinecraft.Local.PedirTransicion();
+        else
+            TransicionMinecraftVideo.SolicitarDesdeCrack();
     }
-   
 }

@@ -416,100 +416,133 @@ MonoBehaviour:
   - id: 1
     nombre: MainMenu
     escena: MainMenu
-    posicion: {x: -290, y: -50}
+    posicion: {x: -320, y: 0}
     inicial: 1
     falso: 0
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    acento: {r: 1, g: 0.68, b: 0.24, a: 1}
+    requisitosProgreso: []
   - id: 2
     nombre: LevelSelector
     escena: LevelSelector
-    posicion: {x: 110, y: -50}
+    posicion: {x: 0, y: 0}
     inicial: 0
     falso: 0
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    acento: {r: 0.18, g: 0.74, b: 0.9, a: 1}
+    requisitosProgreso: []
   - id: 3
-    nombre: Tutorial
-    escena: Tutorial
-    posicion: {x: -130, y: 100}
+    nombre: TutorialGoogle
+    escena: TutorialGoogle
+    posicion: {x: -200, y: 160}
     inicial: 0
     falso: 0
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    acento: {r: 0.68, g: 0.55, b: 0.94, a: 1}
+    requisitosProgreso: []
   - id: 4
     nombre: LevelYoutube
     escena: LevelYoutube
-    posicion: {x: 110, y: 120}
+    posicion: {x: 140, y: 160}
     inicial: 0
     falso: 0
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    acento: {r: 0.94, g: 0.2, b: 0.18, a: 1}
+    requisitosProgreso: []
   - id: 5
-    nombre: TikTok
-    escena: 
-    posicion: {x: 330, y: 120}
+    nombre: LevelYoutubev2
+    escena: LevelYoutubev2
+    posicion: {x: 300, y: 160}
     inicial: 0
-    falso: 1
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    falso: 0
+    acento: {r: 0.95, g: 0.35, b: 0.2, a: 1}
+    requisitosProgreso:
+    - level:LevelYoutube
   - id: 6
-    nombre: Instagram
-    escena: 
-    posicion: {x: 330, y: -50}
+    nombre: LevelYoutubev3
+    escena: LevelYoutubev3
+    posicion: {x: 460, y: 160}
     inicial: 0
-    falso: 1
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    falso: 0
+    acento: {r: 0.85, g: 0.15, b: 0.35, a: 1}
+    requisitosProgreso:
+    - level:LevelYoutubev2
   - id: 7
-    nombre: WhatsApp
-    escena: 
-    posicion: {x: 540, y: 110}
+    nombre: LevelSnapchat
+    escena: LevelSnapchat
+    posicion: {x: 140, y: -140}
     inicial: 0
-    falso: 1
-    acento: {r: 0, g: 0, b: 0, a: 0}
+    falso: 0
+    acento: {r: 1, g: 0.9, b: 0.15, a: 1}
+    requisitosProgreso: []
+  - id: 8
+    nombre: EscenaTiktok
+    escena: EscenaTiktok
+    posicion: {x: 300, y: -140}
+    inicial: 0
+    falso: 0
+    acento: {r: 0.1, g: 0.9, b: 0.9, a: 1}
+    requisitosProgreso: []
+  - id: 9
+    nombre: EscenaVR
+    escena: EscenaVR
+    posicion: {x: -200, y: -140}
+    inicial: 0
+    falso: 0
+    acento: {r: 0.45, g: 0.35, b: 0.95, a: 1}
+    requisitosProgreso: []
+  - id: 10
+    nombre: JuegoDinoChrome
+    escena: JuegoDinoChrome
+    posicion: {x: 460, y: -140}
+    inicial: 0
+    falso: 0
+    acento: {r: 0.55, g: 0.55, b: 0.58, a: 1}
+    requisitosProgreso: []
+  - id: 11
+    nombre: pruebaLobby
+    escena: pruebaLobby
+    posicion: {x: 0, y: -260}
+    inicial: 0
+    falso: 0
+    acento: {r: 0.25, g: 0.85, b: 0.55, a: 1}
+    requisitosProgreso: []
   conexiones:
   - origen: 1
     destino: 2
     peso: 1
     bidireccional: 1
-  - origen: 3
-    destino: 1
-    peso: 1
-    bidireccional: 0
-  - origen: 3
-    destino: 4
-    peso: 2
-    bidireccional: 0
-  - origen: 4
-    destino: 5
-    peso: 3
-    bidireccional: 0
-  - origen: 4
-    destino: 6
-    peso: 2
-    bidireccional: 0
-  - origen: 5
-    destino: 7
-    peso: 1
-    bidireccional: 0
-  - origen: 6
-    destino: 7
-    peso: 3
-    bidireccional: 0
   - origen: 2
     destino: 3
     peso: 2
-    bidireccional: 0
+    bidireccional: 1
   - origen: 2
     destino: 4
-    peso: 5
-    bidireccional: 0
-  - origen: 2
-    destino: 5
-    peso: 8
-    bidireccional: 0
-  - origen: 2
-    destino: 6
-    peso: 7
-    bidireccional: 0
+    peso: 2
+    bidireccional: 1
   - origen: 2
     destino: 7
-    peso: 9
+    peso: 3
+    bidireccional: 1
+  - origen: 2
+    destino: 8
+    peso: 3
+    bidireccional: 1
+  - origen: 2
+    destino: 9
+    peso: 3
+    bidireccional: 1
+  - origen: 2
+    destino: 10
+    peso: 4
+    bidireccional: 1
+  - origen: 2
+    destino: 11
+    peso: 2
+    bidireccional: 1
+  - origen: 4
+    destino: 5
+    peso: 2
+    bidireccional: 0
+  - origen: 5
+    destino: 6
+    peso: 2
     bidireccional: 0
   colorBloqueado: {r: 0.3, g: 0.25, b: 0.4, a: 1}
   colorDisponible: {r: 0.1, g: 0.9, b: 1, a: 1}

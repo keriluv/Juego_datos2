@@ -15,7 +15,7 @@ public class MultijugadorJuego : MonoBehaviour
 
     [Header("Configuración")]
     [Tooltip("Niveles reales que el anfitrión puede cargar en red.")]
-    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat", "EscenaTiktok" };
+    public string[] escenasDisponibles = { "LevelYoutube", "LevelSelector", "LevelYoutubev2", "LevelSnapchat", "EscenaTiktok", "pruebaLobby", "LevelYoutubev3" };
 
     public int indiceEscena;
     public int maxJugadores = 4;
@@ -205,6 +205,7 @@ public class MultijugadorJuego : MonoBehaviour
         }
 
         GameObject objeto = new GameObject("NetworkManagerOnline");
+        DontDestroyOnLoad(objeto);
         UnityTransport transporte = objeto.AddComponent<UnityTransport>();
         red = objeto.AddComponent<NetworkManager>();
 
@@ -402,7 +403,19 @@ public class MultijugadorJuego : MonoBehaviour
         if (SceneManager.GetActiveScene().name != "MainMenu")
             SceneManager.LoadScene("MainMenu");
     }
-    
+    public void IrAEscena(string escena)
+    {
+        if (red != null && red.IsListening)
+        {
+            if (red.IsServer) CargarSiguienteEscena(escena);   // el host carga para todos
+            else mensajeEstado = "Solo el anfitrión cambia de escena.";
+        }
+        else
+        {
+            SceneManager.LoadScene(escena);                     // modo sin red
+        }
+    }
+
     /*
     private void OnGUI()
     {

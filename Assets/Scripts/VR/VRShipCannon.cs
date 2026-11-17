@@ -226,7 +226,7 @@ public class VRShipCannon : MonoBehaviour
         proyectil.DefinirEfectoAgua(efectoImpactoAgua);
 
         if (sonidoDisparo != null)
-            audioFuente.PlayOneShot(sonidoDisparo);
+            audioFuente.PlayOneShot(sonidoDisparo, AjustesJuego.FactorEfectos());
 
         if (origenHaptica != null)
             Vibrar(origenHaptica, amplitudHaptica, duracionHaptica);

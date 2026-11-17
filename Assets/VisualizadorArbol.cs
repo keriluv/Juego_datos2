@@ -9,8 +9,9 @@ public class VisualizadorArbol : MonoBehaviour
 
     private GameObject nodoVisualActual;
 
-    [SerializeField] private float separacionX=60f;
-    [SerializeField] private float separacionY=30f;
+    [SerializeField] private float separacionX = 140f;
+    [SerializeField] private float separacionY = 90f;
+    [SerializeField] private Vector2 tamanoNodo = new Vector2(160f, 72f);
 
     public void MostrarArbol(ArbolABB<PeligroData> arbol)
     {
@@ -41,12 +42,17 @@ public class VisualizadorArbol : MonoBehaviour
 
         RectTransform rect = nuevoNodo.GetComponent<RectTransform>();
         rect.anchoredPosition = new Vector2(x, y);
+        rect.sizeDelta = tamanoNodo;
 
         TMP_Text texto = nuevoNodo.GetComponentInChildren<TMP_Text>();
 
         if (texto != null)
         {
             texto.text = nodo.Valor.nombre + "\nNivel: " + nodo.Valor.nivelPeligro;
+            texto.fontSize = Mathf.Max(texto.fontSize, 18f);
+            texto.enableAutoSizing = true;
+            texto.fontSizeMin = 14f;
+            texto.fontSizeMax = 26f;
         }
 
         if (nodo.Izquierdo != null)

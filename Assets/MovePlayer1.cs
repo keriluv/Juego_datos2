@@ -1,6 +1,6 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(10001)]
@@ -23,8 +23,13 @@ public class MovePlayer1 : NetworkBehaviour
     [SerializeField] private AudioListener playerListener;
 
     private Rigidbody rb;
+    private NetworkTransform transformRed;
+    private NetworkRigidbody[] cuerposRed;
     private bool canJump = true;
     private Vector2 movement = Vector2.zero;
+    private Vector3 anclaLobby;
+    private bool hayAnclaLobby;
+    private bool redLobbyDesactivada;
 
     private NetworkVariable<float> networkSpeed =
        new NetworkVariable<float>(
@@ -51,10 +56,33 @@ public class MovePlayer1 : NetworkBehaviour
         Debug.Log("PLAYER: Awake ejecutado");
 
         rb = GetComponent<Rigidbody>();
+        transformRed = GetComponent<NetworkTransform>();
+        cuerposRed = GetComponents<NetworkRigidbody>();
         if (animator == null)
         {
             animator = GetComponentInChildren<Animator>();
         }
+
+        // Nested non-kinematic rigidbodies (e.g. hitbox "fff") fight the player body
+        // and can shove it through the floor.
+        foreach (Rigidbody hijo in GetComponentsInChildren<Rigidbody>(true))
+        {
+            if (hijo == rb) continue;
+            hijo.isKinematic = true;
+            hijo.useGravity = false;
+        }
+
+        // Capsule prefab accidentally has two NetworkRigidbody components; keep one.
+        for (int i = 1; i < cuerposRed.Length; i++)
+        {
+            if (cuerposRed[i] != null)
+                cuerposRed[i].enabled = false;
+        }
+
+        if (GetComponent<ReaparicionJugador>() == null)
+            gameObject.AddComponent<ReaparicionJugador>();
+        if (GetComponent<RelayTransicionMinecraft>() == null)
+            gameObject.AddComponent<RelayTransicionMinecraft>();
     }
     private void Start()
     {
@@ -62,11 +90,7 @@ public class MovePlayer1 : NetworkBehaviour
         {
             isPlatform = true;
         }
-        if (SceneManager.GetActiveScene().name == "pruebaLobby")
-        {
-            NoMover();
-            this.gameObject.transform.localScale = new Vector3(1.8f, 1.8f, 1.8f);
-        }
+        AplicarModoLobbySiCorresponde(duranteSpawn: false);
     }
 
     public override void OnNetworkSpawn()
@@ -85,12 +109,16 @@ public class MovePlayer1 : NetworkBehaviour
             " isServer=" + IsServer +
             " pos=" + transform.position);
 
+        // During spawn, set the transform directly (NGO picks it up). Later
+        // corrections must use NetworkTransform.Teleport or it snaps back.
+        AplicarModoLobbySiCorresponde(duranteSpawn: true);
+
         if (IsOwner)
         {
             RefrescarCamara();
 
             if (JuegoOnlineEscena.HayPuntoAparicion)
-                ColocarEnAparicion(JuegoOnlineEscena.PuntoAparicion, OwnerClientId);
+                ColocarEnAparicion(JuegoOnlineEscena.PuntoAparicion, OwnerClientId, duranteSpawn: true);
         }
 
         networkSpeed.OnValueChanged += OnSpeedChanged;
@@ -98,6 +126,95 @@ public class MovePlayer1 : NetworkBehaviour
 
         UpdateAnimations();
 
+    }
+
+    private bool EnLobby => SceneManager.GetActiveScene().name == "pruebaLobby";
+
+    private void AplicarModoLobbySiCorresponde(bool duranteSpawn)
+    {
+        if (!EnLobby) return;
+
+        mover = false;
+        DesactivarSyncRedLobby();
+
+        Vector3 escalaLobby = new Vector3(1.8f, 1.8f, 1.8f);
+        AplicarPoseLocal(transform.position, transform.rotation, escalaLobby);
+    }
+
+    private void SalirModoLobbySiCorresponde()
+    {
+        if (EnLobby || mover) return;
+
+        hayAnclaLobby = false;
+        mover = true;
+
+        AplicarPoseLocal(transform.position, transform.rotation, startSize);
+        ReactivarSyncRed();
+
+        if (rb != null)
+        {
+            rb.useGravity = true;
+            rb.isKinematic = !ControlaEsteCliente;
+        }
+
+        // Push the restored pose into NetworkTransform so peers stay aligned.
+        if (transformRed != null && IsSpawned && IsOwner && transformRed.enabled)
+            transformRed.Teleport(transform.position, transform.rotation, transform.localScale);
+    }
+
+    private void DesactivarSyncRedLobby()
+    {
+        if (redLobbyDesactivada) return;
+
+        // Same approach as RedTiktok: while we own placement, NetworkTransform
+        // must not run or it keeps restoring the prefab pose (-2, 1.74, 0).
+        if (transformRed != null)
+            transformRed.enabled = false;
+
+        if (cuerposRed != null)
+        {
+            for (int i = 0; i < cuerposRed.Length; i++)
+            {
+                if (cuerposRed[i] != null)
+                    cuerposRed[i].enabled = false;
+            }
+        }
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.useGravity = false;
+            rb.isKinematic = true;
+        }
+
+        redLobbyDesactivada = true;
+    }
+
+    private void ReactivarSyncRed()
+    {
+        if (!redLobbyDesactivada) return;
+
+        if (cuerposRed != null && cuerposRed.Length > 0 && cuerposRed[0] != null)
+            cuerposRed[0].enabled = true;
+
+        if (transformRed != null)
+            transformRed.enabled = true;
+
+        redLobbyDesactivada = false;
+    }
+
+    private void AplicarPoseLocal(Vector3 posicion, Quaternion rotacion, Vector3 escala)
+    {
+        transform.SetPositionAndRotation(posicion, rotacion);
+        transform.localScale = escala;
+
+        if (rb == null) return;
+
+        rb.position = posicion;
+        rb.rotation = rotacion;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
     }
     public override void OnNetworkDespawn()
     {
@@ -119,65 +236,144 @@ public class MovePlayer1 : NetworkBehaviour
             target = Camera.main.transform;
     }
 
-    public void ColocarEnAparicion(Vector3 posicionBase, ulong ownerId)
+    public void ColocarEnAparicion(Vector3 posicionBase, ulong ownerId, bool duranteSpawn = false)
     {
         if (!ControlaEsteCliente) return;
 
-        int indice = (int)(ownerId % 4u);
-        Vector3 posicion = posicionBase + new Vector3(indice * 2.5f, 0.5f, 0f);
+        if (EnLobby)
+            AplicarModoLobbySiCorresponde(duranteSpawn);
 
-        transform.position = posicion;
-        rb.position = posicion;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
+        int indice = (int)(ownerId % 4u);
+        float elevacion = AlturaPies() + 0.05f;
+        Vector3 posicion = posicionBase + new Vector3(indice * 2.5f, elevacion, 0f);
+        Vector3 escala = EnLobby ? new Vector3(1.8f, 1.8f, 1.8f) : transform.localScale;
+
+        if (EnLobby)
+        {
+            DesactivarSyncRedLobby();
+            AplicarPoseLocal(posicion, transform.rotation, escala);
+            anclaLobby = posicion;
+            hayAnclaLobby = true;
+        }
+        else if (!duranteSpawn && transformRed != null && IsSpawned && IsOwner && transformRed.enabled)
+        {
+            transformRed.Teleport(posicion, transform.rotation, escala);
+            if (rb != null)
+            {
+                rb.position = posicion;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+        }
+        else
+        {
+            AplicarPoseLocal(posicion, transform.rotation, escala);
+        }
+
+        Debug.Log(
+            "[Online] COLOCADO objetivo=" + posicion +
+            " actual=" + transform.position +
+            " nt=" + (transformRed != null && transformRed.enabled) +
+            " lobby=" + EnLobby);
+    }
+
+    private float AlturaPies()
+    {
+        CapsuleCollider capsula = GetComponent<CapsuleCollider>();
+        float escalaY = Mathf.Abs(transform.localScale.y);
+        if (EnLobby)
+            escalaY = 1.8f;
+
+        if (capsula != null)
+            return capsula.height * 0.5f * escalaY;
+
+        return escalaY * 0.5f;
     }
 
     void Update()
     {
-        if (SceneManager.GetActiveScene().name != "pruebaLobby" && !mover)
-        {
-            transform.localScale = startSize;
-            mover = true;
-        }
+        SalirModoLobbySiCorresponde();
         if (SceneManager.GetActiveScene().name == "LevelYoutubev2" && !isPlatform)
         {
             isPlatform = true;
         }
+        else if (SceneManager.GetActiveScene().name != "LevelYoutubev2")
+        {
+            isPlatform = false;
+        }
         if (!ControlaEsteCliente) return;
-        if (Keyboard.current == null) return;
+        if (PauseManager.IsPaused) return;
 
-        movement = Vector2.zero;
-
-        if (Keyboard.current.wKey.isPressed) movement.y += velocity;
-        if (Keyboard.current.sKey.isPressed) movement.y -= velocity;
-        if (Keyboard.current.aKey.isPressed) movement.x -= velocity;
-        if (Keyboard.current.dKey.isPressed) movement.x += velocity;
-
+        movement = LeerMovimiento();
 
         float speed = movement.magnitude;
+        if (IsSpawned) networkSpeed.Value = speed;
 
-        networkSpeed.Value = speed;
+        ActualizarSuelo();
 
-        if (canJump && Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (canJump && ControlesJuego.QuiereSaltar())
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             canJump = false;
- 
-            networkJump.Value = true;
+            if (IsSpawned) networkJump.Value = true;
         }
 
         UpdateAnimations();
+    }
 
+    private Vector2 LeerMovimiento()
+    {
+        Vector2 input = ControlesJuego.LeerMovimiento(velocity);
+        if (ControlesJuego.QuiereCorrer())
+            input *= runMultiplier;
+        return input;
+    }
+
+    private void ActualizarSuelo()
+    {
+        // Restore jump without requiring only the "Platform" tag (fixes A appearing to "do nothing").
+        float radio = 0.28f;
+        float dist = 0.55f;
+        Vector3 origen = transform.position + Vector3.up * 0.1f;
+        if (!Physics.SphereCast(origen, radio, Vector3.down, out RaycastHit hit, dist, ~0, QueryTriggerInteraction.Ignore))
+            return;
+        if (hit.collider != null && hit.collider.transform.IsChildOf(transform))
+            return;
+
+        if (!canJump)
+            canJump = true;
+        if (IsSpawned && networkJump.Value)
+            networkJump.Value = false;
     }
 
     void FixedUpdate()
     {
+        if (EnLobby)
+        {
+            DesactivarSyncRedLobby();
+
+            if (rb != null)
+            {
+                rb.useGravity = false;
+                rb.isKinematic = true;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+
+            // Keep forcing the lobby pose; without NetworkTransform disabled,
+            // NGO restores the Capsule prefab pose (-2, 1.74, 0).
+            if (hayAnclaLobby)
+                AplicarPoseLocal(anclaLobby, transform.rotation, new Vector3(1.8f, 1.8f, 1.8f));
+
+            return;
+        }
+
         if (!ControlaEsteCliente) return;
+        if (PauseManager.IsPaused) return;
 
         if (target == null) RefrescarCamara();
         if (target == null) return;
         if (!mover) return;
-
 
         Vector3 forward = target.forward;
         Vector3 right = target.right;
@@ -220,7 +416,7 @@ public class MovePlayer1 : NetworkBehaviour
         }
 
         rb.linearVelocity = new Vector3(horizontalVelocity.x, currentVelocity.y, horizontalVelocity.z);
-        networkSpeed.Value = horizontalVelocity.magnitude;
+        if (IsSpawned) networkSpeed.Value = horizontalVelocity.magnitude;
     }
 
     private void UpdateAnimations()
@@ -262,6 +458,6 @@ public class MovePlayer1 : NetworkBehaviour
     }
     public void NoMover()
     {
-        mover = !mover;
+        mover = false;
     }
 }

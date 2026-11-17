@@ -64,6 +64,8 @@ public class SkinJugador : NetworkBehaviour
         if (!Todos.Contains(this)) Todos.Add(this);
         if (IsOwner) Local = this;
 
+        PrepararSkins();
+
         skinIndex.OnValueChanged += AlCambiarSkin;
         SceneManager.sceneLoaded += AlCargarEscena;
 
@@ -78,6 +80,39 @@ public class SkinJugador : NetworkBehaviour
         Todos.Remove(this);
         if (Local == this) Local = null;
         AlCambiarLista?.Invoke();
+    }
+
+    /// <summary>
+    /// Los modelos de skin son solo visuales. Si traen Rigidbody, colliders, camara o
+    /// root motion, empujan al jugador o le roban la camara (y el teletransporte al spawn falla).
+    /// </summary>
+    private void PrepararSkins()
+    {
+        if (skins == null) return;
+
+        foreach (SkinData skin in skins)
+        {
+            if (skin.modelo == null) continue;
+
+            foreach (Rigidbody r in skin.modelo.GetComponentsInChildren<Rigidbody>(true))
+            {
+                if (r.gameObject == gameObject) continue;
+                r.isKinematic = true;
+                r.useGravity = false;
+            }
+
+            foreach (Collider c in skin.modelo.GetComponentsInChildren<Collider>(true))
+                c.enabled = false;
+
+            foreach (Camera cam in skin.modelo.GetComponentsInChildren<Camera>(true))
+                cam.enabled = false;
+
+            foreach (AudioListener al in skin.modelo.GetComponentsInChildren<AudioListener>(true))
+                al.enabled = false;
+
+            foreach (Animator a in skin.modelo.GetComponentsInChildren<Animator>(true))
+                a.applyRootMotion = false;
+        }
     }
 
     private void AlCambiarSkin(int anterior, int actual)

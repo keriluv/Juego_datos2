@@ -5,27 +5,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public static class ProgresoNiveles
-{
-    private const string Prefijo = "completado_";
-
-    public static void Completar(string escena)
-    {
-        PlayerPrefs.SetInt(Prefijo + escena, 1);
-        PlayerPrefs.Save();
-    }
-
-    public static bool EstaCompletado(string escena)
-    {
-        return PlayerPrefs.GetInt(Prefijo + escena, 0) == 1;
-    }
-
-    public static void Reiniciar(string escena)
-    {
-        PlayerPrefs.DeleteKey(Prefijo + escena);
-    }
-}
-
 [Serializable]
 public class NivelConfig
 {
@@ -36,6 +15,8 @@ public class NivelConfig
     public bool inicial;
     public bool falso;
     public Color acento = Color.clear;
+    [Tooltip("Formats: level:Scene, objective:Id, milestone:Id, keys:Scene:N, or bare scene name")]
+    public string[] requisitosProgreso;
 }
 
 [Serializable]
@@ -156,31 +137,34 @@ public class MapaNavegacionUI : MonoBehaviour
 
     private void CargarEjemplo()
     {
+        // Only scenes present in Editor Build Settings (skips MapaNiveles3D + SampleScene).
         niveles = new List<NivelConfig>
         {
-            new NivelConfig { id = 1, nombre = "MainMenu", escena = "MainMenu", posicion = new Vector2(-290, -50), inicial = true },
-            new NivelConfig { id = 2, nombre = "LevelSelector", escena = "LevelSelector", posicion = new Vector2(110, -50) },
-            new NivelConfig { id = 3, nombre = "Tutorial", escena = "Tutorial", posicion = new Vector2(-130, 100), acento = new Color(0.65f, 0.55f, 1.00f) },
-            new NivelConfig { id = 4, nombre = "LevelYoutube", escena = "LevelYoutube", posicion = new Vector2(110, 120), acento = new Color(1.00f, 0.20f, 0.20f) },
-            new NivelConfig { id = 5, nombre = "TikTok", escena = "", posicion = new Vector2(330, 120), falso = true, acento = new Color(0.10f, 0.90f, 0.90f) },
-            new NivelConfig { id = 6, nombre = "Instagram", escena = "", posicion = new Vector2(330, -50), falso = true, acento = new Color(0.90f, 0.25f, 0.60f) },
-            new NivelConfig { id = 7, nombre = "WhatsApp", escena = "", posicion = new Vector2(540, 110), falso = true, acento = new Color(0.15f, 0.83f, 0.40f) },
+            new NivelConfig { id = 1, nombre = "MainMenu", escena = "MainMenu", posicion = new Vector2(-320, 0), inicial = true, acento = new Color(1f, 0.68f, 0.24f) },
+            new NivelConfig { id = 2, nombre = "LevelSelector", escena = "LevelSelector", posicion = new Vector2(0, 0), acento = new Color(0.18f, 0.74f, 0.90f) },
+            new NivelConfig { id = 3, nombre = "TutorialGoogle", escena = "TutorialGoogle", posicion = new Vector2(-200, 160), acento = new Color(0.65f, 0.55f, 1.00f) },
+            new NivelConfig { id = 4, nombre = "LevelYoutube", escena = "LevelYoutube", posicion = new Vector2(140, 160), acento = new Color(1.00f, 0.20f, 0.20f) },
+            new NivelConfig { id = 5, nombre = "LevelYoutubev2", escena = "LevelYoutubev2", posicion = new Vector2(300, 160), acento = new Color(0.95f, 0.35f, 0.20f), requisitosProgreso = new[] { "level:LevelYoutube" } },
+            new NivelConfig { id = 6, nombre = "LevelYoutubev3", escena = "LevelYoutubev3", posicion = new Vector2(460, 160), acento = new Color(0.85f, 0.15f, 0.35f), requisitosProgreso = new[] { "level:LevelYoutubev2" } },
+            new NivelConfig { id = 7, nombre = "LevelSnapchat", escena = "LevelSnapchat", posicion = new Vector2(140, -140), acento = new Color(1.00f, 0.90f, 0.15f) },
+            new NivelConfig { id = 8, nombre = "EscenaTiktok", escena = "EscenaTiktok", posicion = new Vector2(300, -140), acento = new Color(0.10f, 0.90f, 0.90f) },
+            new NivelConfig { id = 9, nombre = "EscenaVR", escena = "EscenaVR", posicion = new Vector2(-200, -140), acento = new Color(0.45f, 0.35f, 0.95f) },
+            new NivelConfig { id = 10, nombre = "JuegoDinoChrome", escena = "JuegoDinoChrome", posicion = new Vector2(460, -140), acento = new Color(0.55f, 0.55f, 0.58f) },
+            new NivelConfig { id = 11, nombre = "pruebaLobby", escena = "pruebaLobby", posicion = new Vector2(0, -260), acento = new Color(0.25f, 0.85f, 0.55f) },
         };
 
         conexiones = new List<ConexionConfig>
         {
             new ConexionConfig { origen = 1, destino = 2, peso = 1f, bidireccional = true },
-            new ConexionConfig { origen = 1, destino = 3, peso = 1f },
-            new ConexionConfig { origen = 3, destino = 4, peso = 2f },
-            new ConexionConfig { origen = 4, destino = 5, peso = 3f },
-            new ConexionConfig { origen = 4, destino = 6, peso = 2f },
-            new ConexionConfig { origen = 5, destino = 7, peso = 1f },
-            new ConexionConfig { origen = 6, destino = 7, peso = 3f },
-            new ConexionConfig { origen = 2, destino = 3, peso = 2f },
-            new ConexionConfig { origen = 2, destino = 4, peso = 5f },
-            new ConexionConfig { origen = 2, destino = 5, peso = 8f },
-            new ConexionConfig { origen = 2, destino = 6, peso = 7f },
-            new ConexionConfig { origen = 2, destino = 7, peso = 9f },
+            new ConexionConfig { origen = 2, destino = 3, peso = 2f, bidireccional = true },
+            new ConexionConfig { origen = 2, destino = 4, peso = 2f, bidireccional = true },
+            new ConexionConfig { origen = 2, destino = 7, peso = 3f, bidireccional = true },
+            new ConexionConfig { origen = 2, destino = 8, peso = 3f, bidireccional = true },
+            new ConexionConfig { origen = 2, destino = 9, peso = 3f, bidireccional = true },
+            new ConexionConfig { origen = 2, destino = 10, peso = 4f, bidireccional = true },
+            new ConexionConfig { origen = 2, destino = 11, peso = 2f, bidireccional = true },
+            new ConexionConfig { origen = 4, destino = 5, peso = 2f },
+            new ConexionConfig { origen = 5, destino = 6, peso = 2f },
         };
     }
 
@@ -466,15 +450,24 @@ public class MapaNavegacionUI : MonoBehaviour
         var ruta = grafo.CaminoMasCorto(idActual, destino, out costo);
         if (ruta.Count == 0)
         {
-          //  MostrarInfo("No hay ruta desde " + Nombre(idActual) + " hasta " + Nombre(destino) + ".");
+            MostrarInfo("No hay ruta desde " + Nombre(idActual) + " hasta " + Nombre(destino) + ".");
             return;
         }
 
         var nombres = new List<string>();
-        foreach (var id in ruta) nombres.Add(Nombre(id));
+        foreach (var id in ruta)
+        {
+            nombres.Add(Nombre(id));
+            if (nodos.ContainsKey(id))
+            {
+                nodos[id].borde.color = colorRuta;
+                nodos[id].rect.localScale = Vector3.one * 1.08f;
+            }
+        }
+
         for (int i = 0; i < ruta.Count - 1; i++) ResaltarArista(ruta[i], ruta[i + 1]);
 
-        //MostrarInfo("Ruta más corta (Dijkstra): " + string.Join(" -> ", nombres) + "\nCosto total: " + costo);
+        MostrarInfo("Ruta más corta (Dijkstra): " + string.Join(" -> ", nombres) + "\nCosto total: " + costo);
     }
 
     private void MostrarRecorrido(bool anchura)
@@ -496,12 +489,36 @@ public class MapaNavegacionUI : MonoBehaviour
         Refrescar();
     }
 
+    private void OnEnable()
+    {
+        GameProgressionManager.OnProgressionChanged += AlCambiarProgreso;
+    }
+
+    private void OnDisable()
+    {
+        GameProgressionManager.OnProgressionChanged -= AlCambiarProgreso;
+    }
+
+    private void AlCambiarProgreso()
+    {
+        // LimpiarRuta already refreshes node unlock state.
+        LimpiarRuta();
+    }
+
+    private bool CumpleRequisitosNodo(NivelConfig n)
+    {
+        if (n.requisitosProgreso == null || n.requisitosProgreso.Length == 0)
+            return false;
+        return GameProgressionManager.Asegurar().CumpleTodos(n.requisitosProgreso);
+    }
+
     private void Refrescar()
     {
-        foreach (var n in niveles) grafo.Obtener(n.id).desbloqueado = n.inicial;
+        foreach (var n in niveles)
+            grafo.Obtener(n.id).desbloqueado = n.inicial || CumpleRequisitosNodo(n);
         foreach (var n in niveles)
         {
-            if (n.inicial || ProgresoNiveles.EstaCompletado(Clave(n)))
+            if (n.inicial || ProgresoNiveles.EstaCompletado(Clave(n)) || CumpleRequisitosNodo(n))
                 grafo.CompletarNivel(n.id);
         }
 
@@ -553,6 +570,17 @@ public class MapaNavegacionUI : MonoBehaviour
             v.linea.sizeDelta = new Vector2(v.linea.sizeDelta.x, GrosorArista);
             if (v.pastilla != null) v.pastilla.color = colorBordePastilla;
         }
+
+        foreach (var kv in nodos)
+            kv.Value.rect.localScale = Vector3.one;
+
+        Refrescar();
+    }
+
+    private void MostrarInfo(string mensaje)
+    {
+        if (textoInfo != null) textoInfo.text = mensaje;
+        Debug.Log("[MapaUI] " + mensaje);
     }
 
     private Sprite SpriteRedondeado(int radio)

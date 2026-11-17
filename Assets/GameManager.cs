@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
             intro.SetActive(true);
             return;
         }
-        SceneManager.LoadScene(LevelSelector);
+        MultijugadorJuego.Instancia.IrAEscena("pruebaLobby");
     }
 
     public void goToBatallaVR()

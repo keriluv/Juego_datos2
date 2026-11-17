@@ -15,6 +15,15 @@ public class Arbolmenu : MonoBehaviour
     {
         rawImage = BkArbolView.GetComponent<RawImage>();
         rawImage.enabled = false;
+
+        // Enlarge inventory/tree panel for readability without scaling the whole pause HUD.
+        RectTransform fondo = BkArbolView.GetComponent<RectTransform>();
+        if (fondo != null)
+        {
+            fondo.sizeDelta = new Vector2(
+                Mathf.Max(fondo.sizeDelta.x * 1.45f, 520f),
+                Mathf.Max(fondo.sizeDelta.y * 1.45f, 420f));
+        }
     }
 
     public void RecorridoInOrder()

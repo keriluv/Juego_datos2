@@ -123,8 +123,18 @@ public class GrafoNiveles
             if (actual == -1 || actual == destino) break;
 
             visitados.Add(actual);
+            if (!adyacencia.ContainsKey(actual)) continue;
+
             foreach (var a in adyacencia[actual])
             {
+                // Locked nodes cannot be traversed, except origin/destination.
+                if (a.destino != destino && a.destino != origen)
+                {
+                    Nivel nodo;
+                    if (niveles.TryGetValue(a.destino, out nodo) && !nodo.desbloqueado)
+                        continue;
+                }
+
                 float nuevo = dist[actual] + a.peso;
                 if (nuevo < dist[a.destino])
                 {
@@ -134,14 +144,20 @@ public class GrafoNiveles
             }
         }
 
-        costo = dist[destino];
+        costo = dist.ContainsKey(destino) ? dist[destino] : float.PositiveInfinity;
         var camino = new List<int>();
         if (float.IsPositiveInfinity(costo)) return camino;
+        if (!previo.ContainsKey(destino) && origen != destino) return camino;
 
         for (int c = destino; ; c = previo[c])
         {
             camino.Insert(0, c);
             if (c == origen) break;
+            if (!previo.ContainsKey(c))
+            {
+                camino.Clear();
+                break;
+            }
         }
         return camino;
     }

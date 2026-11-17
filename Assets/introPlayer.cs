@@ -36,6 +36,6 @@ public class introPlayer : MonoBehaviour
 
         fadePanel.alpha = 1;
 
-        SceneManager.LoadScene(nombreEscena);
+        MultijugadorJuego.Instancia.CargarSiguienteEscena(nombreEscena);
     }
 }

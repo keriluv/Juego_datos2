@@ -17,6 +17,8 @@ public class BoatCamera : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        BuscarJugadorLocal();
     }
 
     void Update()
@@ -38,5 +40,31 @@ public class BoatCamera : MonoBehaviour
         transform.position = target.position + offset;
 
         transform.LookAt(target.position + Vector3.up * 1.5f);
+    }
+    private void BuscarJugadorLocal()
+    {
+        MovePlayer1[] barcos =
+            FindObjectsByType<MovePlayer1>(FindObjectsInactive.Exclude);
+
+        foreach (MovePlayer1 barco in barcos)
+        {
+            if (barco.IsSpawned && barco.IsOwner)
+            {
+                target = barco.transform;
+                return;
+            }
+        }
+
+        JugadorRed[] jugadores =
+            FindObjectsByType<JugadorRed>(FindObjectsInactive.Exclude);
+
+        foreach (JugadorRed jugador in jugadores)
+        {
+            if (jugador.IsSpawned && jugador.IsOwner)
+            {
+                target = jugador.transform;
+                return;
+            }
+        }
     }
 }

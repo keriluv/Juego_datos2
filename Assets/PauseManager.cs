@@ -18,6 +18,10 @@ public class PauseManager : MonoBehaviour
     [SerializeField] private GameObject hover;
     private RectTransform target;
 
+    private void Awake()
+    {
+        DontDestroyOnLoad(this);
+    }
     void Start()
     {
         pauseScreen.SetActive(false);

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
+[DefaultExecutionOrder(10001)]
 public class MovePlayer1 : NetworkBehaviour
 {
     [SerializeField] private float velocity = 1f;

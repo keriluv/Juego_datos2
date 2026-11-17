@@ -7545,7 +7545,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   playButton: {fileID: 0}
-  LevelSelector: LevelSelector
+  LevelSelector: pruebaLobby
   intro: {fileID: 1635303166}
   menuScreen: {fileID: 429995079}
   configScreen: {fileID: 1592538329}

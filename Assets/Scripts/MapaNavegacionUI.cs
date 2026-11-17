@@ -136,7 +136,7 @@ public class MapaNavegacionUI : MonoBehaviour
         CrearInterfaz();
         DeterminarNivelActual();
         Refrescar();
-        MostrarInfo(MensajeNavegar);
+       // MostrarInfo(MensajeNavegar);
     }
 
     private void Update()
@@ -466,7 +466,7 @@ public class MapaNavegacionUI : MonoBehaviour
         var ruta = grafo.CaminoMasCorto(idActual, destino, out costo);
         if (ruta.Count == 0)
         {
-            MostrarInfo("No hay ruta desde " + Nombre(idActual) + " hasta " + Nombre(destino) + ".");
+          //  MostrarInfo("No hay ruta desde " + Nombre(idActual) + " hasta " + Nombre(destino) + ".");
             return;
         }
 
@@ -474,7 +474,7 @@ public class MapaNavegacionUI : MonoBehaviour
         foreach (var id in ruta) nombres.Add(Nombre(id));
         for (int i = 0; i < ruta.Count - 1; i++) ResaltarArista(ruta[i], ruta[i + 1]);
 
-        MostrarInfo("Ruta más corta (Dijkstra): " + string.Join(" -> ", nombres) + "\nCosto total: " + costo);
+        //MostrarInfo("Ruta más corta (Dijkstra): " + string.Join(" -> ", nombres) + "\nCosto total: " + costo);
     }
 
     private void MostrarRecorrido(bool anchura)
@@ -486,7 +486,7 @@ public class MapaNavegacionUI : MonoBehaviour
         foreach (var id in orden) nombres.Add(Nombre(id));
 
         string tipo = anchura ? "Recorrido en anchura (BFS)" : "Recorrido en profundidad (DFS)";
-        MostrarInfo(tipo + " desde " + Nombre(idActual) + ":\n" + string.Join(" -> ", nombres));
+        //MostrarInfo(tipo + " desde " + Nombre(idActual) + ":\n" + string.Join(" -> ", nombres));
     }
 
     private void ReiniciarProgreso()
@@ -494,7 +494,6 @@ public class MapaNavegacionUI : MonoBehaviour
         foreach (var n in niveles) ProgresoNiveles.Reiniciar(Clave(n));
         LimpiarRuta();
         Refrescar();
-        MostrarInfo("Progreso reiniciado.");
     }
 
     private void Refrescar()
@@ -554,11 +553,6 @@ public class MapaNavegacionUI : MonoBehaviour
             v.linea.sizeDelta = new Vector2(v.linea.sizeDelta.x, GrosorArista);
             if (v.pastilla != null) v.pastilla.color = colorBordePastilla;
         }
-    }
-
-    private void MostrarInfo(string mensaje)
-    {
-        textoInfo.text = mensaje;
     }
 
     private Sprite SpriteRedondeado(int radio)

@@ -8,7 +8,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     [SerializeField] private GameObject player;
     public void LoadLevel0()
     {
-        SceneManager.LoadScene(nextLevel);
+        MultijugadorJuego.Instancia.CargarSiguienteEscena(nextLevel);
     }
 
     private void OnTriggerEnter(Collider other)

@@ -155,16 +155,19 @@ public class JuegoOnlineEscena : MonoBehaviour
             string escena = SceneManager.GetActiveScene().name;
             if (escena == "pruebaLobby" || escena == "LevelYoutubev2")
             {
-                
+
             }
             else if (escena == "LevelYoutube")
             {
                 camara.GetComponent<FollowPlayer>().enabled = true;
             }
-            else
+            else if (escena == "LevelSelector")
             {
+                camara.GetComponent<BoatCamera>().enabled = true;
+            }
+            else { 
                 if (camara.GetComponent<CamaraLobby>() == null)
-                    camara.gameObject.AddComponent<CamaraLobby>();
+                camara.gameObject.AddComponent<CamaraLobby>();
             }
         }
 

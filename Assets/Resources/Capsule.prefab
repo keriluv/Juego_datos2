@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: -1984183481028999538}
   - component: {fileID: 8631874819368800385}
   - component: {fileID: -7214123584022104471}
+  - component: {fileID: 7059012002168764363}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Player
@@ -47,6 +48,7 @@ Transform:
   - {fileID: 8590310168098346149}
   - {fileID: 8851526577891056602}
   - {fileID: 4100332344566110616}
+  - {fileID: 2733912302109847043}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!33 &5995549106005902976
@@ -298,6 +300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a216fedd77cee84aa6689f1193087d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Playerhit
+  ShowTopMostFoldoutHeaderGroup: 1
   hit: {fileID: 7145590744847819147}
   cooldown: 2
   showHit: 1
@@ -336,12 +339,20 @@ MonoBehaviour:
   - nombre: Yoshi
     modelo: {fileID: 8970388949857848863}
     icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
+    esBarco: 0
   - nombre: Spiderman
     modelo: {fileID: 8186735066308690272}
     icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
+    esBarco: 0
   - nombre: Klee
     modelo: {fileID: 3723524879590884130}
     icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
+    esBarco: 0
+  - nombre: Boat
+    modelo: {fileID: 3367318597287523513}
+    icono: {fileID: 21300000, guid: b6b01eb5f75f1234798942311171b5a3, type: 3}
+    esBarco: 1
+  escenaBarco: LevelSelector
 --- !u!114 &-7214123584022104471
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -359,6 +370,18 @@ MonoBehaviour:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
+--- !u!114 &7059012002168764363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6146368101489438540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 502e7541e4dbcf444a8d01241b55a898, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &7145590744847819147
 GameObject:
   m_ObjectHideFlags: 0
@@ -545,6 +568,77 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4369289780442619933}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2484429800243890664
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4369289780442619933}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.14932013
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.060379982
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.47718
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_Name
+      value: Sci-fi Speedboat
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+--- !u!4 &2733912302109847043 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+  m_PrefabInstance: {fileID: 2484429800243890664}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3367318597287523513 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9a51cd137a3b2d54e9656c122ce6c9ce, type: 3}
+  m_PrefabInstance: {fileID: 2484429800243890664}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4570581839300083315
 PrefabInstance:
   m_ObjectHideFlags: 0

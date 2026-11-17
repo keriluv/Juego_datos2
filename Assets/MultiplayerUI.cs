@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Video;
 
 public class MultiplayerUI : MonoBehaviour
 {
@@ -37,6 +38,7 @@ public class MultiplayerUI : MonoBehaviour
     private bool charSelector = false;
 
     private MultijugadorJuego multiplayer;
+    [SerializeField] private GameObject vp;
 
     void Start()
     {
@@ -104,7 +106,7 @@ public class MultiplayerUI : MonoBehaviour
 
     public void iniciarPartida()
     {
-        StartCoroutine(multiplayer.CargarEscenaCuandoListo());
+        vp.SetActive(true);
     }
 
     public void unirseCodigo()
